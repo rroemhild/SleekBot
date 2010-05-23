@@ -38,9 +38,9 @@ class basebot(object):
             prefix = self.muc_prefix
         else:
             prefix = self.im_prefix
-        command = msg.get('message', '').split(' ', 1)[0]
-        if ' ' in msg.get('message', ''):
-            args = msg['message'].split(' ', 1)[-1]
+        command = msg.get('body', '').split(' ', 1)[0]
+        if ' ' in msg.get('body', ''):
+            args = msg['body'].split(' ', 1)[-1]
         else:
             args = ''
         if command.startswith(prefix):
@@ -49,9 +49,9 @@ class basebot(object):
             if command in self.im_commands:
                 response = self.im_commands[command](command, args, msg)
                 if msg['type'] == 'groupchat':
-                    self.sendMessage("%s" % msg.get('room', ''), response, mtype=msg.get('type', 'groupchat'))
+                    self.sendMessage("%s" % msg.get('mucroom', ''), response, mtype=msg.get('type', 'groupchat'))
                 else:
-                    self.sendMessage("%s/%s" % (msg.get('jid', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
+                    self.sendMessage("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
         self.handle_event(msg)
             
     
@@ -95,3 +95,6 @@ class basebot(object):
         """ Register a callback object with the bot.
         """
         self.callbacks.append(callbackObject)
+
+    def connected(self):
+	return self.state['connected']

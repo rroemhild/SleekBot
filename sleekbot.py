@@ -196,12 +196,12 @@ Also, thank you Athena and Cath for putting up with us while we programmed.""")
                 #system message
                 jid = None
             else:
-                jid = self.getRealJid("%s/%s" % (msg['room'], msg['name']))
+                jid = self.getRealJid("%s/%s" % (msg['mucroom'], msg['mucnick']))
                 if jid:
                     jid = self.getjidbare(jid)
         else:
             if msg['jid'] in self['xep_0045'].getJoinedRooms():
-                jid = self.getRealJid("%s/%s" % (msg['jid'], msg['resource']))
+                jid = self.getRealJid("%s/%s" % (msg['from'], msg['resource']))
                 if jid:
                     jid = self.getjidbare(jid)
             else:
@@ -215,10 +215,10 @@ Also, thank you Athena and Cath for putting up with us while we programmed.""")
             if msg['name'] == "":
                 #system message
                 return False
-            return self.shouldAnswerToJid("%s/%s" % (msg['room'], msg['name']))
+            return self.shouldAnswerToJid("%s/%s" % (msg['mucroom'], msg['mucnik']))
         else:
             if msg['jid'] in self['xep_0045'].getJoinedRooms():
-                return self.shouldAnswerToJid("%s/%s" % (msg['jid'], msg['resource']))
+                return self.shouldAnswerToJid("%s/%s" % (msg['from'], msg['resource']))
             return self.shouldAnswerToJid(msg.get('jid', ''))
     
     def shouldAnswerToJid(self, passedJid):
