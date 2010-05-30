@@ -19,46 +19,36 @@
 
 import logging
 
-class admin(object):
-    def __init__(self, bot, config):
-        self.bot = bot
-        self.config = config
-        self.about = "'Admin' allows a bot owner to perform tasks such as rehashing a bot remotely.\nWritten By: Kevin Smith"
-        self.bot.addIMCommand('rehash', self.handle_rehash)
-        self.bot.addMUCCommand('rehash', self.handle_rehash)
-        self.bot.addHelp('rehash', 'Rehash command', "Reload the bot config and plugins without dropping the XMPP stream.", 'rehash')
-        self.bot.addIMCommand('die', self.handle_die)
-        self.bot.addMUCCommand('die', self.handle_die)
-        self.bot.addHelp('die', 'Die command', "Kill the bot.", 'kill')
-        self.bot.addIMCommand('restart', self.handle_restart)
-        self.bot.addMUCCommand('restart', self.handle_restart)
-        self.bot.addHelp('restart', 'Restart command', "Restart the bot, reconnecting etc.", 'restart')
+from basebot import botcmd, botplugin
 
-    def message_from_owner(self, msg):
-        """ Was this message sent from a room owner?
-        """
-        jid = self.bot.getRealJidFromMessage(msg)
-        logging.debug("admin.py checking for owner status on jid %s" % jid)
-        return jid in self.bot.getOwners()
-            
+class admin(botplugin):
+    """Plugin to allows a bot owner to perform tasks such as rehashing a bot remotely
+    Written By: Kevin Smith"""
+
+    @botcmd(name = 'rehash') 
     def handle_rehash(self, command, args, msg):
-        if self.message_from_owner(msg):
+        """Reload the bot config and plugins without dropping the XMPP stream."""
+        if self.bot.message_from_owner(msg):
             self.bot.rehash()
             response = "Rehashed boss"
         else:
             response = "You are insufficiently cool, go away."
         return response
-        
+         
+    @botcmd(name = 'restart')
     def handle_restart(self, command, args, msg):
-        if self.message_from_owner(msg):
+        """Restart the bot, reconnecting, etc ..."""
+        if self.bot.message_from_owner(msg):
             self.bot.restart()
             response = "Restarted boss"
         else:
             response = "You are insufficiently cool, go away."
         return response
-        
+
+    @botcmd(name = 'die')
     def handle_die(self, command, args, msg):
-        if self.message_from_owner(msg):
+        """Kill the bot."""
+        if self.bot.message_from_owner(msg):
             response = "Dying (you'll never see this message)"
             self.bot.die()
         else:

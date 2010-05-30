@@ -1,22 +1,30 @@
 import logging
 import inspect
 
-def botcmd(hidden = False, name='', title='', doc='', usage='', IM = True, MUC = True):
-  def _outer(f):
-    def _inner(*args, **kwargs):
-	return f(*args, **kwargs)      
+def botcmd(name='', usage='', title='', doc='', IM = True, MUC = True, hidden = False ):
+    def _outer(f):
+        def _inner(*args, **kwargs):
+            return f(*args, **kwargs)             
         
-    _inner._botcmd = dict()
-    _inner._botcmd['hidden'] = hidden
-    _inner._botcmd['name'] = name or f.__name__
-    _inner._botcmd['title'] = title or f.__doc__.split('\n', 1)[0] or ''
-    _inner._botcmd['doc'] = doc or f.__doc__ or 'undocumented'
-    _inner._botcmd['usage'] = usage or 'undocumented'
-    _inner._botcmd['IM'] = IM
-    _inner._botcmd['MUC'] = MUC
-    return _inner
-  return _outer
-
+        if not f.__doc__:
+            f.__doc__ = ''
+            
+        _inner._botcmd = dict()
+        _inner._botcmd['hidden'] = hidden
+        _inner._botcmd['name'] = name or f.__name__
+        _inner._botcmd['title'] = title or f.__doc__.split('\n', 1)[0] or ''
+        _inner._botcmd['doc'] = doc or f.__doc__ or 'undocumented'
+        _inner._botcmd['usage'] = usage or _inner._botcmd['name']
+        _inner._botcmd['IM'] = IM
+        _inner._botcmd['MUC'] = MUC
+        return _inner
+    return _outer
+    
+class botplugin(object):
+    def __init__(self, bot, config):
+        self.bot = bot
+        self.config = config        
+        self.bot.register_botcmd(self)        
 
 class basebot(object):
     def __init__(self):
@@ -29,23 +37,24 @@ class basebot(object):
         self.help = []
         self.add_event_handler("message", self.handle_message_event, threaded=True)
         self.add_event_handler("groupchat_message", self.handle_message_event, threaded=True)
-        for name, f in inspect.getmembers(self):                        
+        self.register_botcmd(self)
+
+    def register_botcmd(self, whom):
+        for name, f in inspect.getmembers(whom):                        
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
                 self.addHelp(f._botcmd['name'], f._botcmd['title'], f._botcmd['doc'], f._botcmd['usage'])
                 if f._botcmd['IM']:                    
                     self.addIMCommand(f._botcmd['name'], f)
                 if f._botcmd['MUC']:
                     self.addMUCCommand(f._botcmd['name'], f)
+
         
     def clearCommands(self):
         self.im_commands = {}
         self.muc_commands = {}
         self.polls = []
         self.help = []
-        #TODO Change this to use the decorator
-        self.addIMCommand('help', self.handle_help)
-        self.addMUCCommand('help', self.handle_help)
-        self.addHelp('help', 'Help Command', "Returns this list of help commands if no topic is specified.  Otherwise returns help on the specific topic.", 'help [topic]')
+        self.register_botcmd(self)
     
     def shouldAnswerToMessage(self, msg):
         """ Checks whether the bot is configured to respond to the sender of a message.
@@ -53,8 +62,7 @@ class basebot(object):
         """
         return True
     
-    def handle_message_event(self, msg):
-        print msg.keys()
+    def handle_message_event(self, msg):        
         if not self.shouldAnswerToMessage(msg):
             return
         if msg['type'] == 'groupchat':
@@ -74,7 +82,8 @@ class basebot(object):
                 if msg['type'] == 'groupchat':
                     self.sendMessage("%s" % msg.get('mucroom', ''), response, mtype=msg.get('type', 'groupchat'))
                 else:
-                    self.sendMessage("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
+                    #self.sendMessage("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
+                    msg.reply(response)
         self.handle_event(msg)
             
     
@@ -111,7 +120,7 @@ class basebot(object):
     
     def addHelp(self, command, title, body, usage=''):
         self.help.append((command, title, body, usage))
-    
+   
     def addIMCommand(self, command, pointer):
         self.im_commands[command] = pointer
     
@@ -124,4 +133,4 @@ class basebot(object):
         self.callbacks.append(callbackObject)
 
     def connected(self):
-	return self.state['connected']
+        return self.state['connected']

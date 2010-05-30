@@ -19,19 +19,18 @@
 
 import logging
 
-class pingbot(object):
-	def __init__(self, bot, config):
-		self.bot = bot
-		self.config = config
-		self.about = "Pingbot allows users to ping other jids.\nWritten By: Kevin Smith"
-		self.bot.addIMCommand('ping', self.handle_ping)
-		self.bot.addMUCCommand('ping', self.handle_ping)
-		self.bot.addHelp('ping', 'Ping Command', "Discover latency to a jid.", 'ping jid')
-			
-	def handle_ping(self, command, args, msg):
-		latency = self.bot['xep_0199'].sendPing(args, 10)
-		if latency == None:
-			response = "No response when pinging " + args
-		else:
-			response = "Ping response received from %s in %d seconds." % (args, latency)
-		return response
+from basebot import botcmd, botplugin
+
+class pingbot(botplugin):
+    """Pingbot allows users to ping other jids.
+    Written By: Kevin Smith"""    
+               
+    @botcmd(name = 'ping', usage = 'ping jid')
+    def handle_ping(self, command, args, msg):
+        """Discover latency to a jid."""
+        latency = self.bot['xep_0199'].sendPing(args, 10)
+        if latency == None:
+            response = "No response when pinging " + args
+        else:
+            response = "Ping response received from %s in %d seconds." % (args, latency)
+        return response

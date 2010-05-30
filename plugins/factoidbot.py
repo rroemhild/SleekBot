@@ -19,6 +19,8 @@
 import logging
 import pickle
 
+from basebot import botcmd, botplugin
+
 class factstore(object):
     def __init__(self):
         self.null = None
@@ -67,18 +69,16 @@ class factstore(object):
         pickle.dump(self.data, f)
         f.close()
 
-class factoidbot(object):
+class factoidbot(botplugin):
+    """A plugin to remember facts."""
+
     def __init__(self, bot, config):
-        self.bot = bot
-        self.config = config
+        botplugin.__init__(self, bot, config)
         self.factstore = factstore()
-        self.bot.addIMCommand('fact', self.handle_fact)
-        self.bot.addMUCCommand('fact', self.handle_fact)
-        self.bot.addHelp('fact', 'Factoid Command', "Returns facts.", 'fact [topic]')
-        self.bot.addIMCommand('factoid', self.handle_fact)
-        self.bot.addMUCCommand('factoid', self.handle_fact)
-            
+        
+    @botcmd(name = 'fact', usage = 'fact [topic]')
     def handle_fact(self, command, args, msg):
+        """Returns a fact"""
         subcommand = None
         term = None
         fact = None

@@ -20,16 +20,14 @@
 import logging
 import datetime, time
 
-class tell(object):
-    def __init__(self, bot, config):
-        self.bot = bot
-        self.config = config
-        self.about = "Parrots text to a jid."
-        self.bot.addIMCommand('tell', self.handle_tell)
-        self.bot.addMUCCommand('tell', self.handle_tell)
-        self.bot.addHelp('tell', 'Tell Command', "Have the bot parrot some text to a JID", 'say jid text')
-            
+from basebot import botcmd, botplugin
+
+class tell(botplugin):
+    """A plugin to parrot text to a JID."""
+
+    @botcmd(name = 'tell', usage = 'tell jid text')
     def handle_tell(self, command, args, msg):
+        """Have the bot parrot some text to a JID."""
         if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners():
             return "I'm not your monkey."
         if args.count(" ") >= 1:

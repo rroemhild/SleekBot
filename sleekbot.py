@@ -29,6 +29,13 @@ import plugins
 import sys
 
 class sleekbot(sleekxmpp.ClientXMPP, basebot):
+    """SleekBot was written by Nathan Fritz and Kevin Smith.
+    SleekBot uses SleekXMPP which was also written by Nathan Fritz.
+    http://sleekbot.googlecode.com
+    -----------------------------------------------------------------
+    Special thanks to David Search.
+    Also, thank you Athena and Cath for putting up with us while we programmed."""
+
     def __init__(self, configFile, jid, password, ssl=False, plugin_config = {}):
         self.configFile = configFile
         self.botconfig = self.loadConfig(configFile)
@@ -43,11 +50,12 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         self.botPlugin = {}
         self.pluginConfig = {}
         self.add_event_handler("session_start", self.start, threaded=True)
-        self.registerPlugin('xep_0004')
         self.registerPlugin('xep_0030')
+        self.registerPlugin('xep_0004')
         self.registerPlugin('xep_0045')
         self.registerPlugin('xep_0050')
         self.registerPlugin('xep_0060')
+        self.registerPlugin('xep_0199')
         self.register_bot_plugins()
         self.registerCommands()
     
@@ -60,13 +68,7 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         """ Register all ad-hoc commands with SleekXMPP.
         """
         aboutform = self.plugin['xep_0004'].makeForm('form', "About SleekBot")
-        aboutform.addField('about', 'fixed', value=
-"""SleekBot was written by Nathan Fritz and Kevin Smith.
-SleekBot uses SleekXMPP which was also written by Nathan Fritz.
-http://sleekbot.googlecode.com
------------------------------------------------------------------
-Special thanks to David Search.
-Also, thank you Athena and Cath for putting up with us while we programmed.""")
+        aboutform.addField('about', 'fixed', value= self.__doc__)
         self.plugin['xep_0050'].addCommand('about', 'About Sleekbot', aboutform)
         pluginform = self.plugin['xep_0004'].makeForm('form', 'Plugins')
         plugins = pluginform.addField('plugin', 'list-single', 'Plugins')
@@ -86,7 +88,7 @@ Also, thank you Athena and Cath for putting up with us while we programmed.""")
         plugin = value['plugin']
         if option == 'about':
             aboutform = self.plugin['xep_0004'].makeForm('form', "About SleekBot")
-            aboutform.addField('about', 'fixed', value=self.botPlugin[plugin].about)
+            aboutform.addField('about', 'fixed', value=getattr(self.botPlugin[plugin], 'about', self.botPlugin[plugin].__doc__))
             return aboutform, None, False
         elif option == 'config':
             pass
@@ -126,18 +128,37 @@ Also, thank you Athena and Cath for putting up with us while we programmed.""")
         del self.botPlugin[pluginName]
     
     def registerBotPlugin(self, pluginname, config):
-		""" Registers a bot plugin pluginname is the file and class name,
-		and config is an xml element passed to the plugin. Will reload the plugin module,
-		so previously loaded plugins can be updated.
-		"""
-		if pluginname in globals()['plugins'].__dict__:
-			reload(globals()['plugins'].__dict__[pluginname])
-		else:
-			__import__(self.plugin_name_to_module(pluginname))
-		self.botPlugin[pluginname] = getattr(globals()['plugins'].__dict__[pluginname], pluginname)(self, config)
-		self.pluginConfig[pluginname] = config
-		return True
+        """ Registers a bot plugin pluginname is the file and class name,
+        and config is an xml element passed to the plugin. Will reload the plugin module,
+        so previously loaded plugins can be updated.
+        """
+        if pluginname in globals()['plugins'].__dict__:
+            reload(globals()['plugins'].__dict__[pluginname])
+        else:
+            __import__(self.plugin_name_to_module(pluginname))
+        self.botPlugin[pluginname] = getattr(globals()['plugins'].__dict__[pluginname], pluginname)(self, config)
+        self.pluginConfig[pluginname] = config                
+        return True
         
+    def message_from_owner(self, msg):
+        """ Was this message sent from a bot owner?
+        """
+        jid = self.getRealJidFromMessage(msg)        
+        return jid in self.getOwners()
+
+    def message_from_admin(self, msg):
+        """ Was this message sent from a bot admin?
+        """
+        jid = self.getRealJidFromMessage(msg)        
+        return jid in self.getAdmins()    
+
+
+    def message_from_member(self, msg):
+        """ Was this message sent from a bot member?
+        """
+        jid = self.getRealJidFromMessage(msg)        
+        return jid in self.getMember()
+
     def getOwners(self):
         """ Returns a list of all the jids belonging to bot owners
         """
@@ -205,7 +226,7 @@ Also, thank you Athena and Cath for putting up with us while we programmed.""")
                 if jid:
                     jid = self.getjidbare(jid)
             else:
-                jid = self.getjidbare(msg.get('jid', ''))
+                jid = self.getjidbare(msg.get('from', ''))
         return jid
 
     def shouldAnswerToMessage(self, msg):

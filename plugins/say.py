@@ -20,16 +20,15 @@
 import logging
 import datetime, time
 
-class say(object):
-    def __init__(self, bot, config):
-        self.bot = bot
-        self.config = config
-        self.about = "Parrots text to a muc."
-        self.bot.addIMCommand('say', self.handle_say)
-        self.bot.addMUCCommand('say', self.handle_say)
-        self.bot.addHelp('say', 'Say Command', "Have the bot parrot some text in a channel", 'say muc text')
-            
+from basebot import botcmd, botplugin
+
+class say(botplugin):
+    """A plugin to parrots text to a muc"""
+           
+    @botcmd(name = 'say', usage = 'say muc text')
     def handle_say(self, command, args, msg):
+        """Have the bot parrot some text in a channel."""
+
         if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners():
             return "I'm not your monkey."
         if args.count(" ") >= 1:

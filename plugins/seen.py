@@ -21,6 +21,8 @@ import datetime
 import time
 import logging
 
+from basebot import botcmd, botplugin
+
 class seenevent(object):
     """ Represent the last know activity of a user.
     """
@@ -144,15 +146,12 @@ class seenstore(object):
         db.commit()
         db.close()
     
-class seen(object):
+class seen(botplugin):
+    """A plugin to keep track of user presence."""
+    
     def __init__(self, bot, config):
-        self.bot = bot
-        self.config = config
+        botplugin.__init__(self, bot, config)
         self.seenstore = seenstore(self.bot.store)
-        self.about = "Allows users to query the last time a sure was seen."
-        self.bot.addIMCommand('seen', self.handle_seen_request)
-        self.bot.addMUCCommand('seen', self.handle_seen_request)
-        self.bot.addHelp('seen', 'Last seen Command', "See when a user was last seen", 'seen')
         #self.bot.addIMCommand('whowas', self.handle_whowas_request)
         #self.bot.addMUCCommand('whowas', self.handle_whowas_request)
         #self.bot.addHelp('whowas', 'Jid of member', "See the last jid of a member", 'whowas')
@@ -182,8 +181,9 @@ class seen(object):
         self.seenstore.update(seenevent(message['name'], message['dateTime'], message['room'], seenevent.messageType, message['message']))
         #self.jidstore.update(jidevent(message['name'], message['room'], self.bot.getRealJidFromMessag(message), message['dateTime']))
         
-    
+    @botcmd('seen')
     def handle_seen_request(self, command, args, msg):
+        """See when a user was last seen.""" 
         if args == None or args == "":
             return "Please supply a a nickname to search for"
         seenData = self.seenstore.get(args)

@@ -22,6 +22,8 @@ import re
 import random
 from xml.etree import ElementTree as ET
 
+from basebot import botcmd, botplugin
+
 class robberFilter():
     def filter(self, text):
         consonants = 'bcdfghjklmnpqrstvwxz'
@@ -125,19 +127,19 @@ class chefFilter(object):
     def filter(self, text):
         pass
 
-class filter(object):
+class filter(botplugin):
+    """A plugin to filter text."""
+
     def __init__(self, bot, config):
-        self.bot = bot
-        self.config = config
-        self.bot.addIMCommand('filter', self.handle_filter)
-        self.bot.addMUCCommand('filter', self.handle_filter)
-        self.bot.addHelp('filter', 'Text filter command', "Parses the text through a filter.", 'filter filtertype text')
+        botplugin.__init__(self, bot, config)
         self.availableFilters = {}
         self.availableFilters['leet'] = leetFilter()
 #        self.availableFilters['chef'] = chefFilter()
         self.availableFilters['robber'] = robberFilter()
 
+    @botcmd(name = 'filter', usage = 'filter filtertype text')
     def handle_filter(self, command, args, msg):
+        """Parses the text through a filter"""
         if args == None or args == "" or len(args.split(" ")) < 2:
             return "Insufficient information, please check help."
         language = args.split(" ")[0].lower()
