@@ -1,13 +1,17 @@
 About
 ============================================================================
-SleekBot is an easily extendable Bot for XMPP (aka Jabber, Google Talk, etc) 
+SleekBot is an easily extendable Bot for XMPP (aka Jabber, Google Talk, etc)
 written in Python using the elegant SleekXMPP library.
 
 Homepage: http://sleekbot.googlecode.com/
-Authors (by surname): 
+Authors (by surname):
     Nathan Fritz, jabber id: fritzy [at] netflint.net
     Kevin Smith, jabber id: kevdadrum {at] jabber.ex.ac.uk
 
+I have upgraded the api calls to be compatible with SleekXMPP 0.9c
+Additionally, I have taken some ideas from Thomas Perl's Jabberbot
+(http://thpinfo.com/2007/python-jabberbot/) and incorporated them into SleekBot.
+Hernan Grecco. May 2010
 
 
 Requirements
