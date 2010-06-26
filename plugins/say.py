@@ -24,12 +24,12 @@ from basebot import botcmd, botplugin
 
 class say(botplugin):
     """A plugin to parrots text to a muc"""
-           
+
     @botcmd(name = 'say', usage = 'say muc text')
     def handle_say(self, command, args, msg):
         """Have the bot parrot some text in a channel."""
 
-        if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners():
+        if not self.bot.message_from_owner(msg):
             return "I'm not your monkey."
         if args.count(" ") >= 1:
             [muc, text] = args.split(" ",1)

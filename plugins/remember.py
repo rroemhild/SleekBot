@@ -10,7 +10,7 @@ from basebot import botcmd, botplugin
 
 class remember(botplugin):
     """A plugin to rembember events."""
-    
+
     def __init__(self, bot, config):
         botplugin.__init__(self, bot, config)
         self.know = []
@@ -24,7 +24,7 @@ class remember(botplugin):
         self.lastroom = None
         self.lastmessage = ''
         thread.start_new(self.idle, tuple())
-    
+
     def idle(self):
         while self.running:
             time.sleep(random.randint(self.idlemin, self.idlemax))
@@ -52,10 +52,10 @@ class remember(botplugin):
         else:
             search = None
         return self.knowledge(search)
-    
+
     def getRandomKnow(self):
         return self.know[random.randint(0, len(self.know) - 1)]
-    
+
     def searchKnow(self, search):
         found = []
         for know in self.know:
@@ -65,8 +65,8 @@ class remember(botplugin):
             return False
         found = found[random.randint(0, len(found) - 1)]
         return found
-        
-    
+
+
     def knowledge(self, search=None):
         if len(self.know) > 0:
             if search:
@@ -77,21 +77,22 @@ class remember(botplugin):
                 found = self.wrapKnow(self.getRandomKnow())
             return found
         return "I know nothing."
-    
+
     def wrapKnow(self, know):
         r = "%s" % (self.prep[random.randint(0, len(self.prep) - 1)]) % (know,)
         r = r[0].upper() + r[1:]
         return r
-        
-    
+
+
     def handle_message_event(self, msg):
-        self.lastroom = msg['room']
-        if self.bot.rooms[msg['room']] != (msg['name']) and not msg['message'].startswith('!'):
+        self.lastroom = msg['mucroom']
+        # self.bot.rooms[msg['mucroom']] != (msg['name']) and
+        if not msg['message'].startswith('!'):
             self.lastmessage = msg['message']
-            self.command = re.compile("^%s.*know.*?" % self.bot.rooms[msg['room']])
+            self.command = re.compile("^%s.*know.*?" % self.bot.rooms[msg['mucroom']])
             match = self.command.search(msg['message'])
             if match:
-                self.bot.sendMessage(msg['room'], self.knowledge(), mtype='groupchat')
+                self.bot.sendMessage(msg['mucroom'], self.knowledge(), mtype='groupchat')
                 return
             match = self.search.search(msg['message'])
             if match:
@@ -99,7 +100,7 @@ class remember(botplugin):
                 match = match.group()
                 match = match.lower()
                 if not match.startswith(('what','where','why','how','when','who', 'that', 'it', 'they')):
-                    for person in self.bot.plugin['xep_0045'].rooms[msg['room']].keys():
+                    for person in self.bot.plugin['xep_0045'].rooms[msg['mucroom']].keys():
                         if person.lower() in msg['message'].lower():
                             match = match.replace("your", "%s's" % person)
                             match = match.replace('you are', "%s is" % person)
@@ -114,13 +115,13 @@ class remember(botplugin):
                     if match not in self.know:
                         logging.debug("Appending knowledge: %s" % match)
                         self.know.append(match)
-    
+
     def loaddefault(self):
         self.load("remember.dat")
-        
+
     def savedefault(self):
         self.save("remember.dat")
-        
+
     def load(self, filename):
         try:
             f = open(filename, 'rb')

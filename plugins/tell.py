@@ -28,7 +28,7 @@ class tell(botplugin):
     @botcmd(name = 'tell', usage = 'tell jid text')
     def handle_tell(self, command, args, msg):
         """Have the bot parrot some text to a JID."""
-        if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners():
+        if not self.bot.message_from_owner(msg):
             return "I'm not your monkey."
         if args.count(" ") >= 1:
             [jid, text] = args.split(" ",1)

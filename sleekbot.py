@@ -17,16 +17,20 @@
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
 
-import logging
-import sleekxmpp
-from basebot import basebot
-from store import store
-from optparse import OptionParser
-from xml.etree import ElementTree as ET
 import os
 import time
 import plugins
 import sys
+import logging
+
+from store import store
+from optparse import OptionParser
+from xml.etree import ElementTree as ET
+
+import sleekxmpp
+from sleekxmpp.xmlstream.stanzabase import JID
+
+from basebot import basebot
 
 class sleekbot(sleekxmpp.ClientXMPP, basebot):
     """SleekBot was written by Nathan Fritz and Kevin Smith.
@@ -58,12 +62,16 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         self.registerPlugin('xep_0199')
         self.register_bot_plugins()
         self.registerCommands()
-    
+        self.owners = set(self.getMemberClassJids('owner'))
+        self.admins = set(self.getMemberClassJids('admin'))
+        self.members = set(self.getMemberClassJids('member'))
+        self.banned = set(self.getMemberClassJids('banned'))
+
     def loadConfig(self, configFile):
         """ Load the specified config. Does not attempt to make changes based upon config.
         """
         return ET.parse(configFile)
-    
+
     def registerCommands(self):
         """ Register all ad-hoc commands with SleekXMPP.
         """
@@ -78,8 +86,7 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         plugins.addOption('about', 'About')
         #plugins.addOption('config', 'Configure')
         self.plugin['xep_0050'].addCommand('plugins', 'Plugins', pluginform, self.form_plugin_command, True)
-    
-    
+
     def form_plugin_command(self, form, sessid):
         """ Take appropriate action when a plugin ad-hoc request is received.
         """
@@ -103,20 +110,20 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
                 loaded = self.registerBotPlugin(plugin.attrib['name'], plugin.find('config'))
                 if not loaded:
                     logging.info("Loading plugin %s FAILED." % (plugin.attrib['name']))
-    
+
     def deregister_bot_plugins(self):
         """ Unregister all loaded bot plugins.
         """
         for plugin in self.botPlugin.keys():
             self.deregisterBotPlugin(plugin)
-    
+
     def plugin_name_to_module(self, pluginname):
         """ Takes a plugin name, and returns a module name
         """
         #following taken from sleekxmpp.py
         # discover relative "path" to the plugins module from the main app, and import it.
         return "%s.%s" % (globals()['plugins'].__name__, pluginname)
-    
+
     def deregisterBotPlugin(self, pluginName):
         """ Unregisters a bot plugin.
         """
@@ -126,7 +133,7 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
             self.botPlugin[pluginName].shutDown()
         del self.pluginConfig[pluginName]
         del self.botPlugin[pluginName]
-    
+
     def registerBotPlugin(self, pluginname, config):
         """ Registers a bot plugin pluginname is the file and class name,
         and config is an xml element passed to the plugin. Will reload the plugin module,
@@ -137,47 +144,26 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         else:
             __import__(self.plugin_name_to_module(pluginname))
         self.botPlugin[pluginname] = getattr(globals()['plugins'].__dict__[pluginname], pluginname)(self, config)
-        self.pluginConfig[pluginname] = config                
+        self.pluginConfig[pluginname] = config
         return True
-        
+
     def message_from_owner(self, msg):
         """ Was this message sent from a bot owner?
         """
-        jid = self.getRealJidFromMessage(msg)        
-        return jid in self.getOwners()
+        jid = self.get_real_jid(msg)
+        return jid in self.owners
 
     def message_from_admin(self, msg):
         """ Was this message sent from a bot admin?
         """
-        jid = self.getRealJidFromMessage(msg)        
-        return jid in self.getAdmins()    
-
+        jid = self.get_real_jid(msg)
+        return jid in self.admins
 
     def message_from_member(self, msg):
         """ Was this message sent from a bot member?
         """
-        jid = self.getRealJidFromMessage(msg)        
-        return jid in self.getMember()
-
-    def getOwners(self):
-        """ Returns a list of all the jids belonging to bot owners
-        """
-        return self.getMemberClassJids('owner')
-        
-    def getAdmins(self):
-        """ Returns a list of all the jids belonging to bot admins
-        """
-        return self.getMemberClassJids('admin')
-
-    def getMembers(self):
-        """ Returns a list of all the jids belonging to bot members
-        """
-        return self.getMemberClassJids('member')
-
-    def getBannedUsers(self):
-        """ Returns a list of all the jids belonging to banned users
-        """
-        return self.getMemberClassJids('banned')
+        jid = self.get_real_jid(msg)
+        return jid in self.members
 
     def getMemberClassJids(self, userClass):
         """ Returns a list of all jids belonging to users of a given class
@@ -193,68 +179,45 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
                         jids.append(jid.text)
         return jids
 
-    def getRealJid(self, jid):
-        """ Returns the 'real' jid.
-            If the jid isn't in a muc, it is returned.
-            If the jid is in a muc and the true jid is known, that is returned.
-            If it's in muc and the true jid isn't known, None is returned.
+    def mucnick_to_jid(self, mucroom, mucnick):
+        """ Returns the jid associated with a mucnick and mucroom
         """
-        bareJid = self.getjidbare(jid)
-        nick = self.getjidresource(jid)
-        if bareJid in self.plugin['xep_0045'].getJoinedRooms():
-            logging.debug("Checking real jid for %s %s (%s)" %(bareJid, nick, jid))
-            realJid = self.plugin['xep_0045'].getJidProperty(bareJid, nick, 'jid')
-            if realJid:
-                return realJid
+        if mucroom in self.plugin['xep_0045'].getJoinedRooms():
+            logging.debug("Checking real jid for %s %s" %(mucroom, mucnick))
+            real_jid = self.plugin['xep_0045'].getJidProperty(mucroom, mucnick, 'jid')
+            print real_jid
+            if real_jid:
+                return real_jid
             else:
                 return None
-        return jid
+        return None
 
-    def getRealJidFromMessage(self, msg):
-        jid = None
+    def get_real_jid(self, msg):
         if msg['type'] == 'groupchat':
-            if msg['name'] == "":
-                #system message
-                jid = None
-            else:
-                jid = self.getRealJid("%s/%s" % (msg['mucroom'], msg['mucnick']))
-                if jid:
-                    jid = self.getjidbare(jid)
+            # TODO detect system message
+            return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
         else:
             if msg['jid'] in self['xep_0045'].getJoinedRooms():
-                jid = self.getRealJid("%s/%s" % (msg['from'], msg['resource']))
-                if jid:
-                    jid = self.getjidbare(jid)
+                return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
             else:
-                jid = self.getjidbare(msg.get('from', ''))
-        return jid
+                return msg['from'].bare
+        return None
 
-    def shouldAnswerToMessage(self, msg):
+    def should_answer_message(self, msg):
         """ Checks whether the bot is configured to respond to the sender of a message.
-        """     
-        if msg['type'] == 'groupchat':
-            if msg['name'] == "":
-                #system message
-                return False
-            return self.shouldAnswerToJid("%s/%s" % (msg['mucroom'], msg['mucnik']))
-        else:
-            if msg['jid'] in self['xep_0045'].getJoinedRooms():
-                return self.shouldAnswerToJid("%s/%s" % (msg['from'], msg['resource']))
-            return self.shouldAnswerToJid(msg.get('jid', ''))
-    
-    def shouldAnswerToJid(self, passedJid):
+        """
+        return self.shouldAnswerToJid(self.get_real_jid(msg))
+
+    def shouldAnswerToJid(self, jid):
         """ Checks whether the bot is configured to respond to the specified jid.
             Pass in a muc jid if you want, it'll be converted to a real jid if possible
             Accepts 'None' jids (acts as an unknown user).
-        """     
-        jid = self.getRealJid(passedJid)
-        if jid:
-            jid = self.getjidbare(jid)
-        if jid in self.getBannedUsers():
+        """
+        if jid in self.banned:
             return False
         if not self.botconfig.find('require-membership'):
             return True
-        if jid in self.getMembers() or jid in self.getAdmins() or jid in self.getOwners():
+        if jid in self.members or jid in self.admins or jid in self.owners:
             return True
         return False
 
@@ -263,7 +226,7 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         self.getRoster()
         self.sendPresence(ppriority = self.botconfig.find('auth').get('priority', '1'))
         self.joinRooms()
-    
+
     def rehash(self):
         """ Re-reads the config file, making appropriate runtime changes.
             Causes all plugins to be reloaded (or unloaded). The XMPP stream, and
@@ -272,14 +235,14 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         logging.info("Deregistering bot plugins for rehash")
         del globals()['plugins']
         globals()['plugins'] = __import__('plugins')
-        self.clearCommands()
+        self.reset_bot()
         self.deregister_bot_plugins()
         logging.info("Reloading config file")
         self.botconfig = self.loadConfig(self.configFile)
         self.register_bot_plugins()
         self.joinRooms()
-    
-    
+
+
     def joinRooms(self):
         logging.info("Re-syncing with required channels")
         newRoomXml = self.botconfig.findall('rooms/muc')
@@ -322,7 +285,7 @@ if __name__ == '__main__':
     optp.add_option('-v','--verbose', help='set logging to COMM', action='store_const', dest='loglevel', const=5, default=logging.INFO)
     optp.add_option("-c","--config", dest="configfile", default="config.xml", help="set config file to use")
     opts,args = optp.parse_args()
-    
+
     logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
 
     global shouldRestart
@@ -334,19 +297,19 @@ if __name__ == '__main__':
         configFile = os.path.expanduser(opts.configfile)
         config = ET.parse(configFile)
         auth = config.find('auth')
-    
+
         #init
         logging.info("Logging in as %s" % auth.attrib['jid'])
-    
+
         plugin_config = {}
         plugin_config['xep_0092'] = {'name': 'SleekBot', 'version': '0.1-dev'}
-    
+
         bot = sleekbot(configFile, auth.attrib['jid'], auth.attrib['pass'], plugin_config=plugin_config)
         if not auth.get('server', None):
             # we don't know the server, but the lib can probably figure it out
-            bot.connect() 
+            bot.connect()
         else:
             bot.connect((auth.attrib['server'], 5222))
         bot.process()
-        while bot.connected:
+        while bot.state['connected']:
             time.sleep(1)

@@ -22,22 +22,22 @@ import logging
 from basebot import botcmd, botplugin
 
 class admin(botplugin):
-    """Plugin to allows a bot owner to perform tasks such as rehashing a bot remotely
+    """ Plugin to allows a bot owner to perform tasks such as rehashing a bot remotely
     Written By: Kevin Smith"""
 
-    @botcmd(name = 'rehash') 
+    @botcmd(name = 'rehash')
     def handle_rehash(self, command, args, msg):
-        """Reload the bot config and plugins without dropping the XMPP stream."""
+        """ Reload the bot config and plugins without dropping the XMPP stream."""
         if self.bot.message_from_owner(msg):
             self.bot.rehash()
             response = "Rehashed boss"
         else:
             response = "You are insufficiently cool, go away."
         return response
-         
+
     @botcmd(name = 'restart')
     def handle_restart(self, command, args, msg):
-        """Restart the bot, reconnecting, etc ..."""
+        """ Restart the bot, reconnecting, etc ..."""
         if self.bot.message_from_owner(msg):
             self.bot.restart()
             response = "Restarted boss"
@@ -47,10 +47,10 @@ class admin(botplugin):
 
     @botcmd(name = 'die')
     def handle_die(self, command, args, msg):
-        """Kill the bot."""
+        """ Kill the bot."""
         if self.bot.message_from_owner(msg):
             response = "Dying (you'll never see this message)"
             self.bot.die()
         else:
             response = "You are insufficiently cool, go away."
-        return response    
+        return response
