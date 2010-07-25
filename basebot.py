@@ -35,23 +35,22 @@ class basebot(object):
         #self.add_event_handler("groupchat_message", self.handle_message_event, threaded=True)
         self.add_event_handler("message", self.handle_message_botcmd, threaded=True)
 
-    def register_botcmd(self, whom):
-        """ Look in all members of whom for botcmd decorated function and add them to the command list
+    def register_botcmd(self, where):
+        """ Look in all members of where for botcmd decorated function and add them to the command list
         """
-        for name, f in inspect.getmembers(whom):
+        for name, f in inspect.getmembers(where):
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
                 self.add_help(f._botcmd['name'], f._botcmd['title'], f._botcmd['doc'], f._botcmd['usage'])
                 if f._botcmd['IM']:
-                    self.addIMCommand(f._botcmd['name'], f)
-                if f._botcmd['MUC']:
-                    self.addMUCCommand(f._botcmd['name'], f)
+                    self.im_commands[f._botcmd['name']] = f
+                if f._botcmd['MUC']:                    
+                    self.muc_commands[f._botcmd['name']] = f
 
     def reset_bot(self):
         """  Reset bot commands to initial state
         """
         self.im_commands = {}
         self.muc_commands = {}
-        self.help = []
         self.register_botcmd(self)
 
     def should_answer_message(self, msg):
@@ -99,32 +98,27 @@ class basebot(object):
         """ Help Commmand
         Returns this list of help commands if no topic is specified.  Otherwise returns help on the specific topic.
         """
-        response = ''
-        if not args:
-            response += "Commands:\n"
-            for topic in self.help:
-                response += "%s -- %s\n" % (topic[0], topic[1])
-            args = 'help'
-            response += "---------\n"
+        if msg['type'] == 'groupchat':
+            commands = self.muc_commands
+        else:
+            commands = self.im_commands
+            
         found = False
-        for topic in self.help:
-            if topic[0] == args:
+        if args:
+            if args in commands:
+                f  = commands[arg]._botcmd['title']
+                response = '%s -- %s\n' % (arg,  f._botcmd['title'])
+                response += ' %s\n' % f._botcmd['doc']
+                response += "Usage: %s%s\n" % (arg,  f._botcmd['usage'])
                 found = True
-                break
-        if found:
-            response += "%s\n" % topic[1]
-            if topic[3]:
-                response += "Usage: %s%s\n" % (self.im_prefix, topic[3])
-            response += topic[2]
+            else:
+                response = '%s is not a valid command' % arg
+
+        if not found:
+            response += "Commands:\n"
+            for command,  f in commands.items():
+                response += "%s -- %s\n" % (command,  f._botcmd['title'])
+            response += "---------\n"
         return response
-
-    def add_help(self, command, title, body, usage=''):
-        self.help.append((command, title, body, usage))
-
-    def addIMCommand(self, command, pointer):
-        self.im_commands[command] = pointer
-
-    def addMUCCommand(self, command, pointer):
-        self.muc_commands[command] = pointer
 
 
