@@ -27,6 +27,13 @@ class botplugin(object):
         self.bot.register_botcmd(self)
 
 class basebot(object):
+    """ Base class for robots that accept commands.
+        Requires to be coinherited with a class that has the following commands:
+        - send_message
+        - add_event_handler
+        as defined in SleekXMPP
+    """
+    
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
         self.im_prefix = im_prefix
         self.muc_prefix = muc_prefix
@@ -40,7 +47,6 @@ class basebot(object):
         """
         for name, f in inspect.getmembers(where):
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
-                self.add_help(f._botcmd['name'], f._botcmd['title'], f._botcmd['doc'], f._botcmd['usage'])
                 if f._botcmd['IM']:
                     self.im_commands[f._botcmd['name']] = f
                 if f._botcmd['MUC']:                    
@@ -102,23 +108,22 @@ class basebot(object):
             commands = self.muc_commands
         else:
             commands = self.im_commands
-            
-        found = False
+   
+        response = ''
         if args:
             if args in commands:
                 f  = commands[arg]._botcmd['title']
-                response = '%s -- %s\n' % (arg,  f._botcmd['title'])
+                response += '%s -- %s\n' % (arg,  f._botcmd['title'])
                 response += ' %s\n' % f._botcmd['doc']
                 response += "Usage: %s%s\n" % (arg,  f._botcmd['usage'])
-                found = True
+                return response
             else:
-                response = '%s is not a valid command' % arg
+                response += '%s is not a valid command' % arg
 
-        if not found:
-            response += "Commands:\n"
-            for command,  f in commands.items():
-                response += "%s -- %s\n" % (command,  f._botcmd['title'])
-            response += "---------\n"
+        response += "Commands:\n"
+        for command,  f in commands.items():
+            response += "%s -- %s\n" % (command,  f._botcmd['title'])
+        response += "---------\n"
         return response
 
 
