@@ -42,7 +42,7 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
 
     def __init__(self, configFile, jid, password, ssl=False, plugin_config = {}):
         self.configFile = configFile
-        self.botconfig = self.loadConfig(configFile)
+        self.botconfig = self.load_config(configFile)
         sleekxmpp.ClientXMPP.__init__(self, jid, password, ssl, plugin_config)
         basebot.__init__(self)
         storageXml = self.botconfig.find('storage')
@@ -61,18 +61,18 @@ class sleekbot(sleekxmpp.ClientXMPP, basebot):
         self.registerPlugin('xep_0060')
         self.registerPlugin('xep_0199')
         self.register_bot_plugins()
-        self.registerCommands()
+        self.register_adhocs()
         self.owners = set(self.getMemberClassJids('owner'))
         self.admins = set(self.getMemberClassJids('admin'))
         self.members = set(self.getMemberClassJids('member'))
         self.banned = set(self.getMemberClassJids('banned'))
 
-    def loadConfig(self, configFile):
+    def load_config(self, configFile):
         """ Load the specified config. Does not attempt to make changes based upon config.
         """
         return ET.parse(configFile)
 
-    def registerCommands(self):
+    def register_adhocs(self):
         """ Register all ad-hoc commands with SleekXMPP.
         """
         aboutform = self.plugin['xep_0004'].makeForm('form', "About SleekBot")
