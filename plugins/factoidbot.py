@@ -19,7 +19,8 @@
 import logging
 import pickle
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
 class factstore(object):
     def __init__(self):
@@ -69,11 +70,10 @@ class factstore(object):
         pickle.dump(self.data, f)
         f.close()
 
-class factoidbot(botplugin):
+class factoidbot(BotPlugin):
     """A plugin to remember facts."""
 
-    def __init__(self, bot, config):
-        botplugin.__init__(self, bot, config)
+    def on_register(self):
         self.factstore = factstore()
         
     @botcmd(name = 'fact', usage = 'fact [topic]')
@@ -121,5 +121,3 @@ class factoidbot(botplugin):
                 response = "Deleted (if found)"
         logging.debug("handle_fact done: %s" % response)
         return response
-
-

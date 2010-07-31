@@ -19,9 +19,10 @@
 
 import logging
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class admin(botplugin):
+class admin(BotPlugin):
     """ Plugin to allows a bot owner to perform tasks such as rehashing a bot remotely
     Written By: Kevin Smith"""
 

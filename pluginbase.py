@@ -33,8 +33,9 @@ class Plugin(object):
     """ A base class for plugins.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self,  config = {}):
+        self.config = config
+        self.__plugin_dict = None
 
     def on_register(self):
         pass
@@ -67,7 +68,8 @@ class Plugin(object):
 def default_plugin_factory(aclass, config):
     """ The default factory for Plugin.
     """    
-    return aclass()
+    print(aclass)
+    return aclass(config)
 
 
 class PluginDict(dict):
@@ -78,7 +80,9 @@ class PluginDict(dict):
         super(PluginDict, self).__init__()
         self._plugin_base_class = plugin_base_class
         self._default_factory = default_factory
-        self._default_package = defailt_package
+        self._default_package = default_package
+        self.__call_on_register = defaultdict(set)
+        self.__call_on_unregister = defaultdict(set)
 
     def __getitem__(self, key):
         """ Get a Plugin from the dictionary.
@@ -93,7 +97,7 @@ class PluginDict(dict):
 
         value.plugin_dict = self
         value.on_register()
-        for event in self._call_on_register[key]:
+        for event in self.__call_on_register[key]:
             event[1](value)
 
         return super(PluginDict, self).__setitem__(key, value)
@@ -105,7 +109,7 @@ class PluginDict(dict):
         if key in self:
             current = super(PluginDict, self).__getitem__(key)
             current.on_unregister()
-            for event in self._call_on_unregister[key]:
+            for event in self.__call_on_unregister[key]:
                 event[1](current)
             self._degister_calls(key)
         else:
@@ -114,21 +118,21 @@ class PluginDict(dict):
         super(PluginDict, self).__delitem__(key)
 
 
-    def register_plugin(self, name, config = {}, package = '__default__'):
+    def register(self, name, config = {}, package = '__default__'):
         """ Register a plugin from the same directory of this file.
         """
         if name in self:
             return
         if package == '__default__':
-            package = self._plugin_package
+            package = self._default_package
+
 
         module = __import__("%s.%s" % (package, name), fromlist = name)
-        self[name] = self._plugin_factory(getattr(module, name),  config)
-        self[name].__config = config
+        self[name] = self._default_factory(getattr(module, name),  config)
         logging.debug("Loaded Plugin %s: %s" % (name, self[name].__doc__.split('\n', 1)[0] or ''))
+        return True
 
-
-    def register_plugins(self, include = '__all__', exclude = set(), config = dict()):
+    def register_many(self, include = '__all__', exclude = set(), config = dict()):
         """ Register multiple plugins
 
         include -- set of plugins names to register or
@@ -141,22 +145,22 @@ class PluginDict(dict):
             include = __all__
 
         for plugin in set(include).difference(set(exclude)):
-            self.register_plugin(plugin, config.get(plugin, {}))
+            self.register(plugin, config.get(plugin, {}))
 
-    def reload_plugin(self, name, config = {}):
+    def reload(self, name, config = {}):
         """ Reload a registered plugins.
         """
-        config = getattr(self[name], '__config',  {})
+        config = getattr(self[name], 'config',  {})
         package = self[name].__package__
         del self[name]
-        self.register_plugin(name, config,  package)
+        self.register(name, config,  package)
 
-    def reload_plugins(self):
+    def reload_all(self):
         """ Reload all registered plugins.
         """
 
         for plugin in self.keys():
-            self.reload_plugin(plugin)
+            self.reload(plugin)
 
     def _degister_event(self, source):
         for v in self._call_on_register.values():

@@ -4,9 +4,10 @@ import sys
 import re
 import traceback
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class diceroll(botplugin):
+class diceroll(BotPlugin):
     """A nerdy plugin for rolling complex or simple dice formulas."""
     
     @botcmd(name = 'roll', usage = 'roll [dice calculation]')
@@ -176,4 +177,3 @@ if __name__ == '__main__':
             d = diceCalc(command)
             print d.show()
         command = raw_input()
-

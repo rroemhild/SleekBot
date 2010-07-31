@@ -19,9 +19,10 @@
 
 import logging
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class pingbot(botplugin):
+class pingbot(BotPlugin):
     """Pingbot allows users to ping other jids.
     Written By: Kevin Smith"""    
                

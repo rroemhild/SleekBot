@@ -6,13 +6,14 @@ import thread
 import time
 import copy
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class remember(botplugin):
+class remember(BotPlugin):
     """A plugin to rembember events."""
 
     def __init__(self, bot, config):
-        botplugin.__init__(self, bot, config)
+        BotPlugin.__init__(self, bot, config)
         self.know = []
         self.loaddefault()
         self.idlemin = int(self.config.get('idlemin', 60))

@@ -23,13 +23,13 @@ from xml.etree import ElementTree as ET
 import time
 import math
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class xepbot(botplugin):
+class xepbot(BotPlugin):
     """A plugin for obtaining xep information."""
 
-    def __init__(self, bot, config):
-        botplugin.__init__(self, bot, config)
+    def on_register(self):
         self.lastCacheTime = 0
         self.xeps = None
         self.ensureCacheIsRecent()

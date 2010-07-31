@@ -20,9 +20,10 @@
 import logging
 import datetime, time
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class tell(botplugin):
+class tell(BotPlugin):
     """A plugin to parrot text to a JID."""
 
     @botcmd(name = 'tell', usage = 'tell jid text')

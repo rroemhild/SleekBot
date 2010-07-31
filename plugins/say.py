@@ -20,9 +20,10 @@
 import logging
 import datetime, time
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class say(botplugin):
+class say(BotPlugin):
     """A plugin to parrots text to a muc"""
 
     @botcmd(name = 'say', usage = 'say muc text')

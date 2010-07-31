@@ -22,7 +22,8 @@ import re
 import random
 from xml.etree import ElementTree as ET
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
 class robberFilter():
     def filter(self, text):
@@ -127,11 +128,10 @@ class chefFilter(object):
     def filter(self, text):
         pass
 
-class filter(botplugin):
+class filter(BotPlugin):
     """A plugin to filter text."""
 
-    def __init__(self, bot, config):
-        botplugin.__init__(self, bot, config)
+    def on_register(self):
         self.availableFilters = {}
         self.availableFilters['leet'] = leetFilter()
 #        self.availableFilters['chef'] = chefFilter()

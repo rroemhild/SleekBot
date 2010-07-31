@@ -31,12 +31,12 @@ class CommandBot(object):
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
         self.im_prefix = im_prefix
         self.muc_prefix = muc_prefix
-
-        self.reset_bot()
+        
+        self.reset()
         #self.add_event_handler("groupchat_message", self.handle_message_event, threaded=True)
         self.add_event_handler("message", self.handle_msg_botcmd, threaded=True)
 
-    def register_botcmd(self, where):
+    def register_commands(self, where):
         """ Look in all members of where for botcmd decorated function and add them to the command list
         """
         for name, f in inspect.getmembers(where):
@@ -46,12 +46,13 @@ class CommandBot(object):
                 if f._botcmd['MUC']:                    
                     self.muc_commands[f._botcmd['name']] = f
 
-    def reset_botcmd(self):
-        """  Reset bot commands to initial state
+    def reset(self):
+        """  Reset commandbot commands to its initial state
         """
+        logging.info("Reseting command bot.")
         self.im_commands = {}
         self.muc_commands = {}
-        self.register_botcmd(self)
+        self.register_commands(self)
 
         self.owners = set(self.get_member_class_jids('owner'))
         self.admins = set(self.get_member_class_jids('admin'))
@@ -87,11 +88,11 @@ class CommandBot(object):
                 command_found = True
                 response = commands[command](command, args, msg)
                 if msg['type'] == 'groupchat':
-                    self.sendMessage("%s" % msg.get('mucroom', ''), response, mtype=msg.get('type', 'groupchat'))
+                    self.send_message("%s" % msg.get('mucroom', ''), response, mtype=msg.get('type', 'groupchat'))
                 else:
-                    self.sendMessage("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
+                    self.send_message("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
                     #msg.reply(response)
-        self.handle_message_event(msg, command_found)
+        self.handle_msg_event(msg, command_found)
 
     @botcmd(name='help', usage='help [topic]')
     def handle_help(self, command, args, msg):
@@ -100,20 +101,20 @@ class CommandBot(object):
         """
         if msg['type'] == 'groupchat':
             commands = self.muc_commands
-            commands = self.muc_commands
         else:
             commands = self.im_commands
    
         response = ''
         if args:
+            args = args.strip()
             if args in commands:
-                f  = commands[arg]._botcmd['title']
-                response += '%s -- %s\n' % (arg,  f._botcmd['title'])
+                f  = commands[args]
+                response += '%s -- %s\n' % (args,  f._botcmd['title'])
                 response += ' %s\n' % f._botcmd['doc']
-                response += "Usage: %s%s\n" % (arg,  f._botcmd['usage'])
+                response += "Usage: %s%s\n" % (args,  f._botcmd['usage'])
                 return response
             else:
-                response += '%s is not a valid command' % arg
+                response += '%s is not a valid command' % args
 
         response += "Commands:\n"
         for command,  f in commands.items():
@@ -149,7 +150,7 @@ class CommandBot(object):
                 userJids = user.findall('jid')
                 if userJids:
                     for jid in userJids:
-                        logging.debug("appending %s to %s list" % (jid.text, userClass))
+                        logging.debug("appending %s to %s list" % (jid.text, user_class))
                         jids.append(jid.text)
         return jids
 

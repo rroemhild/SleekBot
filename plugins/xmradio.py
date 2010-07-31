@@ -3,9 +3,10 @@ import re
 import traceback
 import urllib2
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class xmradio(botplugin):
+class xmradio(BotPlugin):
     """A plugin for seeing what's on XM Radio.""" 
     
     @botcmd(name = 'xm', usage = 'xm [channel number]')

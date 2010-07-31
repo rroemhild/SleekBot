@@ -1,13 +1,13 @@
 import logging
 import datetime, time
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class uptime(botplugin):
+class uptime(BotPlugin):
     """A plugin to display the uptime of the bot."""
 
-    def __init__(self, bot, config):
-        botplugin.__init__(self, bot, config)
+    def on_register(self):
         self.started = datetime.timedelta(seconds = time.time())
             
     @botcmd('uptime')
@@ -26,4 +26,3 @@ class uptime(botplugin):
         seconds -= minutes * 60
         return "%s weeks %s days %s hours %s minutes %s seconds" % (weeks, days, hours, minutes, seconds)
         
-

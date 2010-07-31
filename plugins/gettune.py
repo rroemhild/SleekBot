@@ -1,13 +1,13 @@
 import logging
 from xml.etree import cElementTree as ET
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
-class gettune(botplugin):
+class gettune(BotPlugin):
     """A plugin to get user tune info."""
 
-    def __init__(self, bot, config):
-        botplugin.__init__(self, bot, config)
+    def on_register(self):
         self.sd = self.bot.plugin['xep_0030']
         self.sd.add_feature('http://jabber.org/protocol/tune+notify')
         self.bot.add_handler("""<message><event xmlns='http://jabber.org/protocol/pubsub#event'><items node='http://jabber.org/protocol/tune' /></event></message>""", self.handleTune)

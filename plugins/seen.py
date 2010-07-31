@@ -21,7 +21,8 @@ import datetime
 import time
 import logging
 
-from basebot import botcmd, botplugin
+from commandbot import botcmd
+from plugbot import BotPlugin
 
 class seenevent(object):
     """ Represent the last know activity of a user.
@@ -146,11 +147,12 @@ class seenstore(object):
         db.commit()
         db.close()
     
-class seen(botplugin):
+class seen(BotPlugin):
     """A plugin to keep track of user presence."""
     
-    def __init__(self, bot, config):
-        botplugin.__init__(self, bot, config)
+    def on_register(self):
+        logging.info('on register seen')
+        #BotPlugin.__init__(self, bot, config)
         self.seenstore = seenstore(self.bot.store)
         #self.bot.addIMCommand('whowas', self.handle_whowas_request)
         #self.bot.addMUCCommand('whowas', self.handle_whowas_request)
