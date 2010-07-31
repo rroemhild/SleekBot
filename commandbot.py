@@ -27,14 +27,12 @@ class CommandBot(object):
         - add_event_handler
         as defined in SleekXMPP
     """
-    
+
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
         self.im_prefix = im_prefix
         self.muc_prefix = muc_prefix
-        
-        self.reset()
-        #self.add_event_handler("groupchat_message", self.handle_message_event, threaded=True)
-        self.add_event_handler("message", self.handle_msg_botcmd, threaded=True)
+
+        CommandBot.start(self)
 
     def register_commands(self, where):
         """ Look in all members of where for botcmd decorated function and add them to the command list
@@ -43,13 +41,25 @@ class CommandBot(object):
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
                 if f._botcmd['IM']:
                     self.im_commands[f._botcmd['name']] = f
-                if f._botcmd['MUC']:                    
+                if f._botcmd['MUC']:
                     self.muc_commands[f._botcmd['name']] = f
 
-    def reset(self):
-        """  Reset commandbot commands to its initial state
+    def unregister_commands(self, where):
+        """ Look in all members of where for botcmd decorated function and add them to the command list
         """
-        logging.info("Reseting command bot.")
+        for name, f in inspect.getmembers(where):
+            if inspect.ismethod(f) and hasattr(f, '_botcmd'):
+                if f._botcmd['IM']:
+                    del self.im_commands[f._botcmd['name']]
+                if f._botcmd['MUC']:
+                    del self.muc_commands[f._botcmd['name']]
+
+    def stop(self):
+        logging.info("Stopping CommandBot")
+        self.del_event_handler("message", self.handle_msg_botcmd)
+
+    def start(self):
+        logging.info("Starting CommandBot")
         self.im_commands = {}
         self.muc_commands = {}
         self.register_commands(self)
@@ -59,6 +69,14 @@ class CommandBot(object):
         self.members = set(self.get_member_class_jids('member'))
         self.banned = set(self.get_member_class_jids('banned'))
         self.require_membership = self.botconfig.find('require-membership')
+
+        self.add_event_handler("message", self.handle_msg_botcmd, threaded=True)
+
+    def reset(self):
+        """  Reset commandbot commands to its initial state
+        """
+        CommandBot.stop(self)
+        CommandBot.start(self)
 
     def handle_msg_event(self, msg, command_found):
         """ Performs extra actions on the message.
@@ -103,7 +121,7 @@ class CommandBot(object):
             commands = self.muc_commands
         else:
             commands = self.im_commands
-   
+
         response = ''
         if args:
             args = args.strip()
@@ -181,11 +199,11 @@ class CommandBot(object):
     def should_answer_msg(self, msg):
         """ Checks whether the bot is configured to respond to the sender of a message.
              Overload if needed
-        """ 
+        """
 
-        return self.should_answer_to_jid(self.get_real_jid(msg))
+        return self.should_answer_jid(self.get_real_jid(msg))
 
-    def should_answer_to_jid(self, jid):
+    def should_answer_jid(self, jid):
         """ Checks whether the bot is configured to respond to the specified jid.
             Pass in a muc jid if you want, it'll be converted to a real jid if possible
             Accepts 'None' jids (acts as an unknown user).

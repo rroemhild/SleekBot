@@ -67,8 +67,7 @@ class Plugin(object):
 
 def default_plugin_factory(aclass, config):
     """ The default factory for Plugin.
-    """    
-    print(aclass)
+    """
     return aclass(config)
 
 
@@ -111,7 +110,9 @@ class PluginDict(dict):
             current.on_unregister()
             for event in self.__call_on_unregister[key]:
                 event[1](current)
-            self._degister_calls(key)
+            self._unregister_event(key)
+            current.plugin_dict = None
+            logging.info("%s unregistered" % key)
         else:
             logging.warning("Plugin not in dict %s." % key)
 
@@ -121,16 +122,25 @@ class PluginDict(dict):
     def register(self, name, config = {}, package = '__default__'):
         """ Register a plugin from the same directory of this file.
         """
-        if name in self:
-            return
-        if package == '__default__':
-            package = self._default_package
+        try:
+            if name in self:
+                return
+            if isinstance(name,  self._plugin_base_class):
+                plugin = name
+                name = name.__class__.__name__
+                self[name] = plugin
+            elif isinstance(name,  str):
+                if package == '__default__':
+                    package = self._default_package
 
+                module = __import__("%s.%s" % (package, name), fromlist = name)
+                self[name] = self._default_factory(getattr(module, name),  config)
 
-        module = __import__("%s.%s" % (package, name), fromlist = name)
-        self[name] = self._default_factory(getattr(module, name),  config)
-        logging.debug("Loaded Plugin %s: %s" % (name, self[name].__doc__.split('\n', 1)[0] or ''))
-        return True
+            logging.debug("Registered Plugin %s: %s" % (name, self[name].__doc__.split('\n', 1)[0] or ''))
+            return True
+
+        except Exception,  e:
+                logging.error('Error while registering plugin %s: %s' % (name,  e))
 
     def register_many(self, include = '__all__', exclude = set(), config = dict()):
         """ Register multiple plugins
@@ -151,9 +161,11 @@ class PluginDict(dict):
         """ Reload a registered plugins.
         """
         config = getattr(self[name], 'config',  {})
-        package = self[name].__package__
+        #package = self[name].__package__
+        module = __import__(self[name].__module__, fromlist = name)
         del self[name]
-        self.register(name, config,  package)
+        reload(module)
+        self.register(name, config)
 
     def reload_all(self):
         """ Reload all registered plugins.
@@ -162,14 +174,14 @@ class PluginDict(dict):
         for plugin in self.keys():
             self.reload(plugin)
 
-    def _degister_event(self, source):
-        for v in self._call_on_register.values():
-            v = set(filter(_not_source(source), v))
-        for v in self._call_on_unregister.values():
-            v = set(filter(_not_source(source), v))
+    def _unregister_event(self, source):
+        for v in self.__call_on_register.values():
+            v = set(filter(lambda x: x[0] != source, v))
+        for v in self.__call_on_unregister.values():
+            v = set(filter(lambda x: x[0] != source, v))
 
-    def _not_source(event, source):
-        return not event[0] == source
+    def get_modules(self):
+            return [__import__(self[name].__module__, fromlist = name) for name in self.keys()]
 
 class NotAPluginError(Exception):
     """Exception raised when the object added to PluginDict is

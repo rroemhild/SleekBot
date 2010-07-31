@@ -30,7 +30,7 @@ class say(BotPlugin):
     def handle_say(self, command, args, msg):
         """Have the bot parrot some text in a channel."""
 
-        if not self.bot.message_from_owner(msg):
+        if not self.bot.msg_from_owner(msg):
             return "I'm not your monkey."
         if args.count(" ") >= 1:
             [muc, text] = args.split(" ",1)

@@ -95,17 +95,6 @@ class sleekbot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         elif option == 'config':
             pass
 
-    def register_bot_plugins(self):
-        """ Registers all bot plugins required by botconfig.
-        """
-        plugins = self.botconfig.findall('plugins/bot/plugin')
-        if plugins:
-            for plugin in plugins:
-                logging.info("Loading plugin %s." % (plugin.attrib['name']))
-                loaded = self.registerBotPlugin(plugin.attrib['name'], plugin.find('config'))
-                if not loaded:
-                    logging.info("Loading plugin %s FAILED." % (plugin.attrib['name']))
-
     def mucnick_to_jid(self, mucroom, mucnick):
         """ Returns the jid associated with a mucnick and mucroom
         """
@@ -141,14 +130,16 @@ class sleekbot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
             Causes all plugins to be reloaded (or unloaded). The XMPP stream, and
             channels will not be disconnected.
         """
-        logging.info("Deregistering bot plugins for rehash")
-        del globals()['plugins']
-        globals()['plugins'] = __import__('plugins')
-        self.reset_bot()
-        self.deregister_bot_plugins()
+        logging.info("Rehashing started")
+        modules = self.cmd_plugins.get_modules()
+        CommandBot.stop(self)
+        PlugBot.stop(self)
         logging.info("Reloading config file")
-        self.botconfig = self.loadConfig(self.configFile)
-        self.register_bot_plugins()
+        self.botconfig = self.load_config(self.configFile)
+        for module in modules:
+            reload(module)
+        CommandBot.start(self)
+        PlugBot.start(self)
         self.joinRooms()
 
     def joinRooms(self):
@@ -172,7 +163,8 @@ class sleekbot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
     def die(self):
         """ Kills the bot.
         """
-        self.deregister_bot_plugins()
+        PlugBot.stop(self)
+        CommandBot.stop(self)
         self.rooms = {}
         logging.info("Disconnecting bot")
         self.disconnect()
@@ -184,8 +176,8 @@ class sleekbot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         shouldRestart = True
         logging.info("Restarting bot")
         self.die()
-        
-    #TODO: temporary
+
+    #TODO: temporary until SleekXMPP is PEP8 compliant
     def send_message(self,  *args,  **kwargs):
         self.sendMessage(*args,  **kwargs)
 
@@ -222,6 +214,10 @@ if __name__ == '__main__':
             bot.connect()
         else:
             bot.connect((auth.attrib['server'], 5222))
-        bot.process()
-        while bot.state['connected']:
+        bot.process(threaded=False)
+        while not bot.state['disconnecting']:
             time.sleep(1)
+        #this does not work properly. Some thread is runnng
+
+    logging.info("SleekBot finished")
+

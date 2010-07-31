@@ -56,7 +56,7 @@ class factstore(object):
         try:
             f = open(filename, 'rb')
         except:
-            logging.warning("Error loading factoids")
+            logging.warning("Error loading factoids. Cannot open fact file: %s" %  filename)
             return
         self.data = pickle.load(f)
         f.close()
@@ -65,7 +65,7 @@ class factstore(object):
         try:
             f = open(filename, 'wb')
         except IOError:
-            logging.warning("Error saving factoids")
+            logging.warning("Error saving factoids. Cannot open fact file: %s" %  filename)
             return
         pickle.dump(self.data, f)
         f.close()

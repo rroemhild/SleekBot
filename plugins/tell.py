@@ -29,7 +29,7 @@ class tell(BotPlugin):
     @botcmd(name = 'tell', usage = 'tell jid text')
     def handle_tell(self, command, args, msg):
         """Have the bot parrot some text to a JID."""
-        if not self.bot.message_from_owner(msg):
+        if not self.bot.msg_from_owner(msg):
             return "I'm not your monkey."
         if args.count(" ") >= 1:
             [jid, text] = args.split(" ",1)

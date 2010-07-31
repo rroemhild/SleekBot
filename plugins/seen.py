@@ -151,7 +151,6 @@ class seen(BotPlugin):
     """A plugin to keep track of user presence."""
     
     def on_register(self):
-        logging.info('on register seen')
         #BotPlugin.__init__(self, bot, config)
         self.seenstore = seenstore(self.bot.store)
         #self.bot.addIMCommand('whowas', self.handle_whowas_request)

@@ -9,7 +9,7 @@ class uptime(BotPlugin):
 
     def on_register(self):
         self.started = datetime.timedelta(seconds = time.time())
-            
+
     @botcmd('uptime')
     def handle_uptime(self, command, args, msg):
         """See how long the bot has been up."""
@@ -25,4 +25,4 @@ class uptime(BotPlugin):
         minutes = seconds / 60
         seconds -= minutes * 60
         return "%s weeks %s days %s hours %s minutes %s seconds" % (weeks, days, hours, minutes, seconds)
-        
+
