@@ -25,12 +25,9 @@ from commandbot import  CommandBot
 from plugbot import PlugBot
 
 class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
-    """SleekBot was written by Nathan Fritz and Kevin Smith.
-    SleekBot uses SleekXMPP which was also written by Nathan Fritz.
-    http://sleekbot.googlecode.com
-    -----------------------------------------------------------------
-    Special thanks to David Search.
-    Also, thank you Athena and Cath for putting up with us while we programmed."""
+    """ SleekBot was originally written by Nathan Fritz and Kevin Smith.
+        This fork is maintained by Hernan E. Grecco
+    """
 
     def __init__(self, configFile, jid, password, ssl=False, plugin_config = {}):
         self.configFile = configFile
@@ -51,7 +48,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.registerPlugin('xep_0199')
         CommandBot.__init__(self)
         PlugBot.__init__(self)
-        #self.register_adhocs()
+        self.register_adhocs()
 
     def load_config(self, configFile):
         """ Load the specified config. Does not attempt to make changes based upon config.
@@ -66,7 +63,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.plugin['xep_0050'].addCommand('about', 'About Sleekbot', aboutform)
         pluginform = self.plugin['xep_0004'].makeForm('form', 'Plugins')
         plugins = pluginform.addField('plugin', 'list-single', 'Plugins')
-        for key in self.BotPlugin:
+        for key in self.cmd_plugins:
             plugins.addOption(key, key)
         plugins = pluginform.addField('option', 'list-single', 'Commands')
         plugins.addOption('about', 'About')
@@ -81,7 +78,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         plugin = value['plugin']
         if option == 'about':
             aboutform = self.plugin['xep_0004'].makeForm('form', "About SleekBot")
-            aboutform.addField('about', 'fixed', value=getattr(self.BotPlugin[plugin], 'about', self.BotPlugin[plugin].__doc__))
+            aboutform.addField('about', 'fixed', value=getattr(self.cmd_plugins[plugin], 'about', self.cmd_plugins[plugin].__doc__))
             return aboutform, None, False
         elif option == 'config':
             pass
@@ -114,7 +111,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         #TODO: make this configurable
         self.getRoster()
         self.sendPresence(ppriority = self.botconfig.find('auth').get('priority', '1'))
-        self.joinRooms()
+        self.join_rooms()
 
     def rehash(self):
         """ Re-reads the config file, making appropriate runtime changes.
@@ -131,9 +128,9 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
             reload(module)
         CommandBot.start(self)
         PlugBot.start(self)
-        self.joinRooms()
+        self.join_rooms()
 
-    def joinRooms(self):
+    def join_rooms(self):
         logging.info("Re-syncing with required channels")
         newRoomXml = self.botconfig.findall('rooms/muc')
         newRooms = {}
