@@ -14,7 +14,7 @@ from plugbot import BotPlugin
 class xmradio(BotPlugin):
     """A plugin for seeing what's on XM Radio."""
 
-    @botcmd(name = 'xm', usage = 'xm [channel number]')
+    @botcmd(name = 'xm', usage = '[channel number]')
     def handle_xm(self, command, args, msg):
         """Tells you what's on XM.
         Example: !xm 47"""

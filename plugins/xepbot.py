@@ -39,7 +39,7 @@ class xepbot(BotPlugin):
         except:
             logging.info("Loading XEP list file %s failed." % (url))
 
-    @botcmd(name = 'xep', usage = 'xep [number]')
+    @botcmd(name = 'xep', usage = '[number]')
     def handle_xep(self, command, args, msg):
         """Returns details of the specified XEP."""
         self.ensureCacheIsRecent()

@@ -123,7 +123,7 @@ class filter(BotPlugin):
 #        self.availableFilters['chef'] = chefFilter()
         self.availableFilters['robber'] = robberFilter()
 
-    @botcmd(name = 'filter', usage = 'filter filtertype text')
+    @botcmd(name = 'filter', usage = '[filter type] [text]')
     def handle_filter(self, command, args, msg):
         """Parses the text through a filter"""
         if args == None or args == "" or len(args.split(" ")) < 2:

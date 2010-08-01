@@ -12,7 +12,7 @@ class pingbot(BotPlugin):
     """Pingbot allows users to ping other jids.
     Written By: Kevin Smith"""
 
-    @botcmd(name = 'ping', usage = 'ping jid')
+    @botcmd(name = 'ping', usage = '[jid]')
     def handle_ping(self, command, args, msg):
         """Discover latency to a jid."""
         latency = self.bot['xep_0199'].sendPing(args, 10)

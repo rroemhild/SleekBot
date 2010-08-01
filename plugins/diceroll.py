@@ -15,7 +15,7 @@ from plugbot import BotPlugin
 class diceroll(BotPlugin):
     """A nerdy plugin for rolling complex or simple dice formulas."""
 
-    @botcmd(name = 'roll', usage = 'roll [dice calculation]')
+    @botcmd(name = 'roll', usage = '[dice calculation]')
     def handle_roll(self, command, args, msg):
         """Rolls dice for you.
         Example: !roll (1 + d6 + 2d10 + 5 + d4) * 2 """

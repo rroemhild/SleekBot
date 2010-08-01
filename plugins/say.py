@@ -12,7 +12,7 @@ from plugbot import BotPlugin
 class say(BotPlugin):
     """A plugin to parrots text to a muc"""
 
-    @botcmd(name = 'say', usage = 'say muc text')
+    @botcmd(name = 'say', usage = '[muc] [text]')
     def handle_say(self, command, args, msg):
         """Have the bot parrot some text in a channel."""
 

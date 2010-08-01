@@ -12,7 +12,7 @@ from plugbot import BotPlugin
 class tell(BotPlugin):
     """A plugin to parrot text to a JID."""
 
-    @botcmd(name = 'tell', usage = 'tell jid text')
+    @botcmd(name = 'tell', usage = '[jid] [text]')
     def handle_tell(self, command, args, msg):
         """Have the bot parrot some text to a JID."""
         if not self.bot.msg_from_owner(msg):

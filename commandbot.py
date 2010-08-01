@@ -138,7 +138,7 @@ class CommandBot(object):
                 f  = commands[args]
                 response += '%s -- %s\n' % (args,  f._botcmd['title'])
                 response += ' %s\n' % f._botcmd['doc']
-                response += "Usage: %s%s\n" % (args,  f._botcmd['usage'])
+                response += "Usage: %s %s\n" % (args,  f._botcmd['usage'])
                 return response
             else:
                 response += '%s is not a valid command' % args
@@ -146,7 +146,8 @@ class CommandBot(object):
         response += "Commands:\n"
         for command in sorted(commands.keys()):
             f = commands[command]
-            response += "%s -- %s\n" % (command,  f._botcmd['title'])
+            if not f._botcmd['hidden']:
+                response += "%s -- %s\n" % (command,  f._botcmd['title'])
         response += "---------\n"
         return response
 
