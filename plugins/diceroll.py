@@ -1,3 +1,8 @@
+"""
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
+"""
+
 import random
 import time
 import sys
@@ -9,7 +14,7 @@ from plugbot import BotPlugin
 
 class diceroll(BotPlugin):
     """A nerdy plugin for rolling complex or simple dice formulas."""
-    
+
     @botcmd(name = 'roll', usage = 'roll [dice calculation]')
     def handle_roll(self, command, args, msg):
         """Rolls dice for you.
@@ -21,73 +26,73 @@ class diceroll(BotPlugin):
         except:
             traceback.print_exc()
             return "Invalid dice calculation."
-        
+
 class Die(object):
     def __init__(self, sides):
         self.sides = sides
         self.value = 0
-    
+
     def roll(self):
         self.value = random.randint(1,self.sides)
         return self.value
-    
+
     def __mul__(self, other):
         dielist = [self]
         for x in range(1, other):
             dielist.append(Die(self.sides))
         return Dice(dielist)
-    
+
     def __cmp__(self, other):
         if self.value > other.value:
             return 1
         if self.value < other.value:
             return -1;
         return 0
-        
+
     def __retr__(self):
         return self.__str__()
-    
+
     def __str__(self):
         if self.value == 0:
             self.roll()
         return "d%s: %s" % (self.sides, self.value)
-        
-            
+
+
 class Dice(object):
     def __init__(self, dice_list):
         self.dice_list = dice_list
         self.total = 0
         self.base = 0
         self.calc = ''
-        
+
     def roll(self):
         for ddie in self.dice_list:
             self.total += ddie.roll()
             time.sleep(random.randint(0,100) * .0001)
         self.base = self.total
         return self.total
-    
+
     def dropLow(self, number):
         self.dice_list.sort()
         sum = 0
         for die in self.dice_list[number:] :
             sum += die.value
         return sum
-    
+
     def dropHigh(self, number):
         self.dice_list.sort()
         sum = 0
         for die in self.dice_list[:(-1*number)] :
             sum += die.value
         return sum
-        
+
     def __repr__(self):
         return self.show()
-    
+
     def sort(self):
         self.dice_list.sort()
         return self
-        
+
     def show(self):
         if self.total == 0:
             self.roll()
@@ -97,28 +102,28 @@ class Dice(object):
         output += "Total: %s\n" % self.total
         output += ", ".join([str(x) for x in self.dice_list])
         return output
-    
+
     def __mul__(self, other):
         if self.total == 0:
             self.roll()
         self.total = self.total * other
         self.calc += ' * %s' % other
         return self
-    
+
     def __div__(self, other):
         if self.total == 0:
             self.roll()
         self.total = self.total / other
         self.calc += ' / %s' % other
         return self
-    
+
     def __add__(self, other):
         if self.total == 0:
             self.roll()
         self.total = self.total + other
         self.calc += ' + %s' % other
         return self
-    
+
     def __sub__(self, other):
         if self.total == 0:
             self.roll()
@@ -154,7 +159,7 @@ class diceCalc(object):
         if not times:
             times = 1
         return Die(int(sides)) * int(times)
-    
+
     def show(self):
         output = "%s = %s\n" % (self.calc, self.total)
         #output = "Total: %s\n" % self.total
@@ -169,7 +174,7 @@ class diceCalc(object):
         #    output = ""
         output += ', '.join(dicelist)
         return output
-    
+
 if __name__ == '__main__':
     command = ''
     while command != 'quit':

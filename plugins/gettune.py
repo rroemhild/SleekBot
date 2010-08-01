@@ -1,3 +1,8 @@
+"""
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
+"""
+
 import logging
 from xml.etree import cElementTree as ET
 
@@ -12,7 +17,7 @@ class gettune(BotPlugin):
         self.sd.add_feature('http://jabber.org/protocol/tune+notify')
         self.bot.add_handler("""<message><event xmlns='http://jabber.org/protocol/pubsub#event'><items node='http://jabber.org/protocol/tune' /></event></message>""", self.handleTune)
         self.tunes = {}
-    
+
     def handleTune(self, xml):
         logging.info("Got Tune")
         jid = xml.get('from')

@@ -1,20 +1,6 @@
 """
-    rssbot.py - A plugin for streaming RSS entries into a channel.
-    Copyright (C) 2007 Kevin Smith
-
-    SleekBot is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    SleekBot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this software; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
 """
 
 import logging
@@ -47,7 +33,7 @@ class rssbot(object):
                     rooms.append(roomXml.attrib['room'])
                 logging.info("Creating new thread to manage feed.")
                 self.threads[feed.attrib['url']] = thread.start_new(self.loop,(feed.attrib['url'], feed.attrib['refresh'], rooms))
-                
+
     def shutDown(self):
         self.shuttingDown = True
         logging.info("Shutting down RSSBot plugin")
@@ -78,7 +64,7 @@ class rssbot(object):
                     logging.debug("Saving updated feed cache for %s" % feedUrl)
                     self.saveCache(feedUrl)
             time.sleep(float(refresh)*60)
-            
+
     def sendItem(self, item, muc, feedName):
         """ Sends a summary of an rss item to a specified muc.
         """
@@ -96,13 +82,13 @@ class rssbot(object):
             content = ''
         text = html2text("Update from feed %s\n%s\n%s" % (feedName, self.bot.xmlesc(item['title']), content))
         self.bot.sendMessage(muc, text, mtype='groupchat')
-    
+
     def cacheFilename(self, feedUrl):
         """ Returns the filename used to store the cache for a feedUrl
         """
         rep = re.compile('\W')
         return "rsscache-%s.dat" % rep.sub('', feedUrl)
-    
+
     def loadCache(self, feed):
         """ Loads the cache of entries
         """
@@ -113,7 +99,7 @@ class rssbot(object):
             print "Error loading rss data %s" % self.cacheFilename(feed)
             return
         f.close()
-        
+
     def saveCache(self, feed):
         """ Saves the cache of entries
         """

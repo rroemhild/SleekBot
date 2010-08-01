@@ -1,20 +1,6 @@
 """
-    xepbot.py - A XEP information plugin
-    Copyright (C) 2007 Kevin Smith
-
-    SleekBot is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    SleekBot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this software; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
 """
 
 import logging
@@ -41,7 +27,7 @@ class xepbot(BotPlugin):
         expirySeconds = int(self.config.find('cache').attrib['expiry']) * 60 * 60
         if self.lastCacheTime + expirySeconds < now:
             self.refreshCache()
-    
+
     def refreshCache(self):
         """ Updates the xep list cache.
         """
@@ -52,7 +38,7 @@ class xepbot(BotPlugin):
             self.lastCacheTime = math.floor(time.time())
         except:
             logging.info("Loading XEP list file %s failed." % (url))
-        
+
     @botcmd(name = 'xep', usage = 'xep [number]')
     def handle_xep(self, command, args, msg):
         """Returns details of the specified XEP."""
@@ -76,10 +62,10 @@ class xepbot(BotPlugin):
                     response = response + "\n\n"
                 response = response + '%(type)s XEP-%(number)s, %(name)s, is %(status)s (last updated %(updated)s): http://www.xmpp.org/extensions/xep-%(number)s.html'
                 texts = {}
-                texts['type'] = xep.find('type').text 
-                texts['number'] = xep.find('number').text 
-                texts['name'] = xep.find('name').text 
-                texts['status'] = xep.find('status').text 
+                texts['type'] = xep.find('type').text
+                texts['number'] = xep.find('number').text
+                texts['name'] = xep.find('name').text
+                texts['status'] = xep.find('status').text
                 texts['updated'] = xep.find('updated').text
                 response = response % texts
         if numResponses > 6:

@@ -1,4 +1,10 @@
-#!/usr/bin/env python
+"""
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
+"""
+
+__author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
+__license__ = 'MIT License/X11 license'
 
 import logging
 
@@ -40,9 +46,9 @@ class PlugBot(object):
         if plugins:
             for plugin in plugins:
                 loaded = self.cmd_plugins.register(plugin.attrib['name'], plugin.find('config'))
-                logging.info("Loading plugin %s ok" % (plugin.attrib['name']))
+                logging.info("Registering plugin %s OK" % (plugin.attrib['name']))
                 if not loaded:
-                    logging.info("Loading plugin %s FAILED." % (plugin.attrib['name']))
+                    logging.info("Registering plugin %s FAILED." % (plugin.attrib['name']))
 
     def stop(self):
         logging.info("Stopping PlugBot")
@@ -58,11 +64,3 @@ class PlugBot(object):
         """
         PlugBot.stop(self)
         PlugBot.start(self)
-
-        """ Causes all plugins to be reloaded (or unloaded).
-        """
-        #logging.info("Deregistering bot plugins for rehash")
-        #globals()['plugins'] = __import__('plugins')
-        #self.deregister_bot_plugins()
-        #logging.info("Reloading config file")
-        #self.register_cmd_plugins()

@@ -1,3 +1,11 @@
+"""
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
+"""
+
+__author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
+__license__ = 'MIT License/X11 license'
+
 import logging
 import inspect
 
@@ -68,8 +76,9 @@ class CommandBot(object):
         self.admins = set(self.get_member_class_jids('admin'))
         self.members = set(self.get_member_class_jids('member'))
         self.banned = set(self.get_member_class_jids('banned'))
-        self.require_membership = self.botconfig.find('require-membership')
-
+        self.require_membership = self.botconfig.find('require-membership') or False
+        logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
+                    ( len(self.owners), len(self.admins), len(self.members), len(self.banned), self.require_membership))
         self.add_event_handler("message", self.handle_msg_botcmd, threaded=True)
 
     def reset(self):
@@ -135,7 +144,8 @@ class CommandBot(object):
                 response += '%s is not a valid command' % args
 
         response += "Commands:\n"
-        for command,  f in commands.items():
+        for command in sorted(commands.keys()):
+            f = commands[command]
             response += "%s -- %s\n" % (command,  f._botcmd['title'])
         response += "---------\n"
         return response

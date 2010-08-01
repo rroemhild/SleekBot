@@ -1,21 +1,12 @@
 #!/usr/bin/env python
 """
-    This file is part of SleekXMPP.
-
-    SleekXMPP is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    SleekXMPP is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with SleekXMPP; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
 """
+
+__author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
+__license__ = 'MIT License/X11 license'
+
 
 import os
 import time
@@ -33,7 +24,7 @@ from sleekxmpp.xmlstream.stanzabase import JID
 from commandbot import  CommandBot
 from plugbot import PlugBot
 
-class sleekbot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
+class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
     """SleekBot was written by Nathan Fritz and Kevin Smith.
     SleekBot uses SleekXMPP which was also written by Nathan Fritz.
     http://sleekbot.googlecode.com
@@ -208,7 +199,7 @@ if __name__ == '__main__':
         plugin_config = {}
         plugin_config['xep_0092'] = {'name': 'SleekBot', 'version': '0.1-dev'}
 
-        bot = sleekbot(configFile, auth.attrib['jid'], auth.attrib['pass'], plugin_config=plugin_config)
+        bot = SleekBot(configFile, auth.attrib['jid'], auth.attrib['pass'], plugin_config=plugin_config)
         if not auth.get('server', None):
             # we don't know the server, but the lib can probably figure it out
             bot.connect()

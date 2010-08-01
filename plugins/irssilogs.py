@@ -1,20 +1,6 @@
 """
-	irssilogs.py - A plugin for logging muc traffic in an irssi style.
-	Copyright (C) 2008 Kevin Smith
-
-    SleekBot is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    SleekBot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this software; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
 """
 
 import datetime
@@ -31,12 +17,12 @@ class irssilogfile(object):
         self.muc = muc
         self.fileName = fileName
         self.logfile = codecs.open(self.fileName, 'a', 'utf-8')
-    
+
     def datetimeToTimestamp(self, dt):
         """ Convert a datetime to hh:mm
         """
         return "%02d:%02d" % (dt.hour, dt.minute)
-        
+
     def logPresence(self, presence):
         """ Log the presence to the file.
             Formats:
@@ -54,7 +40,7 @@ class irssilogfile(object):
         else:
             line = '%(time)s -!- %(nick)s [%(userhost)s] has joined %(room)s'
         self.appendLogLine(line % values)
-        
+
     def logMessage(self, message):
         """ Log the message to the file.
             Formats:
@@ -74,14 +60,14 @@ class irssilogfile(object):
             action = True
         if action:
             values['body'] = values['body'][4:]
-            line = '%(time)s  * %(nick)s %(body)s'            
+            line = '%(time)s  * %(nick)s %(body)s'
         elif topic:
             line = '%(time)s -!- %(nick)s changed the topic of %(room)s to: %(body)s'
         else:
             line = '%(time)s <%(nick)s> %(body)s'
 
         self.appendLogLine(line % values)
-        
+
     def logDateChange(self, newDate):
         """ Log a date change.
             Format:
@@ -94,13 +80,13 @@ class irssilogfile(object):
         values['year'] = newDate.year
         line = "--- Day changed %(dayOfWeek)s %(monthName)s %(day)s %(year)s"
         self.appendLogLine(line % values)
-        
+
     def appendLogLine(self, line):
         """ Append the line to the log
         """
         self.logfile.write("%s\n" % line)
         self.logfile.flush()
-        
+
 class irssilogs(object):
     def __init__(self, bot, config):
         self.bot = bot
@@ -124,8 +110,8 @@ class irssilogs(object):
         if (date - self.lastdate).days > 0:
             for log in self.roomLogFiles.values():
                 self.lastdate = date
-                log.logDateChange(date)            
-    
+                log.logDateChange(date)
+
     def handle_groupchat_presence(self, presence):
         """ Monitor MUC presences.
         """
@@ -138,11 +124,11 @@ class irssilogs(object):
                     for i in range(0,len(self.roomMembers[presence['room']])):
                         if self.roomMembers[presence['room']][i] == presence['nick']:
                            self.roomMembers[presence['room']].remove(i)
-                           break 
+                           break
                 else:
                     self.roomMembers[presence['room']].append(presence['nick'])
-        
-    
+
+
     def handle_groupchat_message(self, message):
         """ Monitor MUC messages.
         """
@@ -151,4 +137,4 @@ class irssilogs(object):
         if message['room'] in self.roomLogFiles.keys():
             self.roomLogFiles[message['room']].logMessage(message)
 
-    
+

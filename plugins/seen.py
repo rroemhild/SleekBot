@@ -1,20 +1,6 @@
 """
-	seen.py - A plugin for tracking user sightings.
-	Copyright (C) 2007 Kevin Smith
-
-    SleekBot is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    SleekBot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this software; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
 """
 
 import datetime
@@ -31,9 +17,9 @@ class seenevent(object):
     joinType = 1
     partType = 2
     presenceType = 3
-    
+
     def __init__(self, nick, eventTime, muc, stanzaType, text=None):
-        """ Initialise seenevent 
+        """ Initialise seenevent
         """
         self.nick = nick
         self.eventTime = eventTime
@@ -103,7 +89,7 @@ class seenstore(object):
         #self.loaddefault()
         self.store = store
         self.createTable()
-      
+
     def createTable(self):
         db = self.store.getDb()
         #Yes, I know this is completely denormalised, and if it becomes more complex I'll refactor the schema
@@ -114,7 +100,7 @@ class seenstore(object):
         #if len(db.execute("pragma table_info('seen')").fetchall()) == 6:
         #    db.execute("""ALTER TABLE seen ADD COLUMN fullJid VARCHAR(256)""")
         db.close()
-    
+
     def update(self, event):
         db = self.store.getDb()
         cur = db.cursor()
@@ -129,7 +115,7 @@ class seenstore(object):
         db.commit()
         db.close()
 
-        
+
     def get(self, nick):
         db = self.store.getDb()
         cur = db.cursor()
@@ -139,17 +125,17 @@ class seenstore(object):
             return None
         return seenevent(results[0][1],datetime.datetime.strptime(results[0][2][0:19],"""%Y-%m-%d %H:%M:%S""" ),results[0][3],results[0][4],results[0][5])
         db.close()
-        
+
     def delete(self, nick):
         db = self.store.getDb()
         cur = db.cursor()
         cur.execute('DELETE FROM seen WHERE nick=?', (nick,))
         db.commit()
         db.close()
-    
+
 class seen(BotPlugin):
     """A plugin to keep track of user presence."""
-    
+
     def on_register(self):
         #BotPlugin.__init__(self, bot, config)
         self.seenstore = seenstore(self.bot.store)
@@ -159,7 +145,7 @@ class seen(BotPlugin):
         self.started = datetime.timedelta(seconds = time.time())
         self.bot.add_event_handler("groupchat_presence", self.handle_groupchat_presence, threaded=True)
         self.bot.add_event_handler("groupchat_message", self.handle_groupchat_message, threaded=True)
-    
+
     def handle_groupchat_presence(self, presence):
         """ Keep track of the presences in mucs.
         """
@@ -170,9 +156,9 @@ class seen(BotPlugin):
             pType = seenevent.presenceType
         self.seenstore.update(seenevent(presence['nick'], presence['dateTime'], presence['room'], pType, presence.get('status', None)))
         #self.jidstore.update(jidevent(presence['nick'], presence['room'], self.bot.getRealJid(presence['jid']) , presence['dateTime']))
-        
-        
-    
+
+
+
     def handle_groupchat_message(self, message):
         """ Keep track of activity through messages.
         """
@@ -181,10 +167,10 @@ class seen(BotPlugin):
         message['dateTime'] = datetime.datetime.now()
         self.seenstore.update(seenevent(message['name'], message['dateTime'], message['room'], seenevent.messageType, message['message']))
         #self.jidstore.update(jidevent(message['name'], message['room'], self.bot.getRealJidFromMessag(message), message['dateTime']))
-        
+
     @botcmd('seen')
     def handle_seen_request(self, command, args, msg):
-        """See when a user was last seen.""" 
+        """See when a user was last seen."""
         if args == None or args == "":
             return "Please supply a a nickname to search for"
         seenData = self.seenstore.get(args)

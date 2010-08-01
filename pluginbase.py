@@ -1,9 +1,14 @@
-import logging
-import inspect
-from collections import defaultdict
+"""
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
+"""
 
 __author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
 __license__ = 'MIT License/X11 license'
+
+import logging
+import inspect
+from collections import defaultdict
 
 def call_on_register(plugin_name):
     """ Register this action to be executed when a plugin is added to the dict.
@@ -136,7 +141,6 @@ class PluginDict(dict):
                 module = __import__("%s.%s" % (package, name), fromlist = name)
                 self[name] = self._default_factory(getattr(module, name),  config)
 
-            logging.debug("Registered Plugin %s: %s" % (name, self[name].__doc__.split('\n', 1)[0] or ''))
             return True
 
         except Exception,  e:
@@ -161,7 +165,6 @@ class PluginDict(dict):
         """ Reload a registered plugins.
         """
         config = getattr(self[name], 'config',  {})
-        #package = self[name].__package__
         module = __import__(self[name].__module__, fromlist = name)
         del self[name]
         reload(module)
