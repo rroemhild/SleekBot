@@ -46,8 +46,9 @@ class PlugBot(object):
         if plugins:
             for plugin in plugins:
                 loaded = self.cmd_plugins.register(plugin.attrib['name'], plugin.find('config'))
-                logging.info("Registering plugin %s OK" % (plugin.attrib['name']))
-                if not loaded:
+                if loaded:
+                    logging.info("Registering plugin %s OK" % (plugin.attrib['name']))
+                else:
                     logging.info("Registering plugin %s FAILED." % (plugin.attrib['name']))
 
     def stop(self):
