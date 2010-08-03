@@ -29,10 +29,12 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         This fork is maintained by Hernan E. Grecco
     """
 
-    def __init__(self, configFile, jid, password, ssl=False, plugin_config = {}):
+    def __init__(self, configFile, ssl=False, plugin_config = {}):
         self.configFile = configFile
         self.botconfig = self.load_config(configFile)
-        sleekxmpp.ClientXMPP.__init__(self, jid, password, ssl, plugin_config)
+        logging.info("Logging in as %s" % self.botconfig.find('auth').attrib['jid'])
+        sleekxmpp.ClientXMPP.__init__(self, self.botconfig.find('auth').attrib['jid'],
+                                      self.botconfig.find('auth').attrib['pass'], ssl, plugin_config)
         storageXml = self.botconfig.find('storage')
         if storageXml is not None:
             self.store = store(storageXml.attrib['file'])
@@ -49,6 +51,16 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         CommandBot.__init__(self)
         PlugBot.__init__(self)
         self.register_adhocs()
+
+    def connect(self):
+        auth = self.botconfig.find('auth')
+        logging.info("Connecting ..." )
+        if not auth.get('server', None):
+            # we don't know the server, but the lib can probably figure it out
+            super(SleekBot, self).ClientXMPP.connect()
+        else:
+            super(SleekBot, self).connect((auth.attrib['server'], auth.get('port', 5222)))
+
 
     def load_config(self, configFile):
         """ Load the specified config. Does not attempt to make changes based upon config.
@@ -82,30 +94,6 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
             return aboutform, None, False
         elif option == 'config':
             pass
-
-    def mucnick_to_jid(self, mucroom, mucnick):
-        """ Returns the jid associated with a mucnick and mucroom
-        """
-        if mucroom in self.plugin['xep_0045'].getJoinedRooms():
-            logging.debug("Checking real jid for %s %s" %(mucroom, mucnick))
-            real_jid = self.plugin['xep_0045'].getJidProperty(mucroom, mucnick, 'jid')
-            print real_jid
-            if real_jid:
-                return real_jid
-            else:
-                return None
-        return None
-
-    def get_real_jid(self, msg):
-        if msg['type'] == 'groupchat':
-            # TODO detect system message
-            return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
-        else:
-            if msg['jid'] in self['xep_0045'].getJoinedRooms():
-                return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
-            else:
-                return msg['from'].bare
-        return None
 
     def start(self, event):
         #TODO: make this configurable
@@ -184,24 +172,13 @@ if __name__ == '__main__':
     shouldRestart = True
     while shouldRestart:
         shouldRestart = False
-        #load xml config
         logging.info("Loading config file: %s" % opts.configfile)
-        configFile = os.path.expanduser(opts.configfile)
-        config = ET.parse(configFile)
-        auth = config.find('auth')
-
-        #init
-        logging.info("Logging in as %s" % auth.attrib['jid'])
 
         plugin_config = {}
         plugin_config['xep_0092'] = {'name': 'SleekBot', 'version': '0.1-dev'}
 
-        bot = SleekBot(configFile, auth.attrib['jid'], auth.attrib['pass'], plugin_config=plugin_config)
-        if not auth.get('server', None):
-            # we don't know the server, but the lib can probably figure it out
-            bot.connect()
-        else:
-            bot.connect((auth.attrib['server'], 5222))
+        bot = SleekBot(opts.configfile, plugin_config=plugin_config)
+        bot.connect()
         bot.process(threaded=False)
         while not bot.state['disconnecting']:
             time.sleep(1)
