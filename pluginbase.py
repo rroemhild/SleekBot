@@ -8,6 +8,8 @@ __license__ = 'MIT License/X11 license'
 
 import logging
 import inspect
+import imp
+
 from collections import defaultdict
 
 def call_on_register(plugin_name):
@@ -87,6 +89,7 @@ class PluginDict(dict):
         self._default_package = default_package
         self.__call_on_register = defaultdict(set)
         self.__call_on_unregister = defaultdict(set)
+        self.__imported = set()
 
     def __getitem__(self, key):
         """ Get a Plugin from the dictionary.
@@ -137,6 +140,9 @@ class PluginDict(dict):
             elif isinstance(name,  str):
                 if package == '__default__':
                     package = self._default_package
+                elif not package in self.__imported:
+                    __import__(package)
+                    self.__imported.add(package)
 
                 module = __import__("%s.%s" % (package, name), fromlist = name)
                 self[name] = self._default_factory(getattr(module, name),  config)
