@@ -29,9 +29,9 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         This fork is maintained by Hernan E. Grecco
     """
 
-    def __init__(self, configFile, ssl=False, plugin_config = {}):
-        self.configFile = configFile
-        self.botconfig = self.load_config(configFile)
+    def __init__(self, config_file, ssl=False, plugin_config = {}):
+        self.config_file = config_file
+        self.botconfig = self.load_config(config_file)
         logging.info("Logging in as %s" % self.botconfig.find('auth').attrib['jid'])
         sleekxmpp.ClientXMPP.__init__(self, self.botconfig.find('auth').attrib['jid'],
                                       self.botconfig.find('auth').attrib['pass'], ssl, plugin_config)
@@ -62,10 +62,13 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
             super(SleekBot, self).connect((auth.attrib['server'], auth.get('port', 5222)))
 
 
-    def load_config(self, configFile):
+    def load_config(self, config_file = None):
         """ Load the specified config. Does not attempt to make changes based upon config.
         """
-        return ET.parse(configFile)
+        if config_file:
+            return ET.parse(config_file)
+        else:
+            return ET.parse(self.config_file)
 
     def register_adhocs(self):
         """ Register all ad-hoc commands with SleekXMPP.
@@ -111,7 +114,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         CommandBot.stop(self)
         PlugBot.stop(self)
         logging.info("Reloading config file")
-        self.botconfig = self.load_config(self.configFile)
+        self.botconfig = self.load_config(self.config_file)
         for module in modules:
             reload(module)
         CommandBot.start(self)
@@ -120,21 +123,18 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
 
     def join_rooms(self):
         logging.info("Re-syncing with required channels")
-        newRoomXml = self.botconfig.findall('rooms/muc')
-        newRooms = {}
-        if newRoomXml:
-            for room in newRoomXml:
-                newRooms[room.attrib['room']] = room.attrib['nick']
-        for room in self.rooms.keys():
-            if room not in newRooms.keys():
-                logging.info("Parting room %s." % room)
-                self.plugin['xep_0045'].leaveMUC(room, self.rooms[room])
-                del self.rooms[room]
-        for room in newRooms.keys():
-            if room not in self.rooms.keys():
-                self.rooms[room] = newRooms[room]
-                logging.info("Joining room %s as %s." % (room, newRooms[room]))
-                self.plugin['xep_0045'].joinMUC(room, newRooms[room])
+        xrooms = self.botconfig.findall('rooms/muc')
+        rooms = {}
+        for xroom in xrooms:
+            rooms[xroom.attrib['room']] = xroom.attrib['nick']
+        for room in set(self.rooms.keys()).difference(rooms.keys()):
+            logging.info("Parting room %s." % room)
+            self.plugin['xep_0045'].leaveMUC(room, self.rooms[room])
+            del self.rooms[room]
+        for room in set(rooms.keys()).difference(self.rooms.keys()):
+            self.rooms[room] = rooms[room]
+            logging.info("Joining room %s as %s." % (room, rooms[room]))
+            self.plugin['xep_0045'].joinMUC(room, rooms[room])
 
     def die(self):
         """ Kills the bot.
@@ -163,7 +163,7 @@ if __name__ == '__main__':
     optp.add_option('-q','--quiet', help='set logging to ERROR', action='store_const', dest='loglevel', const=logging.ERROR, default=logging.INFO)
     optp.add_option('-d','--debug', help='set logging to DEBUG', action='store_const', dest='loglevel', const=logging.DEBUG, default=logging.INFO)
     optp.add_option('-v','--verbose', help='set logging to COMM', action='store_const', dest='loglevel', const=5, default=logging.INFO)
-    optp.add_option("-c","--config", dest="configfile", default="config.xml", help="set config file to use")
+    optp.add_option("-c","--config", dest="config_file", default="config.xml", help="set config file to use")
     opts,args = optp.parse_args()
 
     logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
@@ -172,12 +172,12 @@ if __name__ == '__main__':
     shouldRestart = True
     while shouldRestart:
         shouldRestart = False
-        logging.info("Loading config file: %s" % opts.configfile)
+        logging.info("Loading config file: %s" % opts.config_file)
 
         plugin_config = {}
         plugin_config['xep_0092'] = {'name': 'SleekBot', 'version': '0.1-dev'}
 
-        bot = SleekBot(opts.configfile, plugin_config=plugin_config)
+        bot = SleekBot(opts.config_file, plugin_config=plugin_config)
         bot.connect()
         bot.process(threaded=False)
         while not bot.state['disconnecting']:
