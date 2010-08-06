@@ -22,7 +22,7 @@ def botcmd(name='', usage='', title='', doc='', IM = True, MUC = True, hidden = 
         _inner._botcmd['name'] = name or f.__name__
         _inner._botcmd['title'] = title or f.__doc__.split('\n', 1)[0] or ''
         _inner._botcmd['doc'] = doc or f.__doc__ or 'undocumented'
-        _inner._botcmd['usage'] = usage or _inner._botcmd['name']
+        _inner._botcmd['usage'] = usage or ''
         _inner._botcmd['IM'] = IM
         _inner._botcmd['MUC'] = MUC
         return _inner
@@ -37,8 +37,14 @@ class CommandBot(object):
     """
 
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
-        self.im_prefix = im_prefix
-        self.muc_prefix = muc_prefix
+        prefix = self.botconfig.find('prefix')
+        if prefix is None:
+            self.im_prefix = im_prefix
+            self.muc_prefix = muc_prefix
+        else:
+            self.im_prefix = prefix.attrib.get('im', im_prefix)
+            self.muc_prefix = prefix.attrib.get('muc', muc_prefix)
+
 
         CommandBot.start(self)
 
@@ -103,9 +109,9 @@ class CommandBot(object):
         else:
             prefix = self.im_prefix
             commands = self.im_commands
-        command = msg.get('body', '').split(' ', 1)[0]
+        command = msg.get('body', '').strip().split(' ', 1)[0]
         if ' ' in msg.get('body', ''):
-            args = msg['body'].split(' ', 1)[-1]
+            args = msg['body'].split(' ', 1)[-1].strip()
         else:
             args = ''
         if command.startswith(prefix):
@@ -128,8 +134,10 @@ class CommandBot(object):
         """
         if msg['type'] == 'groupchat':
             commands = self.muc_commands
+            prefix   = self.muc_prefix
         else:
             commands = self.im_commands
+            prefix   = self.im_prefix
 
         response = ''
         if args:
@@ -138,7 +146,7 @@ class CommandBot(object):
                 f  = commands[args]
                 response += '%s -- %s\n' % (args,  f._botcmd['title'])
                 response += ' %s\n' % f._botcmd['doc']
-                response += "Usage: %s %s\n" % (args,  f._botcmd['usage'])
+                response += "Usage: %s%s %s\n" % (prefix, args,  f._botcmd['usage'])
                 return response
             else:
                 response += '%s is not a valid command' % args
