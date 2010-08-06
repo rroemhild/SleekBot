@@ -61,7 +61,7 @@ class PlugBot(object):
         self.register_cmd_plugins()
 
     def reset(self):
-        """  Reset commandbot commands to its initial state
+        """  Reset PlugBot commands to its initial state
         """
         PlugBot.stop(self)
         PlugBot.start(self)

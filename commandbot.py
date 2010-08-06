@@ -8,6 +8,7 @@ __license__ = 'MIT License/X11 license'
 
 import logging
 import inspect
+import threading
 
 def botcmd(name='', usage='', title='', doc='', IM = True, MUC = True, hidden = False ):
     def _outer(f):
@@ -33,6 +34,7 @@ class CommandBot(object):
         Requires to be coinherited with a class that has the following commands:
         - send_message
         - add_event_handler
+        - del_event_handler
         as defined in SleekXMPP
     """
 
@@ -45,7 +47,7 @@ class CommandBot(object):
             self.im_prefix = prefix.attrib.get('im', im_prefix)
             self.muc_prefix = prefix.attrib.get('muc', muc_prefix)
 
-
+        self.__event = threading.Event()
         CommandBot.start(self)
 
     def register_commands(self, where):
@@ -68,12 +70,15 @@ class CommandBot(object):
                 if f._botcmd['MUC']:
                     del self.muc_commands[f._botcmd['name']]
 
-    def stop(self):
-        logging.info("Stopping CommandBot")
-        self.del_event_handler("message", self.handle_msg_botcmd)
-
     def start(self):
         logging.info("Starting CommandBot")
+        CommandBot.reset(self)
+        self.add_event_handler("message", self.handle_msg_botcmd, threaded=True)
+        CommandBot.resume(self)
+
+    def reset(self):
+        """ Reset commands and users
+        """
         self.im_commands = {}
         self.muc_commands = {}
         self.register_commands(self)
@@ -85,13 +90,17 @@ class CommandBot(object):
         self.require_membership = self.botconfig.find('require-membership') or False
         logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
                     ( len(self.owners), len(self.admins), len(self.members), len(self.banned), self.require_membership))
-        self.add_event_handler("message", self.handle_msg_botcmd, threaded=True)
 
-    def reset(self):
-        """  Reset commandbot commands to its initial state
-        """
-        CommandBot.stop(self)
-        CommandBot.start(self)
+    def stop(self):
+        logging.info("Stopping CommandBot")
+        self.del_event_handler("message", self.handle_msg_botcmd)
+
+
+    def pause(self):
+        self.__event.clear()
+
+    def resume(self):
+        self.__event.set()
 
     def handle_msg_event(self, msg, command_found):
         """ Performs extra actions on the message.
@@ -100,6 +109,8 @@ class CommandBot(object):
         pass
 
     def handle_msg_botcmd(self, msg):
+        self.__event.wait()
+
         if not self.should_answer_msg(msg):
             return
         command_found = False

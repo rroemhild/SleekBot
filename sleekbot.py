@@ -111,14 +111,17 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         """
         logging.info("Rehashing started")
         modules = self.cmd_plugins.get_modules()
-        CommandBot.stop(self)
+        CommandBot.pause(self)
         PlugBot.stop(self)
+
         logging.info("Reloading config file")
         self.botconfig = self.load_config(self.config_file)
         for module in modules:
             reload(module)
-        CommandBot.start(self)
+        CommandBot.reset(self)
+
         PlugBot.start(self)
+        CommandBot.resume(self)
         self.join_rooms()
 
     def join_rooms(self):
