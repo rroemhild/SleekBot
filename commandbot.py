@@ -9,8 +9,9 @@ __license__ = 'MIT License/X11 license'
 import logging
 import inspect
 import threading
+import re
 
-def botcmd(name='', usage='', title='', doc='', IM = True, MUC = True, hidden = False ):
+def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False ):
     def _outer(f):
         def _inner(*args, **kwargs):
             return f(*args, **kwargs)
@@ -28,6 +29,38 @@ def botcmd(name='', usage='', title='', doc='', IM = True, MUC = True, hidden = 
         _inner._botcmd['MUC'] = MUC
         return _inner
     return _outer
+
+class botfreetxt(object):
+
+    def __init__(self, priority = 2, regex = None):
+        self.priority = priority
+        if isinstance(regex, str):
+            try:
+                self.regex = re.compile(regex)
+            except:
+                self.regex = None
+        elif not isinstance(regex, re.RegexObject):
+            self.regex = None
+
+    def __call__(self, f):
+        def _inner(self_inner, text, msg, command_found, freetext_found, match=None):
+            if self.regex:
+                match = self.regex.search(text)
+                if match:
+                    return f(self_inner, text, msg, command_found, freetext_found, match)
+                else:
+                    return None
+            else:
+                return f(self_inner, text, msg, command_found, freetext_found)
+
+        if not f.__doc__:
+            f.__doc__ = ''
+
+        _inner._botfreetxt = dict()
+        _inner._botfreetxt['regex'] = self.regex
+        _inner._botfreetxt['priority'] = self.priority
+        return _inner
+
 
 class CommandBot(object):
     """ Base class for bots that accept commands.
@@ -59,6 +92,8 @@ class CommandBot(object):
                     self.im_commands[f._botcmd['name']] = f
                 if f._botcmd['MUC']:
                     self.muc_commands[f._botcmd['name']] = f
+            elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
+                self.freetext.append((f._botfreetxt['priority'], f))
 
     def unregister_commands(self, where):
         """ Look in all members of where for botcmd decorated function and add them to the command list
@@ -69,6 +104,8 @@ class CommandBot(object):
                     del self.im_commands[f._botcmd['name']]
                 if f._botcmd['MUC']:
                     del self.muc_commands[f._botcmd['name']]
+            elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
+                self.freetext.remove((f._botfreetxt['priority'], f))
 
     def start(self):
         logging.info("Starting CommandBot")
@@ -81,6 +118,8 @@ class CommandBot(object):
         """
         self.im_commands = {}
         self.muc_commands = {}
+
+        self.freetext = []
         self.register_commands(self)
 
         self.owners = set(self.get_member_class_jids('owner'))
@@ -102,7 +141,7 @@ class CommandBot(object):
     def resume(self):
         self.__event.set()
 
-    def handle_msg_event(self, msg, command_found):
+    def handle_msg_event(self, msg, command_found = False, freetext_found = False):
         """ Performs extra actions on the message.
             Overload this to handle messages in a generic way.
         """
@@ -131,12 +170,25 @@ class CommandBot(object):
             if command in commands:
                 command_found = True
                 response = commands[command](command, args, msg)
-                if msg['type'] == 'groupchat':
-                    self.send_message("%s" % msg.get('mucroom', ''), response, mtype=msg.get('type', 'groupchat'))
-                else:
-                    self.send_message("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
-                    #msg.reply(response)
-        self.handle_msg_event(msg, command_found)
+                self.reply(msg, response)
+
+        freetext_found = False
+        for (p, f) in self.freetext:
+            response = f(msg['body'], msg, command_found, freetext_found)
+            if not response is None:
+                self.reply(msg, response)
+                freetext_found = True
+
+        self.handle_msg_event(msg, command_found, freetext_found)
+
+    def reply(self, msg, response):
+        """ Reply to a message. This will not be needed when msg.reply works for cases in SleekXMPPP
+        """
+
+        if msg['type'] == 'groupchat':
+            self.send_message("%s" % msg.get('mucroom', ''), response, mtype=msg.get('type', 'groupchat'))
+        else:
+            self.send_message("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
 
     @botcmd(name='help', usage='help [topic]')
     def handle_help(self, command, args, msg):
