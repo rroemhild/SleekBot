@@ -12,6 +12,25 @@ import threading
 import re
 
 def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False ):
+    """ Method decorator to declare a bot command
+        The method signature has to be (self, cmd, args, msg):
+            cmd  -- string with the command
+            args -- string with the arguments
+            msg  -- dictionary containing message properties (see SleekXMPP)
+
+            returns reply string
+
+        Decorator arguments:
+            name   -- name of the command (default method's name)
+            usage  -- one line usage instructions (default empty)
+            title  -- one line description of the command
+                        (default docstring first line)
+            doc    -- extensive description of the command.
+                        (default docstring without first line)
+            IM     -- command will be available in IM (default True)
+            MUC    -- command will be available in MUC (default True)
+            hidden -- command will not be displayed in the help (default False)
+    """
     def _outer(f):
         def _inner(*args, **kwargs):
             return f(*args, **kwargs)
@@ -31,8 +50,22 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False 
     return _outer
 
 class botfreetxt(object):
+    """ Method decorator to declare a bot free text parser
+        The method signature has to be (self, text, msg, command_found, freetext_found):
+            text           -- body of the message
+            msg            -- dictionary containing message properties
+            command_found  -- msg matched a previous botcmd
+            freetext_found -- msg matched a previous freetxt
+            match          -- result of the regular expression match operaton
 
-    def __init__(self, priority = 2, regex = None):
+            returns reply string
+
+        Decorator arguments:
+            priority -- number indicating execution order. Lower is first (default 1)
+            regex    -- regex string or regex object to be matched (default None)
+    """
+
+    def __init__(self, priority = 1, regex = None):
         self.priority = priority
         if isinstance(regex, str):
             try:
@@ -83,8 +116,9 @@ class CommandBot(object):
         self.__event = threading.Event()
         CommandBot.start(self)
 
-    def register_commands(self, where):
-        """ Look in all members of where for botcmd decorated function and add them to the command list
+    def register_commands(self, obj):
+        """ Register bot methods from an object
+                obj -- object containing bot methods
         """
         for name, f in inspect.getmembers(where):
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
@@ -93,10 +127,11 @@ class CommandBot(object):
                 if f._botcmd['MUC']:
                     self.muc_commands[f._botcmd['name']] = f
             elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
-                self.freetext.append((f._botfreetxt['priority'], f))
+                self.freetext.heappush((f._botfreetxt['priority'], f))
 
     def unregister_commands(self, where):
-        """ Look in all members of where for botcmd decorated function and add them to the command list
+        """ Unregister bot methods from an object
+                obj -- object containing bot methods
         """
         for name, f in inspect.getmembers(where):
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
@@ -108,6 +143,8 @@ class CommandBot(object):
                 self.freetext.remove((f._botfreetxt['priority'], f))
 
     def start(self):
+        """ Mesages will be received and processed
+        """
         logging.info("Starting CommandBot")
         CommandBot.reset(self)
         self.add_event_handler("message", self.handle_msg_botcmd, threaded=True)
@@ -131,14 +168,20 @@ class CommandBot(object):
                     ( len(self.owners), len(self.admins), len(self.members), len(self.banned), self.require_membership))
 
     def stop(self):
+        """ Messages will not be received
+        """
         logging.info("Stopping CommandBot")
         self.del_event_handler("message", self.handle_msg_botcmd)
 
 
     def pause(self):
+        """ Received messages will be enqueued for processing
+        """
         self.__event.clear()
 
     def resume(self):
+        """ Received messages will be processed
+        """
         self.__event.set()
 
     def handle_msg_event(self, msg, command_found = False, freetext_found = False):
@@ -148,6 +191,15 @@ class CommandBot(object):
         pass
 
     def handle_msg_botcmd(self, msg):
+        """ Message handler. Execution order:
+                0.- check should_answer_msg
+                1.- Execute matching command (if any)
+                2.- Forward msg to registered free text parsers
+                3.- Forward msg to handle_msg_event
+
+                msg -- dictionary containing message properties (see SleekXMPP)
+        """
+
         self.__event.wait()
 
         if not self.should_answer_msg(msg):
@@ -182,7 +234,7 @@ class CommandBot(object):
         self.handle_msg_event(msg, command_found, freetext_found)
 
     def reply(self, msg, response):
-        """ Reply to a message. This will not be needed when msg.reply works for cases in SleekXMPPP
+        """ Reply to a message. This will not be needed when msg.reply works for all cases in SleekXMPP
         """
 
         if msg['type'] == 'groupchat':
@@ -268,6 +320,8 @@ class CommandBot(object):
         return None
 
     def get_real_jid(self, msg):
+        """ Returns the real jid of a msg
+        """
         if msg['type'] == 'groupchat':
             # TODO detect system message
             return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
@@ -280,7 +334,7 @@ class CommandBot(object):
 
     def should_answer_msg(self, msg):
         """ Checks whether the bot is configured to respond to the sender of a message.
-             Overload if needed
+            Overload if needed
         """
 
         return self.should_answer_jid(self.get_real_jid(msg))
