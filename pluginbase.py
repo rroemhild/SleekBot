@@ -13,8 +13,9 @@ import imp
 from collections import defaultdict
 
 def call_on_register(plugin_name):
-    """ Register this action to be executed when a plugin is added to the dict.
-         plugin_name can be an iterable
+    """ Decorator to relate a plugin method to the event of another plugin
+         being registered
+            plugin_name -- the name of the plugin or an iterable with plugin names
     """
     def __outer(f):
         def __inner(*args, **kwargs):
@@ -25,8 +26,9 @@ def call_on_register(plugin_name):
     return __outer
 
 def call_on_unregister(plugin_name):
-    """ Register this action to be executed when a plugin is removed from the dict.
-         plugin_name can be an iterable
+    """ Decorator to relate a plugin method to the event of another plugin
+         being unregistered
+            plugin_name -- the name of the plugin or an iterable with plugin names
     """
     def __outer(f):
         def __inner(*args, **kwargs):
@@ -72,6 +74,7 @@ class Plugin(object):
 
     plugin_dict = property(fget = _get_dict, fset = _set_dict)
 
+
 def default_plugin_factory(aclass, config):
     """ The default factory for Plugin.
     """
@@ -109,7 +112,6 @@ class PluginDict(dict):
 
         return super(PluginDict, self).__setitem__(key, value)
 
-
     def __delitem__(self, key):
         """ Call plugin.on_unregister and then remove it form the dictionary
         """
@@ -126,9 +128,11 @@ class PluginDict(dict):
 
         super(PluginDict, self).__delitem__(key)
 
-
     def register(self, name, config = {}, package = '__default__'):
-        """ Register a plugin from the same directory of this file.
+        """ Loads and register a plugin
+                name    -- plugin name (name of the class)
+                config  -- extra configuration (to be handled to the plugin)
+                package -- where the plugin is declared
         """
         try:
             if name in self:
@@ -155,10 +159,9 @@ class PluginDict(dict):
     def register_many(self, include = '__all__', exclude = set(), config = dict()):
         """ Register multiple plugins
 
-        include -- set of plugins names to register or
-                   if empty uses __init__.__all__
-        exclude -- set of plugins names to ignored. (default = empty set)
-        config  -- dict plugin_name:config. (default = empty dict)
+                include -- plugins names to register (default __init__.__all__)
+                exclude -- plugins names to ignored (default empty set)
+                config  -- dict plugin_name:config (default empty dict)
         """
 
         if not include:
@@ -183,11 +186,13 @@ class PluginDict(dict):
         for plugin in self.keys():
             self.reload(plugin)
 
-    def _unregister_event(self, source):
+    def _unregister_event(self, plugin):
+        """ Unregister events associated with a plugin
+        """
         for v in self.__call_on_register.values():
-            v = set(filter(lambda x: x[0] != source, v))
+            v = set(filter(lambda x: x[0] != plugin, v))
         for v in self.__call_on_unregister.values():
-            v = set(filter(lambda x: x[0] != source, v))
+            v = set(filter(lambda x: x[0] != plugin, v))
 
     def get_modules(self):
             return [__import__(self[name].__module__, fromlist = name) for name in self.keys()]

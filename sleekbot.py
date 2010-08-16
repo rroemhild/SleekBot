@@ -2,6 +2,16 @@
 """
     This file is part of SleekBot. http://github.com/hgrecco/SleekBot
     See the README file for more information.
+
+
+SleekBot is a pluggable Jabber/XMPP bot based on SleekXMPP.
+
+It is configured using an XML file
+
+
+See CommandBot and PlugBot for more details.
+
+
 """
 
 __author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
@@ -25,7 +35,9 @@ from commandbot import  CommandBot
 from plugbot import PlugBot
 
 class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
-    """ SleekBot was originally written by Nathan Fritz and Kevin Smith.
+    """ SleekBot is a pluggable Jabber/XMPP bot based on SleekXMPP
+
+        SleekBot was originally written by Nathan Fritz and Kevin Smith.
         This fork is maintained by Hernan E. Grecco
     """
 

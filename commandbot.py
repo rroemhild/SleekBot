@@ -97,11 +97,29 @@ class botfreetxt(object):
 
 class CommandBot(object):
     """ Base class for bots that accept commands.
-        Requires to be coinherited with a class that has the following commands:
-        - send_message
-        - add_event_handler
-        - del_event_handler
+        Requires to be coinherited with a class that has the following commands
+            send_message
+            add_event_handler
+            del_event_handler
         as defined in SleekXMPP
+        and a property named:
+            botconfig -- XML ElementTree from the config file. For example:
+                <prefix im='/' muc='!' />
+                <users>
+                    <owner>
+                        <jid>owner1@server.com</jid>
+                        <jid>owner2@server.com</jid>
+                    </owner>
+                    <admin>
+                        <jid>trusteduser@server.com</jid>
+                    </admin>
+                    <member>
+                        <jid>arbitrarybotuser@server.com</jid>
+                    </member>
+                    <banned>
+                        <jid>banneduser@server.com</jid>
+                    </banned>
+                </users>
     """
 
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
