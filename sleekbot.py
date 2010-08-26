@@ -42,18 +42,22 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
     """
 
     def __init__(self, config_file, ssl=False, plugin_config = {}):
+        """ Initializes the bot
+                config_file -- string pointing to an xml configuration file
+        """
         self.config_file = config_file
         self.botconfig = self.load_config(config_file)
-        logging.info("Logging in as %s" % self.botconfig.find('auth').attrib['jid'])
-        sleekxmpp.ClientXMPP.__init__(self, self.botconfig.find('auth').attrib['jid'],
-                                      self.botconfig.find('auth').attrib['pass'], ssl, plugin_config)
+        auth = self.botconfig.find('auth').
+        logging.info("Logging in as %s" % auth.attrib['jid'])
+        sleekxmpp.ClientXMPP.__init__(self, auth.attrib['jid'],
+                                      auth.attrib['pass'], auth.get('ssl', True), plugin_config)
         storageXml = self.botconfig.find('storage')
         if storageXml is not None:
             self.store = store(storageXml.attrib['file'])
         else:
             logging.warning("No storage element found in config file - proceeding with no persistent storage, plugin behaviour may be undefined.")
         self.rooms = {}
-        self.add_event_handler("session_start", self.start, threaded=True)
+        self.add_event_handler("session_start", self.handle_session_start, threaded=True)
         self.registerPlugin('xep_0030')
         self.registerPlugin('xep_0004')
         self.registerPlugin('xep_0045')
@@ -65,6 +69,8 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.register_adhocs()
 
     def connect(self):
+        """ Connects to the server
+        """
         auth = self.botconfig.find('auth')
         logging.info("Connecting ..." )
         if not auth.get('server', None):
@@ -110,16 +116,15 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         elif option == 'config':
             pass
 
-    def start(self, event):
-        #TODO: make this configurable
+    def handle_session_start(self, event):
         self.getRoster()
         self.sendPresence(ppriority = self.botconfig.find('auth').get('priority', '1'))
         self.join_rooms()
 
     def rehash(self):
         """ Re-reads the config file, making appropriate runtime changes.
-            Causes all plugins to be reloaded (or unloaded). The XMPP stream, and
-            channels will not be disconnected.
+            Causes all plugins to be reloaded (or unloaded).
+            The XMPP stream and MUC rooms will not be disconnected.
         """
         logging.info("Rehashing started")
         modules = self.cmd_plugins.get_modules()
@@ -137,7 +142,9 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.join_rooms()
 
     def join_rooms(self):
-        logging.info("Re-syncing with required channels")
+        """ Join to MUC rooms
+        """
+        logging.info("Joining MUC rooms")
         xrooms = self.botconfig.findall('rooms/muc')
         rooms = {}
         for xroom in xrooms:

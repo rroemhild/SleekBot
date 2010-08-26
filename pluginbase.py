@@ -86,6 +86,11 @@ class PluginDict(dict):
     """
 
     def __init__(self, plugin_base_class = Plugin, default_factory = default_plugin_factory, default_package = 'plugins'):
+        """ Initialize dictionary
+                plugin_base_class -- class from which plugins must derive (default Plugin)
+                default_factory   -- method to instantiate a plugin object (default default_plugin_factory)
+                default_package   -- string specifying where to look for plugins (default 'plugins')
+        """
         super(PluginDict, self).__init__()
         self._plugin_base_class = plugin_base_class
         self._default_factory = default_factory

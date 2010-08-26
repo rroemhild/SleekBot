@@ -123,6 +123,14 @@ class CommandBot(object):
     """
 
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
+        """ Initializes the CommandBot by registering commands in self
+            and message handler
+                im_prefix  -- prefix to be used for private messages commands (default '/')
+                muc_prefix -- prefix to be used for muc messages commands (default '!')
+            '
+            Prefixes specified in botconfig has precedence.
+        """
+
         prefix = self.botconfig.find('prefix')
         if prefix is None:
             self.im_prefix = im_prefix
@@ -212,7 +220,7 @@ class CommandBot(object):
         """ Message handler. Execution order:
                 0.- check should_answer_msg
                 1.- Execute matching command (if any)
-                2.- Forward msg to registered free text parsers
+                2.- Forward msg to red free text parsers
                 3.- Forward msg to handle_msg_event
 
                 msg -- dictionary containing message properties (see SleekXMPP)

@@ -42,6 +42,8 @@ class PlugBot(object):
 
 
     def __init__(self, default_package = 'plugins'):
+        """ Initialized the PlugBot by registering the plugins declared in botconfig
+        """
         self.cmd_plugins = PluginDict(plugin_base_class = BotPlugin, default_package = default_package)
         self.cmd_plugins.bot = self
 
