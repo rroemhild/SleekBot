@@ -13,16 +13,15 @@ setup(
     keywords = ["encoding", "i18n", "xml"],
     classifiers = [
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
         "Environment :: Other Environment",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Text Processing :: Linguistic",
         "Topic :: Communications :: Chat"
-
         ],
     requires     = [ 'sleekxmpp'],
+    scripts      = [ 'scripts/runbot.py'],
     long_description = """\
 SleekBot
 -------------------------------------

@@ -47,7 +47,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         """
         self.config_file = config_file
         self.botconfig = self.load_config(config_file)
-        auth = self.botconfig.find('auth').
+        auth = self.botconfig.find('auth')
         logging.info("Logging in as %s" % auth.attrib['jid'])
         sleekxmpp.ClientXMPP.__init__(self, auth.attrib['jid'],
                                       auth.attrib['pass'], auth.get('ssl', True), plugin_config)

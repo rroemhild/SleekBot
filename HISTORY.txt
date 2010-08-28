@@ -1,0 +1,22 @@
+History
+=======
+
+July 2010
+---------
+Refactored of the code, improved the plugin system.
+
+
+June 2010
+---------
+Forked repo
+http://github.com/hgrecco/SleekBot/
+
+Upgraded the api calls to be compatible with SleekXMPP 0.9c
+Additionally, I have taken some ideas from Thomas Perl's Jabberbot
+(http://thpinfo.com/2007/python-jabberbot/) and incorporated them into SleekBot.
+
+
+Original
+--------
+Original version of the software
+http://github.com/Kev/SleekBot/
