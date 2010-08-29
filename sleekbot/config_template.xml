@@ -1,0 +1,77 @@
+<config>
+    <prefix im='/' muc='!' />
+    <!--Bot authorization details-->
+    <auth jid='botname@server' pass='password' priority='10' server='servername' />
+    <rooms>
+        <muc room='c1@conference.localhost' nick='SleekBot' />
+    </rooms>
+    <!--Location of the sqlite3 database used for persistent storage.-->
+    <storage file='test.sqlite' />
+
+<!--When this is set, the bot will ignore requests from anyone who isn't a member (see <users>). When it isn't set, the bot will respond to anyone except outcasts. If you run the bot in an anonymous room, you almost certainly want this set to false-->
+<!--  <require-membership /> -->
+
+<!--Users the bot knows about. Owners have full access to the bot, admins have the next layer of access. If require-membership is set, the bot won't respond to anyone unless they have at least a member entry. Banned users are always ignored.-->
+    <users>
+        <owner>
+            <jid>test@localhost</jid>
+            <jid>anotherjid@backupserver.com</jid>
+        </owner>
+        <admin>
+            <jid>trusteduser@server.com</jid>
+        </admin>
+        <member>
+            <jid>arbitrarybotuser@server.com</jid>
+        </member>
+        <banned>
+            <jid>banneduser@server.com</jid>
+        </banned>
+    </users>
+
+    <plugins>
+        <bot>
+            <plugin name='say'>
+                <config />
+            </plugin>
+            <plugin name='diceroll'>
+                <config />
+            </plugin>
+            <plugin name='admin'>
+                <config />
+            </plugin>
+            <plugin name='factoidbot'>
+                <config />
+            </plugin>
+            <plugin name='filter'>
+                <config />
+            </plugin>
+            <plugin name='gettune'>
+                <config />
+            </plugin>
+            <plugin name='pingbot'>
+                <config />
+            </plugin>
+            <plugin name='seen'>
+                <config />
+            </plugin>
+            <plugin name='tell'>
+                <config />
+            </plugin>
+            <plugin name='uptime'>
+                <config />
+            </plugin>
+            <plugin name='mem'>
+                <config />
+            </plugin>
+            <plugin name='xepbot'>
+                <config>
+                    <xeps url='http://www.xmpp.org/extensions/xeps.xml'/>
+                    <cache expiry='6' />
+                </config>
+            </plugin>
+            <plugin name='xmradio'>
+                <config />
+            </plugin>
+        </bot>
+    </plugins>
+</config>
