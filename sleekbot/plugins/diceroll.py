@@ -9,8 +9,8 @@ import sys
 import re
 import traceback
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class diceroll(BotPlugin):
     """A nerdy plugin for rolling complex or simple dice formulas."""

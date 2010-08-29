@@ -19,39 +19,39 @@
 import logging
 import pickle
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class factstore(object):
     def __init__(self):
         self.null = None
         self.data = {}
         self.loaddefault()
-        
+
 
     def list_terms(self):
         return self.data.keys()
-    
+
     def add(self, term, fact):
         self.data[term.lower()] = fact
         self.savedefault()
-        
+
     def get(self, term):
         if self.data.has_key(term.lower()):
             return self.data[term.lower()]
         return "No facts known about " + term
-        
+
     def delete(self, term):
         if self.data.has_key(term.lower()):
             del self.data[term.lower()]
             self.savedefault()
-    
+
     def loaddefault(self):
         self.load("factoids.dat")
-        
+
     def savedefault(self):
         self.save("factoids.dat")
-        
+
     def load(self, filename):
         try:
             f = open(filename, 'rb')
@@ -75,7 +75,7 @@ class factoidbot(BotPlugin):
 
     def on_register(self):
         self.factstore = factstore()
-        
+
     @botcmd(name = 'fact', usage = 'fact [topic]')
     def handle_fact(self, command, args, msg):
         """Returns a fact"""
@@ -89,14 +89,14 @@ class factoidbot(BotPlugin):
         else:
             subcommand = args
         admin_commands = ['list', 'add', 'delete']
-        
+
         #non-admin commands
         if subcommand not in admin_commands:
             response = "facts for " + args + "\n" + args + ": " + self.factstore.get(args)
             return response
-        
+
         #admin commands
-            
+
         if "list" == subcommand:
             if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners() + self.bot.getAdmins():
                 return "You do not have access to this function"

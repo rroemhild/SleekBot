@@ -6,8 +6,8 @@
 import logging
 from xml.etree import cElementTree as ET
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class gettune(BotPlugin):
     """A plugin to get user tune info."""

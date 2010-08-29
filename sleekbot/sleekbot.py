@@ -20,7 +20,6 @@ __license__ = 'MIT License/X11 license'
 
 import os
 import time
-import plugins
 import sys
 import logging
 
@@ -65,7 +64,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.registerPlugin('xep_0060')
         self.registerPlugin('xep_0199')
         CommandBot.__init__(self)
-        PlugBot.__init__(self)
+        PlugBot.__init__(self, default_package = 'sleekbot.plugins')
         self.register_adhocs()
 
     def connect(self):

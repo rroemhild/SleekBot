@@ -6,8 +6,8 @@
 import logging
 import datetime, time
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class uptime(BotPlugin):
     """A plugin to display the uptime of the bot."""

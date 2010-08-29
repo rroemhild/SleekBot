@@ -11,8 +11,8 @@ import thread
 import time
 import copy
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class remember(BotPlugin):
     """A plugin to rembember events."""

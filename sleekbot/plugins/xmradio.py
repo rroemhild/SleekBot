@@ -8,8 +8,8 @@ import re
 import traceback
 import urllib2
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class xmradio(BotPlugin):
     """A plugin for seeing what's on XM Radio."""

@@ -6,8 +6,8 @@
 import logging
 import datetime, time
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class say(BotPlugin):
     """A plugin to parrots text to a muc"""

@@ -1,0 +1,3 @@
+dnspython
+-e git://github.com/fritzy/SleekXMPP.git#egg=sleekxmpp
+/home/hernan/Documents/code/xmpp/SleekBot/dist/sleekbot-0.1.tar.gz

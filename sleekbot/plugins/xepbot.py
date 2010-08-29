@@ -9,8 +9,8 @@ from xml.etree import ElementTree as ET
 import time
 import math
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class xepbot(BotPlugin):
     """A plugin for obtaining xep information."""

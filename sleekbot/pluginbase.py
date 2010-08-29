@@ -97,7 +97,9 @@ class PluginDict(dict):
         self._default_package = default_package
         self.__call_on_register = defaultdict(set)
         self.__call_on_unregister = defaultdict(set)
+        __import__(default_package)
         self.__imported = set()
+        self.__imported.add(default_package)
 
     def __getitem__(self, key):
         """ Get a Plugin from the dictionary.
@@ -159,7 +161,7 @@ class PluginDict(dict):
             return True
 
         except Exception,  e:
-                logging.error('Error while registering plugin %s: %s' % (name,  e))
+            logging.error('Error while registering plugin %s: %s' % (name,  e))
 
     def register_many(self, include = '__all__', exclude = set(), config = dict()):
         """ Register multiple plugins

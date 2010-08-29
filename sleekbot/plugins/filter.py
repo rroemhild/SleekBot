@@ -8,8 +8,8 @@ import re
 import random
 from xml.etree import ElementTree as ET
 
-from commandbot import botcmd
-from plugbot import BotPlugin
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
 
 class robberFilter():
     def filter(self, text):
