@@ -11,48 +11,6 @@ SleekBot is an easily extendable Bot for XMPP (aka Jabber, Google Talk, etc) wri
 Plugins, also written in Python, are used to add new commands and text parsers to your Bot. These new functionalities are declared by decorating python functions. Plugins can be added, removed or reloaded without stopping the Bot thereby providing a useful upgrade path.
 
 
-Instalation
-===========
-
-The best way to install SleekBot is using virtualenv (http://virtualenv.openplans.org/) and pip (http://pip.openplans.org/). If you don't know what this is, read http://www.b-list.org/weblog/2008/dec/15/pip/.
-
-    pip install -E sleekbot -r http://github.com/hgrecco/sleekbot/raw/master/pip_req.txt
-
-Which is roughly equivalent to
-
-    virtualenv --no-site-packages sleekbot
-    source sleekbot/bin/activate
-    pip install dnspython
-    pip install -e git://github.com/fritzy/SleekXMPP.git#egg=sleekxmpp
-    pip install -e git://github.com/hgrecco/SleekBot.git#egg=sleekbot
-    deactivate
-
-
-Running
-=======
-
-First, activate your virtual environment:
-
-    source sleekbot/bin/activate
-
-Bots are configured using a xml file. Create a template configuration file by running:
-
-    runbot.py --create config.xml
-
-Edit config.xml with your favorite editor. The file is fully documented, so it should be easy to understand what is the purpose of each entry. Among other thing, you will
-* Configure username and password of your bot so it can log in to a server
-* Configure access control lists
-* Select which plugins are going to be loaded
-* Select which XEPs your bot is going to support
-
-
-Run your bot:
-
-    runbot.py config.xml
-
-and talk to it using your favorite XMPP client.
-
-
 Requirements
 ============
 * Python 2.5 or newer
