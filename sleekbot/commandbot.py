@@ -146,7 +146,7 @@ class CommandBot(object):
         """ Register bot methods from an object
                 obj -- object containing bot methods
         """
-        for name, f in inspect.getmembers(where):
+        for name, f in inspect.getmembers(obj):
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
                 if f._botcmd['IM']:
                     self.im_commands[f._botcmd['name']] = f
@@ -155,11 +155,11 @@ class CommandBot(object):
             elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
                 self.freetext.heappush((f._botfreetxt['priority'], f))
 
-    def unregister_commands(self, where):
+    def unregister_commands(self, obj):
         """ Unregister bot methods from an object
                 obj -- object containing bot methods
         """
-        for name, f in inspect.getmembers(where):
+        for name, f in inspect.getmembers(obj):
             if inspect.ismethod(f) and hasattr(f, '_botcmd'):
                 if f._botcmd['IM']:
                     del self.im_commands[f._botcmd['name']]
