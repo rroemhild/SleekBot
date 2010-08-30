@@ -75,10 +75,10 @@
             <plugin name="ldapbot">
                 <config>
                     <server uri="ldap://server.com:389" binddn="" secret="" />
-		            <option name="userinfo" help="userinfo">
-		                <basedn dn="ou=people,dc=s-v,dc=de" />
-		                <filter>
-		                    <attr name="uid" />
+                    <option name="userinfo" help="userinfo">
+                        <basedn dn="ou=people,dc=s-v,dc=de" />
+                        <filter>
+                            <attr name="uid" />
                             <attr name="sn" />
                             <attr name="givenName" />
                         </filter>

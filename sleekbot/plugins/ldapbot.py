@@ -69,7 +69,7 @@ class ldapbot(BotPlugin):
     def merge_search_filter(self, option, query):
         """ Merge ldap search filter from config
         """
-	    # merge the OR search part
+        # merge the OR search part
         filters = []
         for sf in option['searchFilterAttrib']:
             ldap_attrib = sf.attrib['name']
@@ -88,7 +88,7 @@ class ldapbot(BotPlugin):
         
         # merge both lists to one search filter
         return '(&' + ' '.join(requires) + '(|' + ' '.join(filters) +'))'
-	
+    
     def ldap_search(self, searchFilter, retrieveAttrib, option):
         """ Run a search on ldap server
         """
