@@ -189,7 +189,7 @@ class CommandBot(object):
         self.admins = set(self.get_member_class_jids('admin'))
         self.members = set(self.get_member_class_jids('member'))
         self.banned = set(self.get_member_class_jids('banned'))
-        self.require_membership = self.botconfig.find('require-membership') or False
+        self.require_membership = self.botconfig.find('require-membership') != None
         logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
                     ( len(self.owners), len(self.admins), len(self.members), len(self.banned), self.require_membership))
 
