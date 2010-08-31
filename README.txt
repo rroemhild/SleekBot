@@ -52,6 +52,46 @@ Run your bot:
 and talk to it using your favorite XMPP client.
 
 
+Build your own plugins
+======================
+
+To build your own plugin, you need to create a class derived from BotPlugin and expose the desired methods using the @botcmd decorator. By default, the method name will be used as the command name and the docstring will be used for the help.
+
+For example, paste the following code in a file named echo.py
+
+
+from sleekbot.commandbot import botcmd
+from sleekbot.plugbot import BotPlugin
+
+class echo(BotPlugin):
+    """ A plugin to echo your message."""
+
+    @botcmd()
+    def echo(self, command, args, msg):
+        """ Repeats your message back to you."""
+        return args
+
+
+Copy echo.py into your plugins folder. If your followed the described installation process, the plugins folder is:
+
+    sleekbot/src/sleekbot/sleekbot/plugins
+
+Then, you will need to add the following line to your bot configuration file:
+
+    <plugin name='echo' />
+
+Now start your bot and try your new plugin!
+
+If you want to keep you plugins appart, create a package folder (a folder with a __init__.py file inside) within the python search path and put echo.py there.
+
+If your package folder is named myplugins then the line in the config file should be:
+
+    <plugin name='echo' package='myplugins'/>
+
+
+Note: The folder containing the configuration file is automatically added to the python path. So a simple organization is to put all your config files in a folder and your plugins package folder
+
+
 Requirements
 ============
 * Python 2.5 or newer

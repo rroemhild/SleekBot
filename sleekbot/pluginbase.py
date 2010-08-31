@@ -154,6 +154,7 @@ class PluginDict(dict):
                 elif not package in self.__imported:
                     __import__(package)
                     self.__imported.add(package)
+                    logging.debug('Imported package %s' % package)
 
                 module = __import__("%s.%s" % (package, name), fromlist = name)
                 self[name] = self._default_factory(getattr(module, name),  config)
