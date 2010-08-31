@@ -47,7 +47,7 @@ class ldapbot(BotPlugin):
                 'delimiter' : option.find('response').get('delimiter', default=", ").replace('\\n', '\n'),
                 'responseMsg' : option.find('response').get('msg', default='').replace('\\n', '\n'),
                 'searchFilterAttrib' : option.find('filter'),
-                'searchRequireAttrib' : option.find('require') or False,
+                'searchRequireAttrib' : option.find('require'),
                 'searchReturnAttrib' : option.find('return')}
         
         global options
@@ -84,7 +84,7 @@ class ldapbot(BotPlugin):
         
         # merge the AND search part
         requires = []
-        if option['searchRequireAttrib']:
+        if option['searchRequireAttrib'] != None:
             for sr in option['searchRequireAttrib'].findall('attr'):
                 ldap_attrib = sr.attrib['name']
                 if sr.get('exclude', default="") == "!":
