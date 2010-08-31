@@ -75,7 +75,7 @@
             <plugin name="ldapbot">
                 <config>
                     <server uri="ldap://server.com:389" binddn="" secret="" />
-                    <option name="userinfo" help="userinfo">
+                    <option name="userinfo" help="Returns some user Info" usage="userinfo [name|uid]">
                         <basedn dn="ou=people,dc=s-v,dc=de" />
                         <filter>
                             <attr name="uid" />
@@ -83,7 +83,7 @@
                             <attr name="givenName" />
                         </filter>
                         <require>
-                            <attr name="account" str="active" />
+                            <attr name="account" value="active" />
                         </require>
                         <return>
                             <attr name="sn" />
@@ -92,7 +92,7 @@
                             <attr name="ou" />
                             <attr name="telephoneNumber" />
                         </return>
-                        <response msg="\n%(givenName)s %(sn)s\nOrg: %(ou)s\nE-Mail: %(mail)s\nPhone: %(telephoneNumber)s" order="sorted" delimiter="\n" limit="1" />
+                        <response msg="%(givenName)s %(sn)s\nOrg: %(ou)s\nE-Mail: %(mail)s\nPhone: %(telephoneNumber)s" order="sorted" delimiter="\n" limit="1" />
                     </option>
                 </config>
             </plugin>
