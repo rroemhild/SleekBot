@@ -30,48 +30,20 @@
 
     <plugins>
         <bot>
-            <plugin name='say'>
-                <config />
-            </plugin>
-            <plugin name='diceroll'>
-                <config />
-            </plugin>
-            <plugin name='admin'>
-                <config />
-            </plugin>
-            <plugin name='factoidbot'>
-                <config />
-            </plugin>
-            <plugin name='filter'>
-                <config />
-            </plugin>
-            <plugin name='gettune'>
-                <config />
-            </plugin>
-            <plugin name='pingbot'>
-                <config />
-            </plugin>
-            <plugin name='seen'>
-                <config />
-            </plugin>
-            <plugin name='tell'>
-                <config />
-            </plugin>
-            <plugin name='uptime'>
-                <config />
-            </plugin>
-            <plugin name='mem'>
-                <config />
-            </plugin>
+            <plugin name='say' />
+            <plugin name='diceroll' />
+            <plugin name='admin' />
+            <plugin name='filter' />
+            <plugin name='gettune' />
+            <plugin name='pingbot' />
+            <plugin name='uptime' />
             <plugin name='xepbot'>
                 <config>
                     <xeps url='http://www.xmpp.org/extensions/xeps.xml'/>
                     <cache expiry='6' />
                 </config>
             </plugin>
-            <plugin name='xmradio'>
-                <config />
-            </plugin>
+            <plugin name='xmradio' />
             <plugin name="ldapbot">
                 <config>
                     <server uri="ldap://server.com:389" binddn="" secret="" />

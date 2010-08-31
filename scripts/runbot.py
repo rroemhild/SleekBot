@@ -13,8 +13,10 @@ __license__ = 'MIT License/X11 license'
 import os
 import logging
 import shutil
+import sys
 
 from optparse import OptionParser
+
 from sleekbot.sleekbot import SleekBot
 
 if __name__ == '__main__':
@@ -34,6 +36,8 @@ if __name__ == '__main__':
         exit()
 
     logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
+
+    sys.path.append(os.path.dirname(os.path.abspath(args[0])))
 
     global shouldRestart
     shouldRestart = True
