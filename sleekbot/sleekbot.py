@@ -74,7 +74,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         logging.info("Connecting ..." )
         if not auth.get('server', None):
             # we don't know the server, but the lib can probably figure it out
-            super(SleekBot, self).ClientXMPP.connect()
+            super(SleekBot, self).connect()
         else:
             super(SleekBot, self).connect((auth.attrib['server'], auth.get('port', 5222)))
 
