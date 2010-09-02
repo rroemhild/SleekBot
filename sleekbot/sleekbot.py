@@ -48,8 +48,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.botconfig = self.load_config(config_file)
         auth = self.botconfig.find('auth')
         logging.info("Logging in as %s" % auth.attrib['jid'])
-        sleekxmpp.ClientXMPP.__init__(self, auth.attrib['jid'],
-                                      auth.attrib['pass'], auth.get('ssl', True), plugin_config)
+        sleekxmpp.ClientXMPP.__init__(self, auth.attrib['jid'], auth.attrib['pass'], auth.get('ssl', True), plugin_config)
         storageXml = self.botconfig.find('storage')
         if storageXml is not None:
             self.store = store(storageXml.attrib['file'])
@@ -57,12 +56,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
             logging.warning("No storage element found in config file - proceeding with no persistent storage, plugin behaviour may be undefined.")
         self.rooms = {}
         self.add_event_handler("session_start", self.handle_session_start, threaded=True)
-        self.registerPlugin('xep_0030')
-        self.registerPlugin('xep_0004')
-        self.registerPlugin('xep_0045')
-        self.registerPlugin('xep_0050')
-        self.registerPlugin('xep_0060')
-        self.registerPlugin('xep_0199')
+        self.register_xmpp_plugins()
         CommandBot.__init__(self)
         PlugBot.__init__(self, default_package = 'sleekbot.plugins')
         self.register_adhocs()
@@ -114,6 +108,24 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
             return aboutform, None, False
         elif option == 'config':
             pass
+
+
+    def register_xmpp_plugins(self):
+        """ Registers all XMPP plugins required by botconfig.
+        """
+        plugins = self.botconfig.findall('plugins/xmpp/plugin')
+        if plugins:
+            for plugin in plugins:
+                try:
+                    config = plugin.find('config')
+                    if config is None:
+                        self.registerPlugin(plugin.attrib['name'])
+                    else:
+                        self.registerPlugin(plugin.attrib['name'], config)
+                    logging.info("Registering XMPP plugin %s OK" % (plugin.attrib['name']))
+                except Exception as e:
+                    logging.info("Registering XMPP plugin %s FAILED: %s" % (plugin.attrib['name'], e))
+
 
     def handle_session_start(self, event):
         self.getRoster()
@@ -194,10 +206,6 @@ if __name__ == '__main__':
     while shouldRestart:
         shouldRestart = False
         logging.info("Loading config file: %s" % opts.config_file)
-
-        plugin_config = {}
-        plugin_config['xep_0092'] = {'name': 'SleekBot', 'version': '0.1-dev'}
-
         bot = SleekBot(opts.config_file, plugin_config=plugin_config)
         bot.connect()
         bot.process(threaded=False)
