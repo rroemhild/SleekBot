@@ -6,12 +6,26 @@
 __author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
 __license__ = 'MIT License/X11 license'
 
+from functools import wraps
+
 import logging
 import inspect
 import threading
 import re
 
-def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False ):
+
+def denymsg(msg):
+    """ Method decorator to add a denymsg property to a method."""
+    def _outer(f):
+        @wraps(f)
+        def _inner(*args, **kwargs):
+            return f(*args, **kwargs)
+        _inner.denymsg = msg
+        return _inner
+    return _outer
+
+
+def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False, allow=True):
     """ Method decorator to declare a bot command
         The method signature has to be (self, cmd, args, msg):
             cmd  -- string with the command
@@ -30,10 +44,22 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False 
             IM     -- command will be available in IM (default True)
             MUC    -- command will be available in MUC (default True)
             hidden -- command will not be displayed in the help (default False)
+            allow  -- callable to check if the user has permissions to run the command
+                        (default True)
     """
     def _outer(f):
-        def _inner(*args, **kwargs):
-            return f(*args, **kwargs)
+        if allow is True: # Warning this is not the same as if allow:
+            @wraps(f)
+            def _inner(*args, **kwargs):
+                return f(*args, **kwargs)
+
+        else:
+            @wraps(f)
+            def _inner(*args, **kwargs):
+                if allow(args[0].bot, args[-1]):
+                    return f(*args, **kwargs)
+                else:
+                    return getattr(f, 'denymsg', None) or getattr(allow, 'denymsg', 'You are not allowed to execute this command.')
 
         if not f.__doc__:
             f.__doc__ = ''
@@ -300,18 +326,21 @@ class CommandBot(object):
         response += "---------\n"
         return response
 
+    @denymsg('You are not my owner')
     def msg_from_owner(self, msg):
         """ Was this message sent from a bot owner?
         """
         jid = self.get_real_jid(msg)
         return jid in self.owners
 
+    @denymsg('You are not my admin')
     def msg_from_admin(self, msg):
         """ Was this message sent from a bot admin?
         """
         jid = self.get_real_jid(msg)
         return jid in self.admins
 
+    @denymsg('You are not a member')
     def msg_from_member(self, msg):
         """ Was this message sent from a bot member?
         """

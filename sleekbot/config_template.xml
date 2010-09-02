@@ -53,7 +53,7 @@
             <plugin name='xep_0060' />
             <plugin name='xep_0199' />
             <plugin name='xep_0092' >
-                <config name='SleekBot' version= '0.2' />
+                <config name='SleekBot' version= '0.3' />
             </plugin>
         </xmpp>
     </plugins>
