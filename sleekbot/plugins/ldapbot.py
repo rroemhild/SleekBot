@@ -118,11 +118,14 @@ class ldapbot(BotPlugin):
         except ldap.LDAPError as e:
             logging.error('LDAP %s' % e)
     
-    @botcmd(name = 'ldap', usage = options)
+    @botcmd(name='ldap', usage=options)
     def handle_ldapsearch(self, command, args, msg):
-        """Achieve a query on an LDAP Server"""
-        opt = args.split(' ', 1)[0]
+        """ Achieve a query on an LDAP Server."""
+
+        opt = ''
         query = ''
+        
+        opt = args.split(' ', 1)[0]
         if ' ' in args:
             query = args.split(' ', 1)[-1]
         responseTemp = []
@@ -164,4 +167,4 @@ class ldapbot(BotPlugin):
             else:
                 return "No search result."
         
-        return "Unknown option %s." % opt
+        return "Unknown option."
