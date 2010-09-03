@@ -45,10 +45,7 @@ if __name__ == '__main__':
         shouldRestart = False
         logging.info("Loading config file: %s" % args[0])
 
-        plugin_config = {}
-        plugin_config['xep_0092'] = {'name': 'SleekBot', 'version': '0.1-dev'}
-
-        bot = SleekBot(args[0], plugin_config=plugin_config)
+        bot = SleekBot(args[0])
         bot.connect()
         bot.process(threaded=False)
         while not bot.state['disconnecting']:

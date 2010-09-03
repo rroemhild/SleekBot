@@ -69,5 +69,16 @@
                 </config>
             </plugin>
         </bot>
+        <xmpp>
+            <plugin name='xep_0030' />
+            <plugin name='xep_0004' />
+            <plugin name='xep_0045' />
+            <plugin name='xep_0050' />
+            <plugin name='xep_0060' />
+            <plugin name='xep_0199' />
+            <plugin name='xep_0092' >
+                <config name='SleekBot' version= '0.3' />
+            </plugin>
+        </xmpp>
     </plugins>
 </config>

@@ -8,7 +8,7 @@ setup(
     name = "sleekbot",
     packages = ["sleekbot", "sleekbot/plugins"],
     package_data = {"sleekbot": ['config_template.xml']},
-    version = "0.1",
+    version = "0.3",
     description = "SleekXMPP based bot frameework",
     author = "Hernan E. Grecco",
     author_email = "hernan.grecco@gmail.com",
