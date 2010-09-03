@@ -338,14 +338,14 @@ class CommandBot(object):
         """ Was this message sent from a bot admin?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.admins
+        return jid in self.admins or jid in self.owners
 
     @denymsg('You are not a member')
     def msg_from_member(self, msg):
         """ Was this message sent from a bot member?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.members
+        return jid in self.members or jid in self.admins or jid in self.owners
 
     def get_member_class_jids(self, user_class):
         """ Returns a list of all jids belonging to users of a given class
