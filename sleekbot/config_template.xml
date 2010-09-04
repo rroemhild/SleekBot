@@ -47,23 +47,16 @@
             <plugin name="ldapbot">
                 <config>
                     <server uri="ldap://server.com:389" binddn="" secret="" />
-                    <option name="userinfo" help="Returns some user Info" usage="userinfo [name|uid]">
-                        <basedn dn="ou=people,dc=s-v,dc=de" />
-                        <filter>
-                            <attr name="uid" />
-                            <attr name="sn" />
-                            <attr name="givenName" />
-                        </filter>
-                        <require>
-                            <attr name="account" value="active" />
-                        </require>
-                        <return>
+                    <option name="user" help="Returns some user info" usage="user [givenname|surname|uid]">
+                        <basedn dn="ou=people,dc=domain,dc=tld" />
+                        <searchFilter>(&amp;(account=active)(|(uid=*%s*)(sn=*%s*)(givenName=*%s*)(displayName=*%s*)))</searchFilter>
+                        <retrieveAttributes>
                             <attr name="sn" />
                             <attr name="givenName" />
                             <attr name="mail" />
                             <attr name="ou" />
                             <attr name="telephoneNumber" />
-                        </return>
+                        </retrieveAttributes>
                         <response msg="%(givenName)s %(sn)s\nOrg: %(ou)s\nE-Mail: %(mail)s\nPhone: %(telephoneNumber)s" order="sorted" delimiter="\n" limit="1" />
                     </option>
                 </config>
