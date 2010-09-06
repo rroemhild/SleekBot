@@ -392,18 +392,11 @@ class CommandBot(object):
         """ Checks whether the bot is configured to respond to the sender of a message.
             Overload if needed
         """
-
-        return self.should_answer_jid(self.get_real_jid(msg))
-
-    def should_answer_jid(self, jid):
-        """ Checks whether the bot is configured to respond to the specified jid.
-            Pass in a muc jid if you want, it'll be converted to a real jid if possible
-            Accepts 'None' jids (acts as an unknown user).
-        """
+        jid = self.get_real_jid(msg)
         if jid in self.banned:
             return False
         if not self.require_membership:
             return True
-        if jid in self.members or jid in self.admins or jid in self.owners:
+        if self.msg_from_member(msg):
             return True
         return False
