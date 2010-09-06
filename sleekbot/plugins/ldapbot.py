@@ -30,7 +30,7 @@ class Options():
 options = Options()
 
 class ldapbot(BotPlugin):
-    """Ldapbot allows users to query an LDAP server.
+    """Ldapbot allows users to query a LDAP server.
     Written By: Rafael Roemhild"""
     
     def on_register(self):
@@ -54,7 +54,7 @@ class ldapbot(BotPlugin):
         options.x = '[%s]' % '|'.join(self.plugin_options)
     
     def get_available_commands(self, options):
-        """ Returns a list with search commands
+        """ Return a list with search commands
         """
         temp = []
         for option in options:
@@ -62,7 +62,7 @@ class ldapbot(BotPlugin):
         return temp
     
     def get_entries_limit(self, limit, default=1):
-        """ Return an integer for the output limit of entries
+        """ Return a integer for the output limit of entries
         """
         if not limit:
             limit = default
@@ -88,14 +88,14 @@ class ldapbot(BotPlugin):
                                             searchFilter, retrieveAttrib, 0,
                                             int(self.config.find('server').get('timeout', 10)))
             self.ldap.unbind_s()
-            logging.debug('Diconnected from LDAP server.')
+            logging.debug('Disconnected from LDAP server.')
             return result_set
         except ldap.LDAPError as e:
             logging.error('LDAP %s' % e)
     
-    @botcmd(name='ldap', usage=options)
+    @botcmd(name='ldap', usage=options) # options is global
     def handle_ldapsearch(self, command, args, msg):
-        """ Achieve a query on an LDAP Server."""
+        """ Achieve a query on a LDAP Server."""
         
         opt = ''
         query = ''
@@ -111,7 +111,7 @@ class ldapbot(BotPlugin):
             
             # Returns plugin command help if there is no query
             if query == '':
-                return "ldap %s\nHelp: %s\nUsage: %s" % (opt,
+                return "ldap %s -- %s\nUsage: %s\n" % (opt,
                                                         option['help'],
                                                         option['usage'])
             
