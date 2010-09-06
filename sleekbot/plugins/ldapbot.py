@@ -31,7 +31,7 @@ options = Options()
 
 class ldapbot(BotPlugin):
     """Ldapbot allows users to query a LDAP server.
-    Written By: Rafael Roemhild"""
+    """
     
     def on_register(self):
         self.ldap = None
