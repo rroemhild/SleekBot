@@ -135,7 +135,7 @@ class PluginDict(dict):
 
         super(PluginDict, self).__delitem__(key)
 
-    def register(self, name, config = {}, package = '__default__'):
+    def register(self, name, config = {}, module = '__default__', package = '__default__'):
         """ Loads and register a plugin
                 name    -- plugin name (name of the class)
                 config  -- extra configuration (to be handled to the plugin)
@@ -155,9 +155,11 @@ class PluginDict(dict):
                     __import__(package)
                     self.__imported.add(package)
                     logging.debug('Imported package %s' % package)
+                if module == '__default__':
+                    module = name
 
-                module = __import__("%s.%s" % (package, name), fromlist = name)
-                self[name] = self._default_factory(getattr(module, name),  config)
+                imported = __import__("%s.%s" % (package, module), fromlist = name)
+                self[name] = self._default_factory(getattr(imported, name),  config)
 
             return True
 

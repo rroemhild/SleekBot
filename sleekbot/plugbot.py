@@ -55,7 +55,7 @@ class PlugBot(object):
         plugins = self.botconfig.findall('plugins/bot/plugin')
         if plugins:
             for plugin in plugins:
-                loaded = self.cmd_plugins.register(plugin.attrib['name'], plugin.find('config'), plugin.attrib.get('package', '__default__'))
+                loaded = self.cmd_plugins.register(plugin.attrib['name'], plugin.find('config'), plugin.attrib.get('module', '__default__'), plugin.attrib.get('package', '__default__'))
                 if loaded:
                     logging.info("Registering plugin %s OK" % (plugin.attrib['name']))
                 else:
