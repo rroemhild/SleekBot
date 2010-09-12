@@ -22,6 +22,7 @@
         </admin>
         <member>
             <jid>arbitrarybotuser@server.com</jid>
+            <jid>trustedserver.com</jid>
         </member>
         <banned>
             <jid>banneduser@server.com</jid>
