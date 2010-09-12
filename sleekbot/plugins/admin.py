@@ -47,13 +47,19 @@ class admin(BotPlugin):
 class info(BotPlugin):
     """A plugin to obtain information about the bot."""
 
-    def on_register(self):
-        self.started = datetime.datetime.now()
+    def __init__(self, *args, **kwargs):
         try:
             from guppy import hpy
             self.hpy = hpy()
         except:
+            delattr(info, 'mem')
             logging.warning("guppy not present. mem plugin not available")
+        super(info, self).__init__(*args, **kwargs)
+
+
+    def on_register(self):
+        self.started = datetime.datetime.now()
+
 
     @botcmd()
     def uptime(self, command, args, msg):
@@ -65,8 +71,8 @@ class info(BotPlugin):
         return "%s weeks %s days %s hours %s minutes %s seconds" % (weeks, days, hours, minutes, seconds)
 
 
-    @botcmd('mem')
-    def handle_mem(self, command, args, msg):
+    @botcmd()
+    def mem(self, command, args, msg):
         """See how much memory python is using"""
         return '%s\n' % self.hpy.heap()
 
