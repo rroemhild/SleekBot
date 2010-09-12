@@ -13,6 +13,7 @@ import inspect
 import threading
 import re
 
+from eset import eset
 
 def denymsg(msg):
     """ Method decorator to add a denymsg property to a method."""
@@ -211,10 +212,10 @@ class CommandBot(object):
         self.freetext = []
         self.register_commands(self)
 
-        self.owners = set(self.get_member_class_jids('owner'))
-        self.admins = set(self.get_member_class_jids('admin'))
-        self.members = set(self.get_member_class_jids('member'))
-        self.banned = set(self.get_member_class_jids('banned'))
+        self.owners = eset(self.get_member_class_jids('owner'))
+        self.admins = eset(self.get_member_class_jids('admin'))
+        self.members = eset(self.get_member_class_jids('member'))
+        self.banned = eset(self.get_member_class_jids('banned'))
         self.require_membership = self.botconfig.find('require-membership') != None
         logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
                     ( len(self.owners), len(self.admins), len(self.members), len(self.banned), self.require_membership))
