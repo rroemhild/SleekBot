@@ -44,13 +44,6 @@
                 </config>
             </plugin>
             <plugin name='xmradio' />
-            <plugin name="slap" >
-                <config>
-                    <verbs>slaps,hits,smashes,beats,bashes,smacks,blats,punches,stabs</verbs>
-                    <size>a large,an enormous,a small,a tiny,a medium sized,an extra large,a questionable,a suspicious,a terrifying,a scary,a breath taking,a horrifying</size>
-                    <tools>trout,fork,mouse,piano,cello,vacuum,mosquito,sewing needle,iron bar,Windows ME user guide,christmas tree,axe,finetuned sledgehammer,set of Windows 3.11 floppies,MS IIS</tools>
-                </config>
-            </plugin>
         </bot>
         <xmpp>
             <plugin name='xep_0030' />
