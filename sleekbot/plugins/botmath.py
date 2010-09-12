@@ -1,7 +1,10 @@
+#!/usr/bin/env python
 """
     This file is part of SleekBot. http://github.com/hgrecco/SleekBot
     See the README file for more information.
 """
+
+from math import *
 
 import random
 import time
@@ -12,13 +15,52 @@ import traceback
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
-class diceroll(BotPlugin):
-    """A nerdy plugin for rolling complex or simple dice formulas."""
+#make a list of safe functions
+safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', \
+'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot', 'ldexp', 'log', \
+'log10', 'modf', 'pi', 'pow', 'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh', 'abs']
+#use the list to filter the local namespace
+safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
 
-    @botcmd(name = 'roll', usage = '[dice calculation]')
-    def handle_roll(self, command, args, msg):
+class botmath(BotPlugin):
+    """A nerdy plugin for rolling complex or simple formulas."""
+
+    @botcmd(usage = '[math expression]')
+    def calc(self, command, args, msg):
+        """Does a mathematical calculation
+        You can do simple calculations such as 2+3
+        Or more complex such as sin(1.5*pi)
+        """
+        return str(eval(args, {"__builtins__":None}, safe_dict))
+
+
+    @botcmd(usage = '[A B|B]')
+    def random(self, command, args, msg):
+        """Returns a random integer in range A - B or 1 - B."""
+
+        if args != None and args != "" and len(args.split(' ')) <= 2:
+            try:
+                a, b = (0, 0)
+
+                if len(args.split(' ')) < 2:
+                    a = '1'
+                    b = args
+                else:
+                    a, b = args.split(' ')
+
+                x = str(random.randint(int(a), int(b)))
+                if msg['type'] == 'groupchat':
+                    return "%s rolls %s (%s - %s)" % (msg['mucnick'], x, a, b)
+                else:
+                    return "%s (%s - %s)" % (x, a, b)
+            except ValueError:
+                pass
+
+
+    @botcmd(usage = '[dice calculation]')
+    def roll(self, command, args, msg):
         """Rolls dice for you.
-        Example: !roll (1 + d6 + 2d10 + 5 + d4) * 2 """
+        Example: roll (1 + d6 + 2d10 + 5 + d4) * 2 """
 
         try:
             d = diceCalc(args)
@@ -179,6 +221,7 @@ if __name__ == '__main__':
     command = ''
     while command != 'quit':
         if command:
+            print eval(user_func,{"__builtins__":None},safe_dict)
             d = diceCalc(command)
             print d.show()
         command = raw_input()
