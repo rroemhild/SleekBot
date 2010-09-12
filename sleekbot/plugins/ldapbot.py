@@ -3,6 +3,26 @@
     See the README file for more information.
 """
 
+""" Configuration example
+<plugin name="ldapbot">
+    <config>
+        <server uri="ldap://server.com:389" binddn="" secret="" />
+        <option name="user" help="Returns some user info" usage="user [givenname|surname|uid]">
+            <basedn dn="ou=people,dc=domain,dc=tld" />
+            <searchFilter>(&amp;(account=active)(|(uid=*%s*)(sn=*%s*)(givenName=*%s*)(displayName=*%s*)))</searchFilter>
+            <retrieveAttributes>
+                <attr name="sn" />
+                <attr name="givenName" />
+                <attr name="mail" />
+                <attr name="ou" />
+                <attr name="telephoneNumber" />
+            </retrieveAttributes>
+            <response msg="%(givenName)s %(sn)s\nOrg: %(ou)s\nE-Mail: %(mail)s\nPhone: %(telephoneNumber)s" order="sorted" delimiter="\n" limit="1" />
+        </option>
+    </config>
+</plugin>
+"""
+
 import logging
 
 import ldap
@@ -23,7 +43,7 @@ class Options():
     """
     def __init__(self):
         self.x = ''
-    
+
     def __str__(self):
         return self.x
 
@@ -32,11 +52,11 @@ options = Options()
 class ldapbot(BotPlugin):
     """Ldapbot allows users to query a LDAP server.
     """
-    
+
     def on_register(self):
         self.ldap = None
         self.plugin_options = {}
-        
+
         for option in self.config.findall('option'):
             self.plugin_options[option.attrib['name']] = {
                 'name' : option.attrib['name'],
@@ -49,10 +69,10 @@ class ldapbot(BotPlugin):
                 'responseMsg' : option.find('response').get('msg', default='').replace('\\n', '\n'),
                 'searchFilter' : option.find('searchFilter').text,
                 'retrieveAttributes' : option.find('retrieveAttributes')}
-        
+
         global options
         options.x = '[%s]' % '|'.join(self.plugin_options)
-    
+
     def get_available_commands(self, options):
         """ Return a list with search commands
         """
@@ -60,7 +80,7 @@ class ldapbot(BotPlugin):
         for option in options:
             temp.append(option.attrib['name'])
         return temp
-    
+
     def get_entries_limit(self, limit, default=1):
         """ Return a integer for the output limit of entries
         """
@@ -69,7 +89,7 @@ class ldapbot(BotPlugin):
         elif not limit.isdigit():
             limit = default
         return int(limit)
-       
+
     def ldap_search(self, searchFilter, retrieveAttrib, option):
         """ Run a search on LDAP server
         """
@@ -81,7 +101,7 @@ class ldapbot(BotPlugin):
             logging.debug('Connected to ldap server.')
         except ldap.LDAPError as e:
             logging.error('LDAP %s' % e)
-        
+
         searchScope = ldap.SCOPE_SUBTREE
         try:
             result_set = self.ldap.search_st(option['basedn'], searchScope,
@@ -92,42 +112,42 @@ class ldapbot(BotPlugin):
             return result_set
         except ldap.LDAPError as e:
             logging.error('LDAP %s' % e)
-    
+
     @botcmd(name='ldap', usage=options) # options is global
     def handle_ldapsearch(self, command, args, msg):
         """ Achieve a query on a LDAP Server."""
-        
+
         opt = ''
         query = ''
-        
+
         opt = args.split(' ', 1)[0]
         if ' ' in args:
             query = ldap.filter.escape_filter_chars(args.split(' ', 1)[-1])
-        
+
         responseTemp = []
-        
+
         if opt in self.plugin_options:
             option = self.plugin_options[opt]
-            
+
             # Returns plugin command help if there is no query
             if query == '':
                 return "ldap %s -- %s\nUsage: %s\n" % (opt,
                                                         option['help'],
                                                         option['usage'])
-            
+
             searchFilter = ''
             searchFilter = option['searchFilter'].replace('%s', query)
             logging.debug('LDAP search filter: %s' % searchFilter)
-            
+
             # responseable message attributes
             retrieveAttributes = []
             for sr in option['retrieveAttributes'].findall('attr'):
                 retrieveAttributes.append(sr.attrib['name'])
-            
+
             # ldap search
             results = self.ldap_search(searchFilter, retrieveAttributes, option)
             logging.debug('LDAP search results: %s' % results)
-            
+
             # response
             entries = []
             if results:
@@ -138,10 +158,10 @@ class ldapbot(BotPlugin):
             limit = self.get_entries_limit(option['limit'], len(entries))
             for entry in entries[:limit]:
                 responseTemp.append(option['responseMsg'] % entry)
-            
+
             if len(responseTemp) > 0:
                 return "%s" % option['delimiter'].join(responseTemp)
             else:
                 return "No search result."
-        
+
         return "Unknown option."
