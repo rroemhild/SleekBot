@@ -368,7 +368,7 @@ class CommandBot(object):
         if mucroom in self.plugin['xep_0045'].getJoinedRooms():
             logging.debug("Checking real jid for %s %s" %(mucroom, mucnick))
             real_jid = self.plugin['xep_0045'].getJidProperty(mucroom, mucnick, 'jid')
-            print real_jid
+            logging.debug(real_jid)
             if real_jid:
                 return real_jid
             else:
