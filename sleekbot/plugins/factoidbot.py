@@ -76,7 +76,7 @@ class factoidbot(BotPlugin):
     def on_register(self):
         self.factstore = factstore()
 
-    @botcmd(name = 'fact', usage = 'fact [topic]')
+    @botcmd(name='fact', usage='fact [topic]')
     def handle_fact(self, command, args, msg):
         """Returns a fact"""
         subcommand = None
@@ -96,9 +96,8 @@ class factoidbot(BotPlugin):
             return response
 
         #admin commands
-
         if "list" == subcommand:
-            if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners() + self.bot.getAdmins():
+            if not self.bot.msg_from_owner(msg):
                 return "You do not have access to this function"
             terms = self.factstore.list_terms()
             response = "I know about the following topics:\n"
@@ -106,7 +105,7 @@ class factoidbot(BotPlugin):
                 response = response + "\t" + term
             response = response + "."
         elif "add" == subcommand:
-            if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners() + self.bot.getAdmins():
+            if not self.bot.msg_from_owner(msg):
                 response = "You do not have access to this function"
             elif term != None and fact != None:
                 self.factstore.add(term, fact)
@@ -114,7 +113,7 @@ class factoidbot(BotPlugin):
             else:
                 response = "To add a fact, both a topic and description are needed."
         elif "delete" == subcommand:
-            if self.bot.getRealJidFromMessage(msg) not in self.bot.getOwners() + self.bot.getAdmins():
+            if not self.bot.msg_from_owner(msg):
                 response = "You do not have access to this function"
             else:
                 self.factstore.delete(term)

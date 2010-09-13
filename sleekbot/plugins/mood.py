@@ -6,11 +6,12 @@
 import logging
 from xml.etree import cElementTree as ET
 
-class mood(object):
-	def __init__(self, bot, config):
-		self.bot = bot
-		self.config = config
-		self.about = "Set the bot's mood!"
+from sleekbot.plugbot import BotPlugin
+
+class mood(BotPlugin):
+	"""Set the bot's mood."""
+
+	def on_register(self):
 		self.pubsub = self.bot.plugin['xep_0060']
 		self.xform = self.bot.plugin['xep_0004']
 		self.adhoc = self.bot.plugin['xep_0050']
@@ -31,7 +32,7 @@ class mood(object):
 		text.text = value['desc']
 		moodx.append(moodel)
 		moodx.append(text)
-		self.pubsub.setItem(self.bot.server, 'http://jabber.org/protocol/mood', {None:moodx})
+		self.pubsub.setItem(self.bot.server, 'http://jabber.org/protocol/mood', ((None,moodx),))
 		done = self.xform.makeForm('form', "Finished")
 		done.addField('done', 'fixed', value="Mood updated.")
 		return done, None, False
