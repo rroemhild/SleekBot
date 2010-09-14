@@ -97,7 +97,7 @@ class factoidbot(BotPlugin):
 
         #admin commands
         if "list" == subcommand:
-            if not self.bot.msg_from_owner(msg):
+            if not self.bot.msg_from_admin(msg):
                 return "You do not have access to this function"
             terms = self.factstore.list_terms()
             response = "I know about the following topics:\n"
@@ -105,7 +105,7 @@ class factoidbot(BotPlugin):
                 response = response + "\t" + term
             response = response + "."
         elif "add" == subcommand:
-            if not self.bot.msg_from_owner(msg):
+            if not self.bot.msg_from_admin(msg):
                 response = "You do not have access to this function"
             elif term != None and fact != None:
                 self.factstore.add(term, fact)
@@ -113,7 +113,7 @@ class factoidbot(BotPlugin):
             else:
                 response = "To add a fact, both a topic and description are needed."
         elif "delete" == subcommand:
-            if not self.bot.msg_from_owner(msg):
+            if not self.bot.msg_from_admin(msg):
                 response = "You do not have access to this function"
             else:
                 self.factstore.delete(term)
