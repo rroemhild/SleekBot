@@ -1,0 +1,121 @@
+Core
+====
+
+A class to handle users
+-----------------------
+
+The class exposes 4 set-like properties:
+- owners
+- admins
+- members
+- banned
+
+in such a way that membership can be queried like:
+
+    name in obj.owners
+
+In the xml configuration file, this type of configuration would be:
+
+    <users class="classname" config="config">
+
+If CommandBot finds a class attribute, it would instantiate an object using config as the initialization parameter and assign owners, admins, members and banned to the corresponding properties. If jids are also listed inside owners, admins, members and banned tasks; they should be added to the corresponding set.
+
+With the proper implementation, a database or ldap server can be used as back-end to handle users. This could also be used to provide easy to administrate persistency to the user lists.
+
+
+A configuration user-interface
+------------------------------
+
+It would be useful, but not necessary, to have a simple user interface to generate the xml file. This should allow to configure the bot authentication details, and the xeps and plugins to include. The syntax can be:
+
+    runbot.py -i newconfig.xml
+    runbot.py --interactive newconfig.xml
+
+A graphical user interface based on QT/Tk or a text user interface base on urwid is possible but will add more dependencies to the project which is not desirable.
+
+
+Documentation and Plugin documentation
+--------------------------------------
+
+Hopefully, the number of plugins will increase. A good documentation system is necessary to track function and requirements. The documentation should be consistent across plugins and extracted from the source code. It should also be browsable in the github wiki.
+
+
+Plugin configuration through the XML file
+-----------------------------------------
+
+Flexible plugin configuration so that users do not need to change the source code to adapt to their needs.
+Maybe generalizing this:
+http://github.com/Ekimus/SleekBot/commit/8040ddf2ad9dfacb9dca3fdad0b633d86facba8c
+
+
+Internalization
+---------------
+
+It would be good to internationalize SleekBot. Switching languages in the bot is not so problematic, what is a little bit more cumbersome is to allow each user (somebody that is talking to the bot) to change the language only for himself.
+
+
+
+Plugins
+=======
+
+
+User administration
+-------------------
+
+A plugin to add, remove and modify users to owners, admins, members and banned. Should be included in the admin module.
+Commmands:
+- add-user jid group
+- del-user jid
+- set-user jid group
+- list-users [optional group]
+
+
+Distribute
+----------
+
+Consider a set of CPU intensive commands implemented as SleekBot commands. To better distribute the load, multiple bots are created across several computers. Instead of chatting to each individual bot, the user chats with a hub that dispatch commands to worker bots. Node bots use their presence (available/busy) to indicate if they can receive new process. This infrastructure can also be used to interact with different services distributed through the network.
+
+Hub Plugin
+~~~~~~~~~~
+
+Configuration:
+    <plugin name='hub' module='distribute'/>
+        <config token='hub1 token' />
+
+token: is an optional string used by the hub to recognize valid workers
+
+Commands:
+- register-command [command object]
+- unregister-command [command object]
+- A free text parser to do the actual dispatch
+
+[command object] is a serialized (pickled?) version of the botcmd dict.
+
+Node Plugin
+~~~~~~~~~~~
+
+Configuration:
+    <plugin name='node' module='distribute'/>
+        <config>
+            <hubs>
+                <jid token='hub1 token'>hub1@server.com</jid>
+                <jid token='hub2 token'>hub2@server.com</jid>
+                <jid>hub3@server.com</jid>
+            </hubs>
+        </config>
+    </plugin>
+
+on_register sends all the commands that it can process to the hubs.
+
+It should also register itself to receive notifications when a new hub is available so it can send available commands.
+
+
+Artificial Intelligence Markup Language (AIML)
+----------------------------------------------
+
+http://www.alicebot.org/aiml.html
+http://en.wikipedia.org/wiki/AIML
+
+Add a plugin that responds based on a AIML file (maybe through a free text parser). It could be based on:
+
+http://pyaiml.sourceforge.net/

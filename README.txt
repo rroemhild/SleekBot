@@ -123,6 +123,10 @@ Authors
 
 Hernan E. Grecco <hernan.grecco@gmail.com>
 
-Original by Nathan Fritz and Kevin Smith
+Contributors:
+- Rafael Römhild <rafael@roemhild.de>
+
+
+Original by Nathan Fritz and Kevin Smith http://github.com/Kev/SleekBot/
 
 See HISTORY.txt for more details
