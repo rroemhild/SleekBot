@@ -54,7 +54,7 @@ class jidstore(object):
         db = self.store.getDb()
         cur = db.cursor()
         logging.debug("Updating whowas")
-        cur.execute('SELECT * FROM whowas WHERE nick=? AND muc=?', (event.nick,event.muc))
+        cur.execute('SELECT * FROM whowas WHERE nick=? AND muc=?', (event.nick, event.muc))
         if (len(cur.fetchall()) > 0):
             cur.execute('UPDATE whowas SET jid=?, eventTime=?', (event.jid, event.eventTime))
             logging.debug("Updated existing whowas")
@@ -104,7 +104,7 @@ class seenstore(object):
     def update(self, event):
         db = self.store.getDb()
         cur = db.cursor()
-        logging.debug("Updating seen")
+        logging.debug("Updating seen for %s - time: %s" % (event.nick, event.eventTime))
         cur.execute('SELECT * FROM seen WHERE nick=?', (event.nick,))
         if (len(cur.fetchall()) > 0):
             cur.execute('UPDATE seen SET nick=?, eventTime=?, muc=?, stanzaType=?, text=? WHERE nick=?', (event.nick, event.eventTime, event.muc, event.stanzaType, event.text, event.nick))
@@ -114,7 +114,6 @@ class seenstore(object):
             logging.debug("Added new seen")
         db.commit()
         db.close()
-
 
     def get(self, nick):
         db = self.store.getDb()
@@ -149,30 +148,28 @@ class seen(BotPlugin):
     def handle_groupchat_presence(self, presence):
         """ Keep track of the presences in mucs.
         """
-        presence['dateTime'] = datetime.datetime.now()
         if presence.get('type', None) == 'unavailable':
             pType = seenevent.partType
         else:
             pType = seenevent.presenceType
-        self.seenstore.update(seenevent(presence['nick'], presence['dateTime'], presence['room'], pType, presence.get('status', None)))
+        now = datetime.datetime.now()
+        self.seenstore.update(seenevent(presence['from'].resource, now.strftime("%Y-%m-%d %H:%M:%S"), presence['from'].bare, pType, presence.get('status', None)))
         #self.jidstore.update(jidevent(presence['nick'], presence['room'], self.bot.getRealJid(presence['jid']) , presence['dateTime']))
-
-
 
     def handle_groupchat_message(self, message):
         """ Keep track of activity through messages.
         """
-        if 'message' not in message.keys():
+        if 'body' not in message.keys():
             return
-        message['dateTime'] = datetime.datetime.now()
-        self.seenstore.update(seenevent(message['name'], message['dateTime'], message['room'], seenevent.messageType, message['message']))
+        now = datetime.datetime.now()
+        self.seenstore.update(seenevent(message['from'].resource, now.strftime("%Y-%m-%d %H:%M:%S"), message['from'].bare, seenevent.messageType, message['body']))
         #self.jidstore.update(jidevent(message['name'], message['room'], self.bot.getRealJidFromMessag(message), message['dateTime']))
 
-    @botcmd('seen')
+    @botcmd('seen', usage='[nick]')
     def handle_seen_request(self, command, args, msg):
         """See when a user was last seen."""
         if args == None or args == "":
-            return "Please supply a a nickname to search for"
+            return "Please supply a nickname to search for"
         seenData = self.seenstore.get(args)
         if seenData == None:
             return "I have never seen '" + args + "'"
