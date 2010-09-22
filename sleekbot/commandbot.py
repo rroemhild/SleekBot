@@ -378,8 +378,7 @@ class CommandBot(object):
     def get_real_jid(self, msg):
         """ Returns the real jid of a msg
         """
-        if msg['type'] == 'groupchat':
-            # TODO detect system message
+        if msg['type'] == 'groupchat' and msg['mucnick'] != msg['mucroom']:
             return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
         else:
             if msg['jid'] in self['xep_0045'].getJoinedRooms():
