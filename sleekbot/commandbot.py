@@ -8,6 +8,7 @@ __license__ = 'MIT License/X11 license'
 
 from functools import wraps
 
+import collections
 import logging
 import inspect
 import threading
@@ -74,6 +75,7 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False,
         _inner._botcmd['usage'] = usage or ''
         _inner._botcmd['IM'] = IM
         _inner._botcmd['MUC'] = MUC
+        _inner._botcmd['allow'] = allow
         return _inner
     return _outer
 
@@ -309,9 +311,9 @@ class CommandBot(object):
             prefix   = self.im_prefix
 
         response = ''
+        args = args.strip()
         if args:
-            args = args.strip()
-            if args in commands:
+            if args in commands and (commands[args]._botcmd['allow'] is True or commands[args]._botcmd['allow'](self, msg)):
                 f  = commands[args]
                 response += '%s -- %s\n' % (args,  f._botcmd['title'])
                 response += ' %s\n' % f._botcmd['doc']
@@ -323,7 +325,7 @@ class CommandBot(object):
         response += "Commands:\n"
         for command in sorted(commands.keys()):
             f = commands[command]
-            if not f._botcmd['hidden']:
+            if not f._botcmd['hidden'] and (f._botcmd['allow'] is True or f._botcmd['allow'](self, msg)):
                 response += "%s -- %s\n" % (command,  f._botcmd['title'])
         response += "---------\n"
         return response
