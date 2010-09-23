@@ -14,7 +14,7 @@ import inspect
 import threading
 import re
 
-from eset import eset
+from users import Users
 
 def denymsg(msg):
     """ Method decorator to add a denymsg property to a method."""
@@ -214,13 +214,11 @@ class CommandBot(object):
         self.freetext = []
         self.register_commands(self)
 
-        self.owners = eset(self.get_member_class_jids('owner'))
-        self.admins = eset(self.get_member_class_jids('admin'))
-        self.members = eset(self.get_member_class_jids('member'))
-        self.banned = eset(self.get_member_class_jids('banned'))
+        self.users = Users()
+        self.users.update_from_xml(self.botconfig.findall('users'))
         self.require_membership = self.botconfig.find('require-membership') != None
         logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
-                    ( len(self.owners), len(self.admins), len(self.members), len(self.banned), self.require_membership))
+                    ( len(self.users.owners), len(self.users.admins), len(self.users.members), len(self.users.banned), self.require_membership))
 
     def stop(self):
         """ Messages will not be received
@@ -334,35 +332,21 @@ class CommandBot(object):
         """ Was this message sent from a bot owner?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.owners
+        return jid in self.users.owners
 
     @denymsg('You are not my admin')
     def msg_from_admin(self, msg):
         """ Was this message sent from a bot admin?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.admins or jid in self.owners
+        return jid in self.users.admins or jid in self.users.owners
 
     @denymsg('You are not a member')
     def msg_from_member(self, msg):
         """ Was this message sent from a bot member?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.members or jid in self.admins or jid in self.owners
-
-    def get_member_class_jids(self, user_class):
-        """ Returns a list of all jids belonging to users of a given class
-        """
-        jids = []
-        users = self.botconfig.findall('users/' + user_class)
-        if users:
-            for user in users:
-                userJids = user.findall('jid')
-                if userJids:
-                    for jid in userJids:
-                        logging.debug("appending %s to %s list" % (jid.text, user_class))
-                        jids.append(jid.text)
-        return jids
+        return jid in self.users.members or jid in self.users.admins or jid in self.users.owners
 
     def mucnick_to_jid(self, mucroom, mucnick):
         """ Returns the jid associated with a mucnick and mucroom
@@ -395,7 +379,7 @@ class CommandBot(object):
             Overload if needed
         """
         jid = self.get_real_jid(msg)
-        if jid in self.banned:
+        if jid in self.users.banned:
             return False
         if not self.require_membership:
             return True
