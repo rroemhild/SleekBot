@@ -71,8 +71,7 @@ class info(BotPlugin):
         return "%s weeks %s days %s hours %s minutes %s seconds" % (weeks, days, hours, minutes, seconds)
 
 
-    @botcmd()
+    @botcmd(allow=CommandBot.msg_from_owner)
     def mem(self, command, args, msg):
         """See how much memory python is using"""
         return '%s\n' % self.hpy.heap()
-
