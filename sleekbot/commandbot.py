@@ -14,6 +14,7 @@ import threading
 import re
 
 from eset import eset
+from heapq import heappush
 
 def denymsg(msg):
     """ Method decorator to add a denymsg property to a method."""
@@ -78,7 +79,7 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False,
 
 class botfreetxt(object):
     """ Method decorator to declare a bot free text parser
-        The method signature has to be (self, text, msg, command_found, freetext_found):
+        The method signature has to be (self, text, msg, command_found, freetext_found, match):
             text           -- body of the message
             msg            -- dictionary containing message properties
             command_found  -- msg matched a previous botcmd
@@ -180,7 +181,7 @@ class CommandBot(object):
                 if f._botcmd['MUC']:
                     self.muc_commands[f._botcmd['name']] = f
             elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
-                self.freetext.heappush((f._botfreetxt['priority'], f))
+                heappush(self.freetext, (f._botfreetxt['priority'], f))
 
     def unregister_commands(self, obj):
         """ Unregister bot methods from an object
@@ -281,8 +282,8 @@ class CommandBot(object):
         for (p, f) in self.freetext:
             response = f(msg['body'], msg, command_found, freetext_found)
             if not response is None:
-                self.reply(msg, response)
                 freetext_found = True
+                self.reply(msg, response)
 
         self.handle_msg_event(msg, command_found, freetext_found)
 
