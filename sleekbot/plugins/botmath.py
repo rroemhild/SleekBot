@@ -11,6 +11,7 @@ import time
 import sys
 import re
 import traceback
+import string
 
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
@@ -68,6 +69,61 @@ class botmath(BotPlugin):
         except:
             traceback.print_exc()
             return "Invalid dice calculation."
+
+
+    @botcmd(usage = '[alpha|alphanum|numbers|all] [length]')
+    def passgen(self, command, args, msg):
+        """Generates random passwords"""
+
+        """Config example:
+            <plugin name="botmath">
+              <config>
+                <passgen choice="alphanum" length="8" max_length="50" />
+              </config>
+            </plugin>
+
+            Configure the defaults for passgen in the config is not
+            necessary. The defaults in the code are:
+                choice = alphanum
+                length = 8
+                max_length = 100
+        """
+
+        if self.config:
+            config = self.config.find('passgen')
+            default_choice = config.get('choice', 'all')
+            default_length = config.get('length', '8')
+            max_length = config.get('max_length', '100')
+        else:
+            default_choice = 'alphanum'
+            default_length = '8'
+            max_length = '100'
+
+        choices = {'alpha' : string.letters,
+                   'alphanum': string.letters + string.digits,
+                   'num' : string.digits,
+                   'all' : string.letters + string.digits + string.punctuation}
+
+        if args.count(" ") > 0:
+            (choice, length) = args.split(" ", 1)
+            (choice, length) = (choice.strip(' '), length.strip(' '))
+        elif not args == '':
+            if args.isdigit():
+                (choice, length) = (default_choice, args.strip(' '))
+            else:
+                (choice, length) = (args.strip(' '), default_length)
+        else:
+            (choice, length) = (default_choice, default_length)
+
+        if not choice in choices:
+            return "Choices are alpha, alphanum, numbers or all."
+        if not length.isdigit():
+            return "Length should be a number."
+        if int(length) > int(max_length):
+            return "Do you really need such a long password?"
+
+        return "".join(random.choice(choices[choice]) for x in range(int(length)))
+
 
 class Die(object):
     def __init__(self, sides):
