@@ -14,8 +14,23 @@ import inspect
 import threading
 import re
 
-from users import Users
+from users import Users, GROUP
 from heapq import heappush
+
+
+def get_class(class_string):
+    """ Returns class object specified by a string.
+        Arguments:
+            class_string -- The string representing a class.
+
+        Raises:
+            ValueError if module part of the class is not specified.
+    """
+    module_name, _, class_name = class_string.rpartition('.')
+    if module_name == '':
+        raise ValueError('Class name must contain module part.')
+    return getattr(__import__(module_name, globals(), locals(), [class_name], -1), class_name)
+
 
 def denymsg(msg):
     """ Method decorator to add a denymsg property to a method."""
@@ -215,8 +230,9 @@ class CommandBot(object):
         self.freetext = []
         self.register_commands(self)
 
-        self.users = Users()
-        self.users.update_from_xml(self.botconfig.findall('users'))
+        users = self.botconfig.find('users')
+        self.users = get_class(users.attrib.get('classname', 'users.Users'))(users.attrib.get('config', ''))
+        self.users.update_from_xml(users)
         self.require_membership = self.botconfig.find('require-membership') != None
         logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
                     ( len(self.users.owners), len(self.users.admins), len(self.users.members), len(self.users.banned), self.require_membership))
@@ -340,14 +356,14 @@ class CommandBot(object):
         """ Was this message sent from a bot admin?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.users.admins or jid in self.users.owners
+        return self.users.check(jid, [GROUP.owner, GROUP.admin])
 
     @denymsg('You are not a member')
     def msg_from_member(self, msg):
         """ Was this message sent from a bot member?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.users.members or jid in self.users.admins or jid in self.users.owners
+        return self.users.check(jid, [GROUP.owner, GROUP.admin, GROUP.member])
 
     def mucnick_to_jid(self, mucroom, mucnick):
         """ Returns the jid associated with a mucnick and mucroom
