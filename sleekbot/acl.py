@@ -18,6 +18,8 @@ def parts_of(address):
             (pre, dom) = dom.split(".", 1)
             yield dom
 
+def in_clause_subs(n):
+    return ','.join(['?']*n)
 
 def get_jids_in_group(xmlnode, group):
     """ Returns a list of all jids belonging to users of a given group."""
@@ -71,15 +73,18 @@ class Enum(set):
 
 
 class ACL(object):
-    """ Non-persistent storage for users and groups.
+    """ Non-persistent storage for access control lists
     """
 
     ROLE = Enum(['undefined', 'banned', 'user', 'admin', 'owner'])
 
-    def __init__(self, config = dict()):
+    def __init__(self, caller, config = None):
         self.__dict = defaultdict(str)
+        self._post_init()
 
-        # Provide syntactic sugar for accesing the groups within Users
+
+    def _post_init(self):
+        """ Provide syntactic sugar for accesing the different roles."""
         self.banned = virtual_set(self, ACL.ROLE.banned)
         self.admins = virtual_set(self, ACL.ROLE.admin)
         self.owners = virtual_set(self, ACL.ROLE.owner)
@@ -96,13 +101,13 @@ class ACL(object):
 
 
     def check(self, jid, role):
-        """ Check if jid is in a group/groups.
+        """ Check if jid is in a role/roles
                 jid  -- a string with the jid or domain to check
                 role -- an item of ROLE enum or collection of such items
         """
 
         if not isinstance(role, collections.Iterable):
-            role = [role]
+            role = (role, )
         for p in parts_of(jid):
             if self.__dict[p] in role:
                 return True
@@ -110,9 +115,91 @@ class ACL(object):
 
 
     def count(self, role):
-        """ Returns the number of jids that are in group.
+        """ Returns the number of jids that are in role/roles
         """
+        if isinstance(role, collections.Iterable):
+            return reduce(sum, [self.__dict.values().count(r) for r in role])
+
         return self.__dict.values().count(role)
+
+
+class ACLdb(ACL):
+    """ Database storage for access control lists
+    """
+
+    def __init__(self, caller, config = None):
+        self.store = caller.store
+        self.create_table()
+        self._post_init()
+
+
+    def create_table(self):
+        db = self.store.getDb()
+        if not len(db.execute("pragma table_info('acl')").fetchall()) > 0:
+            db.execute('CREATE TABLE "acl" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "jid" VARCHAR(256) UNIQUE, "role" INTEGER)')
+            db.execute('CREATE INDEX idx_role ON acl (role)')
+            logging.info("ACLdb: acl table created")
+        db.close()
+
+
+    def update_from_xml(self, xmlnode):
+        """ Add the jids in an xmlnode.
+        """
+
+        for role in ACL.ROLE:
+            for jid in get_jids_in_group(xmlnode, role):
+                self.update(jid, getattr(ACL.ROLE, role))
+
+
+    def check(self, jid, role):
+        """ Check if jid is in a role/roles
+                jid  -- a string with the jid or domain to check
+                role -- an item of ROLE enum or collection of such items
+        """
+        jid = tuple(parts_of(jid))
+        if isinstance(role, collections.Iterable):
+            query = 'SELECT count(*) FROM acl WHERE jid IN (%s) and role IN (%s)' % (in_clause_subs(len(jid)), in_clause_subs(len(role)))
+            pars = jid + tuple(role)
+        else:
+            query = 'SELECT count(*) FROM acl WHERE jid IN (%s) and role = ?' % (in_clause_subs(len(jid)))
+            pars = jid + (role, )
+
+        db = self.store.getDb()
+        cur = db.cursor()
+        cur.execute(query, pars)
+        ans = int(cur.fetchone()[0]) > 0
+        db.close()
+        return ans
+
+
+    def count(self, role):
+        """ Returns the number of jids that are in role.
+        """
+        if isinstance(role, collections.Iterable):
+            query = 'SELECT count(*) FROM acl WHERE role IN (%s)' % in_clause_subs(role)
+        else:
+            query = 'SELECT count(*) FROM acl WHERE role = ?'
+            role = (role, )
+
+        db = self.store.getDb()
+        cur = db.cursor()
+        cur.execute(query, role)
+        ans = int(cur.fetchone()[0])
+        db.close()
+        return ans
+
+
+    def update(self, jid, role):
+        db = self.store.getDb()
+        cur = db.cursor()
+        cur.execute('SELECT * FROM acl WHERE jid=?', (jid, ))
+        if (len(cur.fetchall()) > 0):
+            cur.execute('UPDATE acl SET jid=?, role=? WHERE jid=?', (jid, role, jid))
+        else:
+            cur.execute('INSERT INTO acl(jid, role) VALUES(?,?)', (jid, role))
+        db.commit()
+        db.close()
+
 
 
 if __name__ == '__main__':
