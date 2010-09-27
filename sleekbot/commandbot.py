@@ -14,9 +14,7 @@ import inspect
 import threading
 import re
 
-from users import Users, GROUP
 from heapq import heappush
-
 
 def get_class(class_string):
     """ Returns class object specified by a string.
@@ -150,7 +148,7 @@ class CommandBot(object):
         and a property named:
             botconfig -- XML ElementTree from the config file. For example:
                 <prefix im='/' muc='!' />
-                <users>
+                <acl>
                     <owner>
                         <jid>owner1@server.com</jid>
                         <jid>owner2@server.com</jid>
@@ -158,13 +156,13 @@ class CommandBot(object):
                     <admin>
                         <jid>trusteduser@server.com</jid>
                     </admin>
-                    <member>
+                    <user>
                         <jid>arbitrarybotuser@server.com</jid>
-                    </member>
+                    </user>
                     <banned>
                         <jid>banneduser@server.com</jid>
                     </banned>
-                </users>
+                </acl>
     """
 
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
@@ -230,12 +228,12 @@ class CommandBot(object):
         self.freetext = []
         self.register_commands(self)
 
-        users = self.botconfig.find('users')
-        self.users = get_class(users.attrib.get('classname', 'users.Users'))(users.attrib.get('config', ''))
-        self.users.update_from_xml(users)
+        aclnode = self.botconfig.find('acl')
+        self.acl = get_class(aclnode.attrib.get('classname', 'acl.ACL'))(aclnode.attrib.get('config', ''))
+        self.acl.update_from_xml(aclnode)
         self.require_membership = self.botconfig.find('require-membership') != None
         logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
-                    ( len(self.users.owners), len(self.users.admins), len(self.users.members), len(self.users.banned), self.require_membership))
+                    ( len(self.acl.owners), len(self.acl.admins), len(self.acl.users), len(self.acl.banned), self.require_membership))
 
     def stop(self):
         """ Messages will not be received
@@ -349,21 +347,21 @@ class CommandBot(object):
         """ Was this message sent from a bot owner?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.users.owners
+        return jid in self.acl.owners
 
     @denymsg('You are not my admin')
     def msg_from_admin(self, msg):
         """ Was this message sent from a bot admin?
         """
         jid = self.get_real_jid(msg)
-        return self.users.check(jid, [GROUP.owner, GROUP.admin])
+        return jid in self.acl.owners or jid in self.acl.admins
 
     @denymsg('You are not a member')
     def msg_from_member(self, msg):
         """ Was this message sent from a bot member?
         """
         jid = self.get_real_jid(msg)
-        return self.users.check(jid, [GROUP.owner, GROUP.admin, GROUP.member])
+        return jid in self.acl.owners or jid in self.acl.admins or jid in self.acl.users
 
     def mucnick_to_jid(self, mucroom, mucnick):
         """ Returns the jid associated with a mucnick and mucroom
@@ -395,7 +393,7 @@ class CommandBot(object):
             Overload if needed
         """
         jid = self.get_real_jid(msg)
-        if jid in self.users.banned:
+        if jid in self.acl.banned:
             return False
         if not self.require_membership:
             return True

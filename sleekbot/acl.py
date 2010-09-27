@@ -70,49 +70,49 @@ class Enum(set):
         return tuple(enumerate(self))
 
 
-
-# Possible groups for users
-GROUP = Enum(['undefined', 'banned', 'member', 'admin', 'owner'])
-
-class Users(object):
+class ACL(object):
     """ Non-persistent storage for users and groups.
     """
+
+    ROLE = Enum(['undefined', 'banned', 'user', 'admin', 'owner'])
 
     def __init__(self, config = dict()):
         self.__dict = defaultdict(str)
 
         # Provide syntactic sugar for accesing the groups within Users
-        self.banned = virtual_set(self, GROUP.banned)
-        self.admins = virtual_set(self, GROUP.admin)
-        self.owners = virtual_set(self, GROUP.owner)
-        self.members = virtual_set(self, GROUP.member)
+        self.banned = virtual_set(self, ACL.ROLE.banned)
+        self.admins = virtual_set(self, ACL.ROLE.admin)
+        self.owners = virtual_set(self, ACL.ROLE.owner)
+        self.users = virtual_set(self, ACL.ROLE.user)
 
 
     def update_from_xml(self, xmlnode):
         """ Add the jids in an xmlnode.
         """
 
-        for group in GROUP:
-            for jid in get_jids_in_group(xmlnode, group):
-                self.__dict[jid] = getattr(GROUP, group)
+        for role in ACL.ROLE:
+            for jid in get_jids_in_group(xmlnode, role):
+                self.__dict[jid] = getattr(ACL.ROLE, role)
 
-    def check(self, jid, group):
+
+    def check(self, jid, role):
         """ Check if jid is in a group/groups.
-                jid   -- a string with the jid or domain to check
-                group -- an item of GROUP enum or collection of such items
+                jid  -- a string with the jid or domain to check
+                role -- an item of ROLE enum or collection of such items
         """
 
-        if not isinstance(group, collections.Iterable):
-            group = [group]
+        if not isinstance(role, collections.Iterable):
+            role = [role]
         for p in parts_of(jid):
-            if self.__dict[p] in group:
+            if self.__dict[p] in role:
                 return True
         return False
 
-    def count(self, group):
+
+    def count(self, role):
         """ Returns the number of jids that are in group.
         """
-        return self.__dict.values().count(group)
+        return self.__dict.values().count(role)
 
 
 if __name__ == '__main__':

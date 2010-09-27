@@ -12,7 +12,7 @@
 <!--  <require-membership /> -->
 
 <!--Users the bot knows about. Owners have full access to the bot, admins have the next layer of access. If require-membership is set, the bot won't respond to anyone unless they have at least a member entry. Banned users are always ignored.-->
-    <users>
+    <acl>
         <owner>
             <jid>test@localhost</jid>
             <jid>anotherjid@backupserver.com</jid>
@@ -20,14 +20,14 @@
         <admin>
             <jid>trusteduser@server.com</jid>
         </admin>
-        <member>
+        <user>
             <jid>arbitrarybotuser@server.com</jid>
             <jid>trustedserver.com</jid>
-        </member>
+        </user>
         <banned>
             <jid>banneduser@server.com</jid>
         </banned>
-    </users>
+    </acl>
 
     <plugins>
         <bot>
