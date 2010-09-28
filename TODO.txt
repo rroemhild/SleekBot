@@ -37,17 +37,6 @@ Plugins
 =======
 
 
-User administration
--------------------
-
-A plugin to add, remove and modify users to owners, admins, members and banned. Should be included in the admin module.
-Commmands:
-- add-user jid group
-- del-user jid
-- set-user jid group
-- list-users [optional group]
-
-
 Distribute
 ----------
 
