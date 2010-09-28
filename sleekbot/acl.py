@@ -60,7 +60,7 @@ class virtual_set(object):
         return self.__users.check(item, self.__prop)
 
 
-class Enum(set):
+class Enum(list):
     """ A simple enum class."""
 
     def __init__(self, names):
@@ -103,7 +103,6 @@ class ACL(object):
     def __contains__(self, key):
         return jid in self.__dict
 
-
     def update_from_xml(self, xmlnode):
         """ Add the jids in an xmlnode.
         """
@@ -111,6 +110,15 @@ class ACL(object):
         for role in ACL.ROLE:
             for jid in get_jids_in_group(xmlnode, role):
                 self[jid] = getattr(ACL.ROLE, role)
+
+
+    def find_part(self, jid):
+        """ For a given jid, find the part that is in the acl
+        """
+        for p in parts_of(jid):
+            if p in self:
+                return p
+        return None
 
 
     def check(self, jid, role):
