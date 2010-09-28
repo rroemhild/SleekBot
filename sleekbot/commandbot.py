@@ -14,7 +14,21 @@ import inspect
 import threading
 import re
 
-from eset import eset
+from heapq import heappush
+
+def get_class(class_string):
+    """ Returns class object specified by a string.
+        Arguments:
+            class_string -- The string representing a class.
+
+        Raises:
+            ValueError if module part of the class is not specified.
+    """
+    module_name, _, class_name = class_string.rpartition('.')
+    if module_name == '':
+        raise ValueError('Class name must contain module part.')
+    return getattr(__import__(module_name, globals(), locals(), [class_name], -1), class_name)
+
 
 def denymsg(msg):
     """ Method decorator to add a denymsg property to a method."""
@@ -80,7 +94,7 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False,
 
 class botfreetxt(object):
     """ Method decorator to declare a bot free text parser
-        The method signature has to be (self, text, msg, command_found, freetext_found):
+        The method signature has to be (self, text, msg, command_found, freetext_found, match):
             text           -- body of the message
             msg            -- dictionary containing message properties
             command_found  -- msg matched a previous botcmd
@@ -134,7 +148,7 @@ class CommandBot(object):
         and a property named:
             botconfig -- XML ElementTree from the config file. For example:
                 <prefix im='/' muc='!' />
-                <users>
+                <acl>
                     <owner>
                         <jid>owner1@server.com</jid>
                         <jid>owner2@server.com</jid>
@@ -142,13 +156,13 @@ class CommandBot(object):
                     <admin>
                         <jid>trusteduser@server.com</jid>
                     </admin>
-                    <member>
+                    <user>
                         <jid>arbitrarybotuser@server.com</jid>
-                    </member>
+                    </user>
                     <banned>
                         <jid>banneduser@server.com</jid>
                     </banned>
-                </users>
+                </acl>
     """
 
     def __init__(self, im_prefix = '/', muc_prefix = '!' ):
@@ -182,7 +196,7 @@ class CommandBot(object):
                 if f._botcmd['MUC']:
                     self.muc_commands[f._botcmd['name']] = f
             elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
-                self.freetext.heappush((f._botfreetxt['priority'], f))
+                heappush(self.freetext, (f._botfreetxt['priority'], f))
 
     def unregister_commands(self, obj):
         """ Unregister bot methods from an object
@@ -214,13 +228,12 @@ class CommandBot(object):
         self.freetext = []
         self.register_commands(self)
 
-        self.owners = eset(self.get_member_class_jids('owner'))
-        self.admins = eset(self.get_member_class_jids('admin'))
-        self.members = eset(self.get_member_class_jids('member'))
-        self.banned = eset(self.get_member_class_jids('banned'))
+        aclnode = self.botconfig.find('acl')
+        self.acl = get_class(aclnode.attrib.get('classname', 'acl.ACL'))(self, aclnode.attrib.get('config', ''))
+        self.acl.update_from_xml(aclnode)
         self.require_membership = self.botconfig.find('require-membership') != None
-        logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
-                    ( len(self.owners), len(self.admins), len(self.members), len(self.banned), self.require_membership))
+        logging.info('%d owners, %d admins, %d users, %d banned. Require-membership %s' % \
+                    ( len(self.acl.owners), len(self.acl.admins), len(self.acl.users), len(self.acl.banned), self.require_membership))
 
     def stop(self):
         """ Messages will not be received
@@ -283,8 +296,8 @@ class CommandBot(object):
         for (p, f) in self.freetext:
             response = f(msg['body'], msg, command_found, freetext_found)
             if not response is None:
-                self.reply(msg, response)
                 freetext_found = True
+                self.reply(msg, response)
 
         self.handle_msg_event(msg, command_found, freetext_found)
 
@@ -334,35 +347,21 @@ class CommandBot(object):
         """ Was this message sent from a bot owner?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.owners
+        return jid in self.acl.owners
 
     @denymsg('You are not my admin')
     def msg_from_admin(self, msg):
         """ Was this message sent from a bot admin?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.admins or jid in self.owners
+        return jid in self.acl.owners or jid in self.acl.admins
 
     @denymsg('You are not a member')
     def msg_from_member(self, msg):
         """ Was this message sent from a bot member?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.members or jid in self.admins or jid in self.owners
-
-    def get_member_class_jids(self, user_class):
-        """ Returns a list of all jids belonging to users of a given class
-        """
-        jids = []
-        users = self.botconfig.findall('users/' + user_class)
-        if users:
-            for user in users:
-                userJids = user.findall('jid')
-                if userJids:
-                    for jid in userJids:
-                        logging.debug("appending %s to %s list" % (jid.text, user_class))
-                        jids.append(jid.text)
-        return jids
+        return jid in self.acl.owners or jid in self.acl.admins or jid in self.acl.users
 
     def mucnick_to_jid(self, mucroom, mucnick):
         """ Returns the jid associated with a mucnick and mucroom
@@ -380,8 +379,7 @@ class CommandBot(object):
     def get_real_jid(self, msg):
         """ Returns the real jid of a msg
         """
-        if msg['type'] == 'groupchat':
-            # TODO detect system message
+        if msg['type'] == 'groupchat' and msg['mucnick'] != msg['mucroom']:
             return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
         else:
             if msg['jid'] in self['xep_0045'].getJoinedRooms():
@@ -395,7 +393,7 @@ class CommandBot(object):
             Overload if needed
         """
         jid = self.get_real_jid(msg)
-        if jid in self.banned:
+        if jid in self.acl.banned:
             return False
         if not self.require_membership:
             return True

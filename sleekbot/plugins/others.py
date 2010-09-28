@@ -6,35 +6,34 @@
 import logging
 import datetime, time
 
-from sleekbot.commandbot import botcmd
+from sleekbot.commandbot import botcmd, CommandBot, denymsg
 from sleekbot.plugbot import BotPlugin
 
 class others(BotPlugin):
     """A plugin to interact with and obtain information about other users."""
 
-    @botcmd(usage = '[muc] [text]')
+    @botcmd(usage = '[muc] [text]', allow=CommandBot.msg_from_owner)
+    @denymsg("I'm not your monkey.")
     def say(self, command, args, msg):
         """Have the bot parrot some text in a channel."""
 
-        if not self.bot.msg_from_owner(msg):
-            return "I'm not your monkey."
         if args.count(" ") >= 1:
             [muc, text] = args.split(" ",1)
         else:
-            return "Insufficient parameters."
+            return "Insufficient parameters"
         self.bot.sendMessage(muc, text, mtype='groupchat')
         return "Sent."
 
 
-    @botcmd(usage = '[jid] [text]')
+    @botcmd(usage = '[jid] [text]', allow=CommandBot.msg_from_owner)
+    @denymsg("I'm not your monkey.")
     def tell(self, command, args, msg):
         """Have the bot parrot some text to a JID."""
-        if not self.bot.msg_from_owner(msg):
-            return "I'm not your monkey."
+
         if args.count(" ") >= 1:
             [jid, text] = args.split(" ",1)
         else:
-            return "Insufficient parameters."
+            return "Insufficient parameters"
         self.bot.sendMessage(jid, text, mtype='chat')
         return "Sent."
 
