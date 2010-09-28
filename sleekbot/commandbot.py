@@ -232,7 +232,7 @@ class CommandBot(object):
         self.acl = get_class(aclnode.attrib.get('classname', 'acl.ACL'))(self, aclnode.attrib.get('config', ''))
         self.acl.update_from_xml(aclnode)
         self.require_membership = self.botconfig.find('require-membership') != None
-        logging.info('%d owners, %d admins, %d members, %d banned. Require-membership %s' % \
+        logging.info('%d owners, %d admins, %d users, %d banned. Require-membership %s' % \
                     ( len(self.acl.owners), len(self.acl.admins), len(self.acl.users), len(self.acl.banned), self.require_membership))
 
     def stop(self):
