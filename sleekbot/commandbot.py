@@ -82,7 +82,7 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False,
 
         _inner._botcmd = dict()
         _inner._botcmd['hidden'] = hidden
-        _inner._botcmd['name'] = name or f.__name__
+        _inner._botcmd['name'] = name or f.__name__.replace('_','-')
         _inner._botcmd['title'] = title or f.__doc__.split('\n', 1)[0] or ''
         _inner._botcmd['doc'] = doc or f.__doc__ or 'undocumented'
         _inner._botcmd['usage'] = usage or ''

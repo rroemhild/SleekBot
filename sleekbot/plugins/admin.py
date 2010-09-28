@@ -88,7 +88,7 @@ class acl(BotPlugin):
         p = self.bot.acl.find_part(jid)
         if p:
             if p == jid:
-                return '%s is a %s' % (jid, self.bot.acl.ROLE[self.bot.acl[jid]])
+                return '%s is %s' % (jid, self.bot.acl.ROLE[self.bot.acl[jid]])
             else:
                 return '%s through %s is %s' % (jid, p, self.bot.acl.ROLE[self.bot.acl[p]])
         else:
