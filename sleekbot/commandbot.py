@@ -400,3 +400,43 @@ class CommandBot(object):
         if self.msg_from_member(msg):
             return True
         return False
+
+
+class mstr(str):
+
+    def __new__(cls, string):
+        return super(mstr, cls).__new__(cls, string)
+
+
+class ArgError(Exception):
+    """Exception raised for error in the bobcmd arguments
+
+    Attributes:
+        var  -- variable name
+        msg  -- explanation of the error
+    """
+
+    def __init__(self, var, msg):
+        self.var = var
+        self.msg = msg
+
+
+def parse_args(args, syntax, separator = ' '):
+    if hasattr(args, 'parsed'):
+        return args
+    o = mstr(args)
+    args = map(str.strip, args.split(separator))
+    for a, s in zip(args, syntax):
+        (name, typ, valid) = s
+        if typ is str:
+            val = a
+        else:
+            try:
+                val = typ(a)
+            except:
+                raise ArgError(name, '%s cannot be converted to %s' % (a, typ.__name__))
+        if valid and not val in valid:
+            raise ArgError(name, '%s is not a valid value for %s. Valid: %s' % (val, name, valid))
+        setattr(o, name, val)
+    o.parsed = True
+    return o

@@ -6,7 +6,7 @@
 import logging
 import datetime, time
 
-from sleekbot.commandbot import botcmd, CommandBot, denymsg
+from sleekbot.commandbot import botcmd, CommandBot, denymsg, parse_args, ArgError
 from sleekbot.plugbot import BotPlugin
 
 class admin(BotPlugin):
@@ -46,73 +46,98 @@ class admin(BotPlugin):
 class acl(BotPlugin):
     """ Allows managing users"""
 
-    @botcmd(usage = 'jid role', allow = CommandBot.msg_from_admin)
+    @botcmd(usage = '[add | del | see | test] jid role', allow = CommandBot.msg_from_admin)
+    def acl(self, command, args, msg):
+        """ Access control list management
+        """
+        try:
+            args = parse_args(args, ( ('action', str, ('add', 'del', 'see', 'test')), ('jid', str, None), ('role', str, None)))
+        except ArgError as e:
+            return e.msg
+
+        return getattr(self, 'acl_' + args.action,)(command, args, msg)
+
+
+    @botcmd(usage = 'jid role', allow = CommandBot.msg_from_admin, hidden = True)
     def acl_add(self, command, args, msg):
         """Add a jid with a given role
             If the user exists, modify the role.
         """
-        (jid, role) = args.split(' ')
         try:
-            rolen = getattr(self.bot.acl.ROLE, role)
+            args = parse_args(args, (('jid', str, None), ('role', str, None)))
+        except ArgError as e:
+            return e.msg
+
+        try:
+            rolen = getattr(self.bot.acl.ROLE, args.role)
         except:
-            return '%s is not a valid role' % role
+            return '%s is not a valid role' % args.role
 
-        present = jid in self.bot.acl
-        self.bot.acl[jid] = rolen
+        present = args.jid in self.bot.acl
+        self.bot.acl[args.jid] = rolen
         if present:
-            return '%s updated as %s' % (jid, role)
+            return '%s updated as %s' % (args.jid, args.role)
         else:
-            return '%s added as %s' % (jid, role)
+            return '%s added as %s' % (args.jid, args.role)
 
 
-    @botcmd(usage = 'jid', allow = CommandBot.msg_from_admin)
+    @botcmd(usage = 'jid', allow = CommandBot.msg_from_admin, hidden = True)
     def acl_del(self, command, args, msg):
         """Deletes a jid
         """
-        jid = args.strip()
+        try:
+            args = parse_args(args, (('jid', str, None), ))
+        except ArgError as e:
+            return e.msg
 
-        present = jid in self.bot.acl
+        present = args.jid in self.bot.acl
         if present:
-            del self.bot.acl[jid]
-            return '%s deleted' % jid
+            del self.bot.acl[args.jid]
+            return '%s deleted' % args.jid
         else:
-            return '%s was not found in acl' % jid
+            return '%s was not found in acl' % args.jid
 
 
-    @botcmd(usage = 'jid', allow = CommandBot.msg_from_admin)
+    @botcmd(usage = 'jid', allow = CommandBot.msg_from_admin, hidden = True)
     def acl_see(self, command, args, msg):
         """See the role a jid
         """
-        jid = args.strip()
+        try:
+            args = parse_args(args, (('jid', str, None), ('role', str, None)))
+        except ArgError as e:
+            return e.msg
 
-        p = self.bot.acl.find_part(jid)
+        p = self.bot.acl.find_part(args.jid)
         if p:
-            if p == jid:
-                return '%s is %s' % (jid, self.bot.acl.ROLE[self.bot.acl[jid]])
+            if p == args.jid:
+                return '%s is %s' % (args.jid, self.bot.acl.ROLE[self.bot.acl[args.jid]])
             else:
-                return '%s through %s is %s' % (jid, p, self.bot.acl.ROLE[self.bot.acl[p]])
+                return '%s through %s is %s' % (args.jid, p, self.bot.acl.ROLE[self.bot.acl[p]])
         else:
-            return '%s was not found in acl' % jid
+            return '%s was not found in acl' % args.jid
 
 
-    @botcmd(usage = 'jid role', allow = CommandBot.msg_from_admin)
+    @botcmd(usage = 'jid role', allow = CommandBot.msg_from_admin, hidden = True)
     def acl_test(self, command, args, msg):
         """Test if jid belongs to role
         """
-        (jid, role) = args.split(' ')
         try:
-            rolen = getattr(self.bot.acl.ROLE, role)
+            args = parse_args(args, (('jid', str, None), ('role', str, None)))
+        except ArgError as e:
+            return e.msg
+        try:
+            rolen = getattr(self.bot.acl.ROLE, args.role)
         except:
-            return '%s is not a valid role' % role
+            return '%s is not a valid role' % args.role
 
-        present = jid in self.bot.acl
+        present = args.jid in self.bot.acl
         if present:
-            if self.bot.acl.check(jid, rolen):
-                return '%s is %s' % (jid, role)
+            if self.bot.acl.check(args.jid, rolen):
+                return '%s is %s' % (args.jid, args.role)
             else:
-                return '%s is not %s' % (jid, role)
+                return '%s is not %s' % (args.jid, args.role)
         else:
-            return '%s was not found in acl' % jid
+            return '%s was not found in acl' % args.jid
 
 
 class info(BotPlugin):
