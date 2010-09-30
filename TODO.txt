@@ -1,28 +1,6 @@
 Core
 ====
 
-A class to handle users
------------------------
-
-The class exposes 4 set-like properties:
-- owners
-- admins
-- members
-- banned
-
-in such a way that membership can be queried like:
-
-    name in obj.owners
-
-In the xml configuration file, this type of configuration would be:
-
-    <users class="classname" config="config">
-
-If CommandBot finds a class attribute, it would instantiate an object using config as the initialization parameter and assign owners, admins, members and banned to the corresponding properties. If jids are also listed inside owners, admins, members and banned tasks; they should be added to the corresponding set.
-
-With the proper implementation, a database or ldap server can be used as back-end to handle users. This could also be used to provide easy to administrate persistency to the user lists.
-
-
 A configuration user-interface
 ------------------------------
 
@@ -57,17 +35,6 @@ It would be good to internationalize SleekBot. Switching languages in the bot is
 
 Plugins
 =======
-
-
-User administration
--------------------
-
-A plugin to add, remove and modify users to owners, admins, members and banned. Should be included in the admin module.
-Commmands:
-- add-user jid group
-- del-user jid
-- set-user jid group
-- list-users [optional group]
 
 
 Distribute

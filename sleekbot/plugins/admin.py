@@ -43,6 +43,77 @@ class admin(BotPlugin):
         self.bot.cmd_plugins.reload_all()
         return "Reloaded boss"
 
+class acl(BotPlugin):
+    """ Allows managing users"""
+
+    @botcmd(usage = 'jid role', allow = CommandBot.msg_from_admin)
+    def acl_add(self, command, args, msg):
+        """Add a jid with a given role
+            If the user exists, modify the role.
+        """
+        (jid, role) = args.split(' ')
+        try:
+            rolen = getattr(self.bot.acl.ROLE, role)
+        except:
+            return '%s is not a valid role' % role
+
+        present = jid in self.bot.acl
+        self.bot.acl[jid] = rolen
+        if present:
+            return '%s updated as %s' % (jid, role)
+        else:
+            return '%s added as %s' % (jid, role)
+
+
+    @botcmd(usage = 'jid', allow = CommandBot.msg_from_admin)
+    def acl_del(self, command, args, msg):
+        """Deletes a jid
+        """
+        jid = args.strip()
+
+        present = jid in self.bot.acl
+        if present:
+            del self.bot.acl[jid]
+            return '%s deleted' % jid
+        else:
+            return '%s was not found in acl' % jid
+
+
+    @botcmd(usage = 'jid', allow = CommandBot.msg_from_admin)
+    def acl_see(self, command, args, msg):
+        """See the role a jid
+        """
+        jid = args.strip()
+
+        p = self.bot.acl.find_part(jid)
+        if p:
+            if p == jid:
+                return '%s is %s' % (jid, self.bot.acl.ROLE[self.bot.acl[jid]])
+            else:
+                return '%s through %s is %s' % (jid, p, self.bot.acl.ROLE[self.bot.acl[p]])
+        else:
+            return '%s was not found in acl' % jid
+
+
+    @botcmd(usage = 'jid role', allow = CommandBot.msg_from_admin)
+    def acl_test(self, command, args, msg):
+        """Test if jid belongs to role
+        """
+        (jid, role) = args.split(' ')
+        try:
+            rolen = getattr(self.bot.acl.ROLE, role)
+        except:
+            return '%s is not a valid role' % role
+
+        present = jid in self.bot.acl
+        if present:
+            if self.bot.acl.check(jid, rolen):
+                return '%s is %s' % (jid, role)
+            else:
+                return '%s is not %s' % (jid, role)
+        else:
+            return '%s was not found in acl' % jid
+
 
 class info(BotPlugin):
     """A plugin to obtain information about the bot."""

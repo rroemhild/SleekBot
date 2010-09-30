@@ -1,6 +1,6 @@
-====================================
-SleekBot - a extendable Bot for XMPP
-====================================
+========================================
+SleekBot - an extendable XMPP/Jabber Bot
+========================================
 
 
 Description
@@ -116,6 +116,12 @@ The best way to get your changes merged back into core is as follows (thanks Gol
    7. If necessary, rebase your commits into logical chunks, without errors
    8. Push the branch up to GitHub
    9. Send me a pull request for your branch
+
+I keep to branches on GitHub.
+- master: appropriate for SleekBot users. It is always working.
+- develop: appropriate for SleekBot developers. Might not be in a fully usable state.
+
+Additionally, other branches might appear as testing ground for new features or big API changes.
 
 
 Authors
