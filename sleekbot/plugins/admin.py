@@ -138,32 +138,3 @@ class acl(BotPlugin):
         else:
             return '%s was not found in acl' % args.jid
 
-
-class info(BotPlugin):
-    """A plugin to obtain information about the bot."""
-
-    def __init__(self, *args, **kwargs):
-        try:
-            from guppy import hpy
-            self.hpy = hpy()
-        except:
-            delattr(info, 'mem')
-            logging.warning("guppy not present. mem plugin not available")
-        super(info, self).__init__(*args, **kwargs)
-
-    def on_register(self):
-        self.started = datetime.datetime.now()
-
-    @botcmd()
-    def uptime(self, command, args, msg):
-        """See how long the bot has been up."""
-        difference = datetime.datetime.now() - self.started
-        weeks, days = divmod(difference.days, 7)
-        minutes, seconds = divmod(difference.seconds, 60)
-        hours, minutes = divmod(minutes, 60)
-        return "%s weeks %s days %s hours %s minutes %s seconds" % (weeks, days, hours, minutes, seconds)
-
-    @botcmd(allow=CommandBot.msg_from_owner)
-    def mem(self, command, args, msg):
-        """See how much memory python is using"""
-        return '%s\n' % self.hpy.heap()
