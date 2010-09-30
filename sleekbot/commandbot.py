@@ -306,9 +306,9 @@ class CommandBot(object):
         """
 
         if msg['type'] == 'groupchat':
-            self.send_message("%s" % msg.get('mucroom', ''), response, mtype=msg.get('type', 'groupchat'))
+            self.send_message("%s" % msg['mucroom'], response, mtype=msg.get('type', 'groupchat'))
         else:
-            self.send_message("%s/%s" % (msg.get('from', ''), msg.get('resource', '')), response, mtype=msg.get('type', 'chat'))
+            self.send_message("%s/%s" % (msg['from'].bare, msg['from'].resource), response, mtype=msg.get('type', 'chat'))
 
     @botcmd(name='help', usage='help [topic]')
     def handle_help(self, command, args, msg):
