@@ -127,7 +127,7 @@ class ACL(object):
                 role -- an item of ROLE enum or collection of such items
         """
 
-        if not isinstance(role, collections.Iterable):
+        if not isinstance(role, (list, tuple)):
             role = (role, )
         for p in parts_of(jid):
             if self[p] in role:
@@ -141,7 +141,7 @@ class ACL(object):
         if role is None:
             return len(self)
 
-        if isinstance(role, collections.Iterable):
+        if isinstance(role, (list, tuple)):
             return reduce(sum, [self.__dict.values().count(r) for r in role])
 
         return self.__dict.values().count(role)
@@ -193,7 +193,7 @@ class ACLdb(ACL):
                 role -- an item of ROLE enum or collection of such items
         """
         jid = tuple(parts_of(jid))
-        if isinstance(role, collections.Iterable):
+        if isinstance(role, (list, tuple)):
             query = 'SELECT count(*) FROM acl WHERE jid IN (%s) and role IN (%s)' % (in_clause_subs(len(jid)), in_clause_subs(len(role)))
             pars = jid + tuple(role)
         else:
@@ -211,7 +211,7 @@ class ACLdb(ACL):
         if role is None:
             query = 'SELECT count(*) FROM acl'
             role = ()
-        elif isinstance(role, collections.Iterable):
+        elif isinstance(role, (list, tuple)):
             query = 'SELECT count(*) FROM acl WHERE role IN (%s)' % in_clause_subs(role)
         else:
             query = 'SELECT count(*) FROM acl WHERE role = ?'
