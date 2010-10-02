@@ -51,7 +51,7 @@ class acl(BotPlugin):
         """ Access control list management
         """
         try:
-            args = parse_args(args, ( ('action', str, ('add', 'del', 'see', 'test')), ('jid', str, None), ('role', str, None)))
+            args = parse_args(args, ( ('action', ('add', 'del', 'see', 'test')), ('jid', str), ('role', 'user')))
         except ArgError as e:
             return e.msg
 
@@ -64,7 +64,7 @@ class acl(BotPlugin):
             If the user exists, modify the role.
         """
         try:
-            args = parse_args(args, (('jid', str, None), ('role', str, None)))
+            args = parse_args(args, (('jid', str), ('role', 'user')))
         except ArgError as e:
             return e.msg
 
@@ -86,7 +86,7 @@ class acl(BotPlugin):
         """Deletes a jid
         """
         try:
-            args = parse_args(args, (('jid', str, None), ))
+            args = parse_args(args, (('jid', str), ))
         except ArgError as e:
             return e.msg
 
@@ -103,7 +103,7 @@ class acl(BotPlugin):
         """See the role a jid
         """
         try:
-            args = parse_args(args, (('jid', str, None), ('role', str, None)))
+            args = parse_args(args, (('jid', str), ))
         except ArgError as e:
             return e.msg
 
@@ -122,7 +122,7 @@ class acl(BotPlugin):
         """Test if jid belongs to role
         """
         try:
-            args = parse_args(args, (('jid', str, None), ('role', str, None)))
+            args = parse_args(args, (('jid', str), ('role', 'user')))
         except ArgError as e:
             return e.msg
         try:

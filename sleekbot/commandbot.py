@@ -403,13 +403,14 @@ class CommandBot(object):
 
 
 class mstr(str):
+    """ A string class to which properties can be added."""
 
     def __new__(cls, string):
         return super(mstr, cls).__new__(cls, string)
 
 
 class ArgError(Exception):
-    """Exception raised for error in the bobcmd arguments
+    """Exception raised for error in the botcmd arguments
 
     Attributes:
         var  -- variable name
@@ -420,23 +421,62 @@ class ArgError(Exception):
         self.var = var
         self.msg = msg
 
+    def __str__(self):
+        return self.msg
 
-def parse_args(args, syntax, separator = ' '):
-    if hasattr(args, 'parsed'):
+    def __repr__(self):
+        return self.msg
+
+
+def parse_args(args, syntax, separator = None):
+    """ Helper function to parse and cast botcmd arguments.
+    Returns a string-like object where each argument is added as a property.
+
+    Arguments:
+        args       -- a string containing the arguments
+        syntax     -- a tuple of tuples detailing the syntax of args
+                        Each tuple contains 2 elements: name of the argument and value.
+                        If value is an element, it is used as a default value
+                        If value is a list/tuple, the first element is used as default value
+                            and the content is used to define valid values
+                        The argument type is infered from the default value
+                        If the default value is a type, then the argument is mandatory
+        separator  -- the separator used to split args (default = spaces, taking consecutives spaces as one)
+
+    """
+
+    if getattr(args, 'parsed', False):
         return args
     o = mstr(args)
-    args = map(str.strip, args.split(separator))
+    args = map(str.strip, args.strip().split(separator))
+    args += [None]*(len(syntax)-len(args))
     for a, s in zip(args, syntax):
-        (name, typ, valid) = s
-        if typ is str:
-            val = a
+        (name, valid) = s
+        if isinstance(valid, (list, tuple)):
+            val = valid[0]
         else:
-            try:
-                val = typ(a)
-            except:
-                raise ArgError(name, '%s cannot be converted to %s' % (a, typ.__name__))
-        if valid and not val in valid:
-            raise ArgError(name, '%s is not a valid value for %s. Valid: %s' % (val, name, valid))
+            val = valid
+
+        if isinstance(val, type):
+            # The argument is mandatory
+            typ = val
+            val = None
+        else:
+            typ = type(val)
+
+        if not a is None:
+            if typ is str:
+                val = a
+            else:
+                try:
+                    val = typ(a)
+                except:
+                    raise ArgError(name, '%s cannot be converted to %s' % (a, typ.__name__))
+            if isinstance(valid, (list, tuple)) and not val in valid:
+                raise ArgError(name, '%s is not a valid value for %s. Valid: %s' % (val, name, valid))
+
+        if val is None:
+            raise ArgError(name, '%s is a mandatory argument' % name)
         setattr(o, name, val)
     o.parsed = True
     return o
