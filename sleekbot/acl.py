@@ -8,6 +8,7 @@ import logging
 import collections
 from collections import defaultdict
 
+
 def parts_of(address):
     """ Given an e-mail address, generates al possible domains."""
     yield address
@@ -18,25 +19,30 @@ def parts_of(address):
             (pre, dom) = dom.split(".", 1)
             yield dom
 
+
 def in_clause_subs(n):
-    return ','.join(['?']*n)
+    return ','.join(['?'] * n)
+
 
 def get_jids_in_group(xmlnode, group):
     """ Returns a list of all jids belonging to users of a given group."""
     jids = []
     users = xmlnode.findall(group)
-    if users:
-        for user in users:
-            userJids = user.findall('jid')
-            if userJids:
-                for jid in userJids:
-                    logging.debug("appending %s to %s list" % (jid.text, group))
-                    jids.append(jid.text)
+    if not users:
+        return jids
+    for user in users:
+        userJids = user.findall('jid')
+        if userJids:
+            for jid in userJids:
+                logging.debug("appending %s to %s list" % (jid.text, group))
+                jids.append(jid.text)
     return jids
 
 
 class eset(set):
-    """A set class for e-mail addresses that checks membership based on domains."""
+    """A set class for e-mail addresses that checks
+    membership based on domains.
+    """
 
     def __contains__(self, item):
         for p in parts_of(item):
@@ -46,7 +52,8 @@ class eset(set):
 
 
 class virtual_set(object):
-    """ A ennumerable object to access the keys of a value-filtered key-value dictionary.
+    """ A ennumerable object to access the keys
+    of a value-filtered key-value dictionary.
     """
 
     def __init__(self, users, prop):
@@ -78,10 +85,9 @@ class ACL(object):
 
     ROLE = Enum(['undefined', 'banned', 'user', 'admin', 'owner'])
 
-    def __init__(self, caller, config = None):
+    def __init__(self, caller, config=None):
         self.__dict = defaultdict(str)
         self._post_init()
-
 
     def _post_init(self):
         """ Provide syntactic sugar for accesing the different roles."""
@@ -89,7 +95,6 @@ class ACL(object):
         self.admins = virtual_set(self, ACL.ROLE.admin)
         self.owners = virtual_set(self, ACL.ROLE.owner)
         self.users = virtual_set(self, ACL.ROLE.user)
-
 
     def __getitem__(self, jid):
         return self.__dict[jid]
@@ -111,7 +116,6 @@ class ACL(object):
             for jid in get_jids_in_group(xmlnode, role):
                 self[jid] = getattr(ACL.ROLE, role)
 
-
     def find_part(self, jid):
         """ For a given jid, find the part that is in the acl
         """
@@ -119,7 +123,6 @@ class ACL(object):
             if p in self:
                 return p
         return None
-
 
     def check(self, jid, role):
         """ Check if jid is in a role/roles
@@ -133,7 +136,6 @@ class ACL(object):
             if self[p] in role:
                 return True
         return False
-
 
     def count(self, role=None):
         """ Returns the number of jids that are in role/roles
@@ -151,19 +153,18 @@ class ACLdb(ACL):
     """ Database storage for access control lists
     """
 
-    def __init__(self, caller, config = None):
+    def __init__(self, caller, config=None):
         self.store = caller.store
         self.create_table()
         self._post_init()
 
-
     def create_table(self):
         with self.store.context_cursor() as cur:
             if not len(cur.execute("pragma table_info('acl')").fetchall()) > 0:
-                cur.execute('CREATE TABLE "acl" ("id" INTEGER PRIMARY KEY AUTOINCREMENT, "jid" VARCHAR(256) UNIQUE, "role" INTEGER)')
+                cur.execute('CREATE TABLE "acl" ("id" INTEGER PRIMARY KEY ' \
+                   'AUTOINCREMENT, "jid" VARCHAR(256) UNIQUE, "role" INTEGER)')
                 cur.execute('CREATE INDEX idx_role ON acl (role)')
                 logging.info("ACLdb: acl table created")
-
 
     def __getitem__(self, jid):
         with self.store.context_cursor() as cur:
@@ -174,9 +175,11 @@ class ACLdb(ACL):
         with self.store.context_cursor() as cur:
             cur.execute('SELECT * FROM acl WHERE jid=?', (jid, ))
             if (len(cur.fetchall()) > 0):
-                cur.execute('UPDATE acl SET jid=?, role=? WHERE jid=?', (jid, role, jid))
+                cur.execute('UPDATE acl SET jid=?, role=? WHERE jid=?', \
+                            (jid, role, jid))
             else:
-                cur.execute('INSERT INTO acl(jid, role) VALUES(?,?)', (jid, role))
+                cur.execute('INSERT INTO acl(jid, role) VALUES(?,?)', \
+                            (jid, role))
 
     def __delitem__(self, jid):
         with self.store.context_cursor() as cur:
@@ -194,16 +197,18 @@ class ACLdb(ACL):
         """
         jid = tuple(parts_of(jid))
         if isinstance(role, (list, tuple)):
-            query = 'SELECT count(*) FROM acl WHERE jid IN (%s) and role IN (%s)' % (in_clause_subs(len(jid)), in_clause_subs(len(role)))
+            query = 'SELECT count(*) FROM acl ' \
+                    'WHERE jid IN (%s) and role IN (%s)' \
+                    % (in_clause_subs(len(jid)), in_clause_subs(len(role)))
             pars = jid + tuple(role)
         else:
-            query = 'SELECT count(*) FROM acl WHERE jid IN (%s) and role = ?' % (in_clause_subs(len(jid)))
+            query = 'SELECT count(*) FROM acl WHERE jid IN (%s) and role = ?' \
+                    % (in_clause_subs(len(jid)))
             pars = jid + (role, )
 
         with self.store.context_cursor() as cur:
             cur.execute(query, pars)
             return int(cur.fetchone()[0]) > 0
-
 
     def count(self, role=None):
         """ Returns the number of jids that are in role.
@@ -212,7 +217,8 @@ class ACLdb(ACL):
             query = 'SELECT count(*) FROM acl'
             role = ()
         elif isinstance(role, (list, tuple)):
-            query = 'SELECT count(*) FROM acl WHERE role IN (%s)' % in_clause_subs(role)
+            query = 'SELECT count(*) FROM acl WHERE role IN (%s)' \
+                    % in_clause_subs(role)
         else:
             query = 'SELECT count(*) FROM acl WHERE role = ?'
             role = (role, )
@@ -226,7 +232,8 @@ if __name__ == '__main__':
     a = eset(['test@a.new.domain.com'])
     b = eset(['a.new.domain.com'])
     c = eset(['domain.com'])
-    xs = ['test@a.new.domain.com', 'test2@a.new.domain.com', 'test3@another.domain.com', 'test4@domain.us', 'us']
+    xs = ['test@a.new.domain.com', 'test2@a.new.domain.com', \
+         'test3@another.domain.com', 'test4@domain.us', 'us']
     for s in [a, b, c]:
         print("---> ", s)
         for x in xs:

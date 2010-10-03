@@ -1,23 +1,11 @@
+#!/usr/bin/env python
 """
-    store.py - Sleekbot's persistant storage module.
-    Copyright (C) 2008 Kevin Smith
-
-    SleekBot is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-
-    SleekBot is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this software; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    This file is part of SleekBot. http://github.com/hgrecco/SleekBot
+    See the README file for more information.
 """
 
 import sqlite3
+
 
 class CMCursor(object):
     """ Context manager for cursor. On exit commits and close the connection."""
@@ -39,6 +27,7 @@ class CMCursor(object):
             self.__con.close()
             self.__con = None
 
+
 class store(object):
     """ Store persistent data in sqlite3.
     """
@@ -52,5 +41,3 @@ class store(object):
 
     def context_cursor(self):
         return CMCursor(self.getDb)
-
-

@@ -11,6 +11,7 @@ from xml.etree import ElementTree as ET
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
+
 class robberFilter():
     def filter(self, text):
         consonants = 'bcdfghjklmnpqrstvwxz'
@@ -22,35 +23,36 @@ class robberFilter():
                 outstring += char
         return outstring
 
+
 class leetFilter():
     def __init__(self):
         self.mappings = {
-            'a':['4','/\\','@','/-\\','^'],
-            'b':['8','6','13','!3'],
-            'c':['[','<','(','{'],
-            'd':[')','|)','[)','0','T)'],
-            'e':['3','&','[-'],
-            'f':['|=','|#','/='],
-            'g':['6','&','9','C-'],
-            'h':['#','/_/','[-]','|-|','}{'],
-            'i':['1','!','|',']'],
-            'j':['_|','_/','(/'],
-            'k':['X','|<','|(','|{'],
-            'l':['1','|','|_'],
-            'm':['|v|','|\\//|'],
-            'n':['^/','/\\/','[]\\'],
-            'o':['0','()','[]'],
-            'p':["|*","|>","9","|7"],
-            'q':['(_,)','()_','0_','<|'],
-            'r':['2','|?','/2','|^','12','l2'],
-            's':['5','$','z'],
-            't':['7','+','-|-','1','\'][\''],
-            'u':['(_)','|_|','v','L|'],
-            'v':['\\/'],
-            'w':['\\/\\/','vv','\\^/','\\|/'],
-            'x':['%','><','}{',')('],
-            'y':['j','`/'],
-            'z':['2','~/_','%','>_','7_']
+            'a': ['4', '/\\', '@', '/-\\', '^'],
+            'b': ['8', '6', '13', '!3'],
+            'c': ['[', '<', '(', '{'],
+            'd': [')', '|)', '[)', '0', 'T)'],
+            'e': ['3', '&', '[-'],
+            'f': ['|=', '|#', '/='],
+            'g': ['6', '&', '9', 'C-'],
+            'h': ['#', '/_/', '[-]', '|-|', '}{'],
+            'i': ['1', '!', '|', ']'],
+            'j': ['_|', '_/', '(/'],
+            'k': ['X', '|<', '|(', '|{'],
+            'l': ['1', '|', '|_'],
+            'm': ['|v|', '|\\//|'],
+            'n': ['^/', '/\\/', '[]\\'],
+            'o': ['0', '()', '[]'],
+            'p': ["|*", "|>", "9", "|7"],
+            'q': ['(_,)', '()_', '0_', '<|'],
+            'r': ['2', '|?', '/2', '|^', '12', 'l2'],
+            's': ['5', '$', 'z'],
+            't': ['7', '+', '-|-', '1', '\'][\''],
+            'u': ['(_)', '|_|', 'v', 'L|'],
+            'v': ['\\/'],
+            'w': ['\\/\\/', 'vv', '\\^/', '\\|/'],
+            'x': ['%', '><', '}{', ')('],
+            'y': ['j', '`/'],
+            'z': ['2', '~/_', '%', '>_', '7_']
         }
         pass
 
@@ -114,6 +116,7 @@ class chefFilter(object):
     def filter(self, text):
         pass
 
+
 class filter(BotPlugin):
     """A plugin to filter text."""
 
@@ -123,7 +126,7 @@ class filter(BotPlugin):
 #        self.availableFilters['chef'] = chefFilter()
         self.availableFilters['robber'] = robberFilter()
 
-    @botcmd(name = 'filter', usage = '[filter type] [text]')
+    @botcmd(name='filter', usage='[filter type] [text]')
     def handle_filter(self, command, args, msg):
         """Parses the text through a filter"""
         if args == None or args == "" or len(args.split(" ")) < 2:

@@ -14,6 +14,7 @@ import copy
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
+
 class remember(BotPlugin):
     """A plugin to rembember events."""
 
@@ -72,7 +73,6 @@ class remember(BotPlugin):
         found = found[random.randint(0, len(found) - 1)]
         return found
 
-
     def knowledge(self, search=None):
         if len(self.know) > 0:
             if search:
@@ -89,7 +89,6 @@ class remember(BotPlugin):
         r = r[0].upper() + r[1:]
         return r
 
-
     def handle_message_event(self, msg):
         self.lastroom = msg['mucroom']
         # self.bot.rooms[msg['mucroom']] != (msg['name']) and
@@ -105,7 +104,7 @@ class remember(BotPlugin):
                 who = None
                 match = match.group()
                 match = match.lower()
-                if not match.startswith(('what','where','why','how','when','who', 'that', 'it', 'they')):
+                if not match.startswith(('what', 'where', 'why', 'how', 'when', 'who', 'that', 'it', 'they')):
                     for person in self.bot.plugin['xep_0045'].rooms[msg['mucroom']].keys():
                         if person.lower() in msg['message'].lower():
                             match = match.replace("your", "%s's" % person)

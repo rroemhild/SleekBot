@@ -30,17 +30,18 @@ from xml.etree import ElementTree as ET
 import sleekxmpp
 from sleekxmpp.xmlstream.stanzabase import JID
 
-from commandbot import  CommandBot
+from commandbot import CommandBot
 from plugbot import PlugBot
 
-class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
+
+class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
     """ SleekBot is a pluggable Jabber/XMPP bot based on SleekXMPP
 
         SleekBot was originally written by Nathan Fritz and Kevin Smith.
         This fork is maintained by Hernan E. Grecco
     """
 
-    def __init__(self, config_file, ssl=False, plugin_config = {}):
+    def __init__(self, config_file, ssl=False, plugin_config={}):
         """ Initializes the bot
                 config_file -- string pointing to an xml configuration file
         """
@@ -58,22 +59,21 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.add_event_handler("session_start", self.handle_session_start, threaded=True)
         self.register_xmpp_plugins()
         CommandBot.__init__(self)
-        PlugBot.__init__(self, default_package = 'sleekbot.plugins')
+        PlugBot.__init__(self, default_package='sleekbot.plugins')
         self.register_adhocs()
 
     def connect(self):
         """ Connects to the server
         """
         auth = self.botconfig.find('auth')
-        logging.info("Connecting ..." )
+        logging.info("Connecting ...")
         if not auth.get('server', None):
             # we don't know the server, but the lib can probably figure it out
             super(SleekBot, self).connect()
         else:
             super(SleekBot, self).connect((auth.attrib['server'], auth.get('port', 5222)))
 
-
-    def load_config(self, config_file = None):
+    def load_config(self, config_file=None):
         """ Load the specified config. Does not attempt to make changes based upon config.
         """
         if config_file:
@@ -85,7 +85,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         """ Register all ad-hoc commands with SleekXMPP.
         """
         aboutform = self.plugin['xep_0004'].makeForm('form', "About SleekBot")
-        aboutform.addField('about', 'fixed', value= self.__doc__)
+        aboutform.addField('about', 'fixed', value=self.__doc__)
         self.plugin['xep_0050'].addCommand('about', 'About Sleekbot', aboutform)
         pluginform = self.plugin['xep_0004'].makeForm('form', 'Plugins')
         plugins = pluginform.addField('plugin', 'list-single', 'Plugins')
@@ -109,7 +109,6 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         elif option == 'config':
             pass
 
-
     def register_xmpp_plugins(self):
         """ Registers all XMPP plugins required by botconfig.
         """
@@ -126,10 +125,9 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
                 except Exception as e:
                     logging.info("Registering XMPP plugin %s FAILED: %s" % (plugin.attrib['name'], e))
 
-
     def handle_session_start(self, event):
         self.getRoster()
-        self.sendPresence(ppriority = self.botconfig.find('auth').get('priority', '1'))
+        self.sendPresence(ppriority=self.botconfig.find('auth').get('priority', '1'))
         self.join_rooms()
 
     def rehash(self):
@@ -187,17 +185,18 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot,  PlugBot):
         self.die()
 
     #TODO: temporary until SleekXMPP is PEP8 compliant
-    def send_message(self,  *args,  **kwargs):
-        self.sendMessage(*args,  **kwargs)
+    def send_message(self, *args, **kwargs):
+        self.sendMessage(*args, **kwargs)
+
 
 if __name__ == '__main__':
     #parse command line arguements
     optp = OptionParser()
-    optp.add_option('-q','--quiet', help='set logging to ERROR', action='store_const', dest='loglevel', const=logging.ERROR, default=logging.INFO)
-    optp.add_option('-d','--debug', help='set logging to DEBUG', action='store_const', dest='loglevel', const=logging.DEBUG, default=logging.INFO)
-    optp.add_option('-v','--verbose', help='set logging to COMM', action='store_const', dest='loglevel', const=5, default=logging.INFO)
-    optp.add_option("-c","--config", dest="config_file", default="config.xml", help="set config file to use")
-    opts,args = optp.parse_args()
+    optp.add_option('-q', '--quiet', help='set logging to ERROR', action='store_const', dest='loglevel', const=logging.ERROR, default=logging.INFO)
+    optp.add_option('-d', '--debug', help='set logging to DEBUG', action='store_const', dest='loglevel', const=logging.DEBUG, default=logging.INFO)
+    optp.add_option('-v', '--verbose', help='set logging to COMM', action='store_const', dest='loglevel', const=5, default=logging.INFO)
+    optp.add_option("-c", '--config', dest='config_file', default='config.xml', help='set config file to use')
+    opts, args = optp.parse_args()
 
     logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
 
@@ -214,4 +213,3 @@ if __name__ == '__main__':
         #this does not work properly. Some thread is runnng
 
     logging.info("SleekBot finished")
-

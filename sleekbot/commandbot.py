@@ -16,6 +16,7 @@ import re
 
 from heapq import heappush
 
+
 def get_class(class_string):
     """ Returns class object specified by a string.
         Arguments:
@@ -27,7 +28,8 @@ def get_class(class_string):
     module_name, _, class_name = class_string.rpartition('.')
     if module_name == '':
         raise ValueError('Class name must contain module part.')
-    return getattr(__import__(module_name, globals(), locals(), [class_name], -1), class_name)
+    return getattr(__import__(module_name, globals(), locals(), \
+                             [class_name], -1), class_name)
 
 
 def denymsg(msg):
@@ -64,7 +66,7 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False,
                         (default True)
     """
     def _outer(f):
-        if allow is True: # Warning this is not the same as if allow:
+        if allow is True:  # Warning this is not the same as if allow:
             @wraps(f)
             def _inner(*args, **kwargs):
                 return f(*args, **kwargs)
@@ -82,7 +84,7 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False,
 
         _inner._botcmd = dict()
         _inner._botcmd['hidden'] = hidden
-        _inner._botcmd['name'] = name or f.__name__.replace('_','-')
+        _inner._botcmd['name'] = name or f.__name__.replace('_', '-')
         _inner._botcmd['title'] = title or f.__doc__.split('\n', 1)[0] or ''
         _inner._botcmd['doc'] = doc or f.__doc__ or 'undocumented'
         _inner._botcmd['usage'] = usage or ''
@@ -91,6 +93,7 @@ def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False,
         _inner._botcmd['allow'] = allow
         return _inner
     return _outer
+
 
 class botfreetxt(object):
     """ Method decorator to declare a bot free text parser
@@ -108,7 +111,7 @@ class botfreetxt(object):
             regex    -- regex string or regex object to be matched (default None)
     """
 
-    def __init__(self, priority = 1, regex = None):
+    def __init__(self, priority=1, regex=None):
         self.priority = priority
         if isinstance(regex, str):
             try:
@@ -165,7 +168,7 @@ class CommandBot(object):
                 </acl>
     """
 
-    def __init__(self, im_prefix = '/', muc_prefix = '!' ):
+    def __init__(self, im_prefix='/', muc_prefix='!'):
         """ Initializes the CommandBot by registering commands in self
             and message handler
                 im_prefix  -- prefix to be used for private messages commands (default '/')
@@ -233,14 +236,13 @@ class CommandBot(object):
         self.acl.update_from_xml(aclnode)
         self.require_membership = self.botconfig.find('require-membership') != None
         logging.info('%d owners, %d admins, %d users, %d banned. Require-membership %s' % \
-                    ( len(self.acl.owners), len(self.acl.admins), len(self.acl.users), len(self.acl.banned), self.require_membership))
+                    (len(self.acl.owners), len(self.acl.admins), len(self.acl.users), len(self.acl.banned), self.require_membership))
 
     def stop(self):
         """ Messages will not be received
         """
         logging.info("Stopping CommandBot")
         self.del_event_handler("message", self.handle_msg_botcmd)
-
 
     def pause(self):
         """ Received messages will be enqueued for processing
@@ -252,7 +254,7 @@ class CommandBot(object):
         """
         self.__event.set()
 
-    def handle_msg_event(self, msg, command_found = False, freetext_found = False):
+    def handle_msg_event(self, msg, command_found=False, freetext_found=False):
         """ Performs extra actions on the message.
             Overload this to handle messages in a generic way.
         """
@@ -317,19 +319,19 @@ class CommandBot(object):
         """
         if msg['type'] == 'groupchat':
             commands = self.muc_commands
-            prefix   = self.muc_prefix
+            prefix = self.muc_prefix
         else:
             commands = self.im_commands
-            prefix   = self.im_prefix
+            prefix = self.im_prefix
 
         response = ''
         args = args.strip()
         if args:
             if args in commands and (commands[args]._botcmd['allow'] is True or commands[args]._botcmd['allow'](self, msg)):
-                f  = commands[args]
-                response += '%s -- %s\n' % (args,  f._botcmd['title'])
+                f = commands[args]
+                response += '%s -- %s\n' % (args, f._botcmd['title'])
                 response += ' %s\n' % f._botcmd['doc']
-                response += "Usage: %s%s %s\n" % (prefix, args,  f._botcmd['usage'])
+                response += "Usage: %s%s %s\n" % (prefix, args, f._botcmd['usage'])
                 return response
             else:
                 response += '%s is not a valid command' % args
@@ -338,7 +340,7 @@ class CommandBot(object):
         for command in sorted(commands.keys()):
             f = commands[command]
             if not f._botcmd['hidden'] and (f._botcmd['allow'] is True or f._botcmd['allow'](self, msg)):
-                response += "%s -- %s\n" % (command,  f._botcmd['title'])
+                response += "%s -- %s\n" % (command, f._botcmd['title'])
         response += "---------\n"
         return response
 
@@ -367,7 +369,7 @@ class CommandBot(object):
         """ Returns the jid associated with a mucnick and mucroom
         """
         if mucroom in self.plugin['xep_0045'].getJoinedRooms():
-            logging.debug("Checking real jid for %s %s" %(mucroom, mucnick))
+            logging.debug("Checking real jid for %s %s" % (mucroom, mucnick))
             real_jid = self.plugin['xep_0045'].getJidProperty(mucroom, mucnick, 'jid')
             logging.debug(real_jid)
             if real_jid:
@@ -428,7 +430,7 @@ class ArgError(Exception):
         return self.msg
 
 
-def parse_args(args, syntax, separator = None):
+def parse_args(args, syntax, separator=None):
     """ Helper function to parse and cast botcmd arguments.
     Returns a string-like object where each argument is added as a property.
 
@@ -449,7 +451,7 @@ def parse_args(args, syntax, separator = None):
         return args
     o = mstr(args)
     args = map(str.strip, args.strip().split(separator))
-    args += [None]*(len(syntax)-len(args))
+    args += [None] * (len(syntax) - len(args))
     for a, s in zip(args, syntax):
         (name, valid) = s
         if isinstance(valid, (list, tuple)):

@@ -21,6 +21,7 @@ import logging
 from sleekbot.commandbot import botcmd, botfreetxt
 from sleekbot.plugbot import BotPlugin
 
+
 class aliascmd(object):
     """ Represent an aliased command
     """
@@ -32,6 +33,7 @@ class aliascmd(object):
         self.jid = jid
         self.alias = alias
         self.command = command
+
 
 class aliasstore(object):
     def __init__(self, store):
@@ -64,7 +66,7 @@ class aliasstore(object):
         results = cur.fetchall()
         if len(results) == 0:
             return None
-        return aliascmd(results[0][1],results[0][2],results[0][3])
+        return aliascmd(results[0][1], results[0][2], results[0][3])
         db.close()
 
     def get_all(self, jid):
@@ -76,7 +78,7 @@ class aliasstore(object):
             return None
         response = []
         for result in results:
-            response.append(aliascmd(result[1],result[2],result[3]))
+            response.append(aliascmd(result[1], result[2], result[3]))
         return response
 
     def delete(self, alias):
@@ -85,6 +87,7 @@ class aliasstore(object):
         cur.execute('DELETE FROM alias WHERE jid=? AND alias=?', (alias.jid, alias.alias))
         db.commit()
         db.close()
+
 
 class alias(BotPlugin):
     """ A plugin for global and user defined aliases.
@@ -136,7 +139,7 @@ class alias(BotPlugin):
             if not alias is None:
                 msg['body'] = "%s%s %s" % (prefix, alias.command, args)
                 self.bot.handle_msg_botcmd(msg)
-            elif self.global_aliases.has_key(command):
+            elif command in self.global_aliases.has_key:
                 alias = self.global_aliases[command]
                 msg['body'] = "%s%s %s" % (prefix, alias.command, args)
                 self.bot.handle_msg_botcmd(msg)
@@ -166,7 +169,7 @@ class alias(BotPlugin):
             if not alias is None:
                 self.aliasstore.delete(aliascmd(self.bot.get_real_jid(msg), value))
                 return "Done."
-            if self.global_aliases.has_key(value):
+            if value in self.global_aliases:
                 return "You can not delete a global alias."
             return "Unkown alias."
 
@@ -177,7 +180,7 @@ class alias(BotPlugin):
                 for alias in aliases:
                     response += "\n%s = %s" % (alias.alias, alias.command)
             if not self.global_aliases == {}:
-                for key,alias in self.global_aliases.iteritems():
+                for key, alias in self.global_aliases.iteritems():
                     response += "\n(*) %s = %s" % (alias.alias, alias.command)
             if response == 'Aliases: ':
                 response += "None."

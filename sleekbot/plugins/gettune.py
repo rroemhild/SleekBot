@@ -9,6 +9,7 @@ from xml.etree import cElementTree as ET
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
+
 class gettune(BotPlugin):
     """A plugin to get user tune info."""
 
@@ -37,8 +38,8 @@ class gettune(BotPlugin):
             title = title.text
         self.tunes[jid] = "%s - %s" % (artist, title)
 
-    @botcmd(name = 'gettune')
-    def handleGettune(self, cmd, args, msg):
+    @botcmd(name='gettune')
+    def handle_gettune(self, cmd, args, msg):
         if not args:
             output = []
             for jid in self.tunes:

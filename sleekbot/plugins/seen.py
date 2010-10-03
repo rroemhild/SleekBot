@@ -10,6 +10,7 @@ import logging
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
+
 class seenevent(object):
     """ Represent the last know activity of a user.
     """
@@ -27,6 +28,7 @@ class seenevent(object):
         self.stanzaType = stanzaType
         self.text = text
 
+
 class jidevent(object):
     """ Represent the last seen jid of a user.
     """
@@ -36,6 +38,7 @@ class jidevent(object):
         self.nick = nick
         self.jid = jid
         self.eventTime = eventTime
+
 
 class jidstore(object):
     def __init__(self, store):
@@ -59,28 +62,28 @@ class jidstore(object):
             cur.execute('UPDATE whowas SET jid=?, eventTime=?', (event.jid, event.eventTime))
             logging.debug("Updated existing whowas")
         else:
-            cur.execute('INSERT INTO whowas(nick, muc, jid, eventTime) VALUES(?,?,?,?)',(event.nick, event.muc, event.jid, event.eventTime))
+            cur.execute('INSERT INTO whowas(nick, muc, jid, eventTime) VALUES(?,?,?,?)', (event.nick, event.muc, event.jid, event.eventTime))
             logging.debug("Added new whowas")
         db.commit()
         db.close()
 
-
     def get(self, nick, muc):
         db = self.store.getDb()
         cur = db.cursor()
-        cur.execute('SELECT * FROM seen WHERE nick=? AND muc=?', (nick,muc))
+        cur.execute('SELECT * FROM seen WHERE nick=? AND muc=?', (nick, muc))
         results = cur.fetchall()
         if len(results) == 0:
             return None
-        return jidevent(results[0][1],results[0][2],results[0][3],datetime.datetime.strptime(results[0][4][0:19],"""%Y-%m-%d %H:%M:%S""" ))
+        return jidevent(results[0][1], results[0][2], results[0][3], datetime.datetime.strptime(results[0][4][0:19], """%Y-%m-%d %H:%M:%S"""))
         db.close()
 
     def delete(self, nick, muc):
         db = self.store.getDb()
         cur = db.cursor()
-        cur.execute('DELETE FROM seen WHERE nick=? AND muc=?', (nick,muc))
+        cur.execute('DELETE FROM seen WHERE nick=? AND muc=?', (nick, muc))
         db.commit()
         db.close()
+
 
 class seenstore(object):
     def __init__(self, store):
@@ -110,7 +113,7 @@ class seenstore(object):
             cur.execute('UPDATE seen SET nick=?, eventTime=?, muc=?, stanzaType=?, text=? WHERE nick=?', (event.nick, event.eventTime, event.muc, event.stanzaType, event.text, event.nick))
             logging.debug("Updated existing seen")
         else:
-            cur.execute('INSERT INTO seen(nick, eventTime, muc, stanzaType, text) VALUES(?,?,?,?,?)',(event.nick, event.eventTime, event.muc, event.stanzaType, event.text))
+            cur.execute('INSERT INTO seen(nick, eventTime, muc, stanzaType, text) VALUES(?,?,?,?,?)', (event.nick, event.eventTime, event.muc, event.stanzaType, event.text))
             logging.debug("Added new seen")
         db.commit()
         db.close()
@@ -122,7 +125,7 @@ class seenstore(object):
         results = cur.fetchall()
         if len(results) == 0:
             return None
-        return seenevent(results[0][1],datetime.datetime.strptime(results[0][2][0:19],"""%Y-%m-%d %H:%M:%S""" ),results[0][3],results[0][4],results[0][5])
+        return seenevent(results[0][1], datetime.datetime.strptime(results[0][2][0:19], """%Y-%m-%d %H:%M:%S"""), results[0][3], results[0][4], results[0][5])
         db.close()
 
     def delete(self, nick):
@@ -131,6 +134,7 @@ class seenstore(object):
         cur.execute('DELETE FROM seen WHERE nick=?', (nick,))
         db.commit()
         db.close()
+
 
 class seen(BotPlugin):
     """A plugin to keep track of user presence."""
@@ -141,7 +145,7 @@ class seen(BotPlugin):
         #self.bot.addIMCommand('whowas', self.handle_whowas_request)
         #self.bot.addMUCCommand('whowas', self.handle_whowas_request)
         #self.bot.addHelp('whowas', 'Jid of member', "See the last jid of a member", 'whowas')
-        self.started = datetime.timedelta(seconds = time.time())
+        self.started = datetime.timedelta(seconds=time.time())
         self.bot.add_event_handler("groupchat_presence", self.handle_groupchat_presence, threaded=True)
         self.bot.add_event_handler("groupchat_message", self.handle_groupchat_message, threaded=True)
 
@@ -191,4 +195,4 @@ class seen(BotPlugin):
             state = "leaving"
         #if seenData['show'] == None:
         #    state = "joining"
-        return "'%s' was last seen %s %s %s %s"  %(args, state, seenData.muc, sinceTime, status)
+        return "'%s' was last seen %s %s %s %s" % (args, state, seenData.muc, sinceTime, status)

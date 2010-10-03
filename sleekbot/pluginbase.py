@@ -12,6 +12,7 @@ import imp
 
 from collections import defaultdict
 
+
 def call_on_register(plugin_name):
     """ Decorator to relate a plugin method to the event of another plugin
          being registered
@@ -20,10 +21,11 @@ def call_on_register(plugin_name):
     def __outer(f):
         def __inner(*args, **kwargs):
             return f(*args, **kwargs)
-        if isinstace(plugin_name,  'str'):
-            plugin_name = (plugin_name,  )
+        if isinstace(plugin_name, 'str'):
+            plugin_name = (plugin_name, )
         __inner._call_on_register = plugin_name
     return __outer
+
 
 def call_on_unregister(plugin_name):
     """ Decorator to relate a plugin method to the event of another plugin
@@ -33,16 +35,17 @@ def call_on_unregister(plugin_name):
     def __outer(f):
         def __inner(*args, **kwargs):
             return f(*args, **kwargs)
-        if isinstace(plugin_name,  'str'):
-            plugin_name = (plugin_name,  )
+        if isinstace(plugin_name, 'str'):
+            plugin_name = (plugin_name, )
         __inner._call_on_unregister = plugin_name
     return __outer
+
 
 class Plugin(object):
     """ A base class for plugins.
     """
 
-    def __init__(self,  config = {}):
+    def __init__(self, config={}):
         self.config = config
         self.__plugin_dict = None
 
@@ -72,7 +75,7 @@ class Plugin(object):
         self.__plugin_dict = value
         self._register_calls()
 
-    plugin_dict = property(fget = _get_dict, fset = _set_dict)
+    plugin_dict = property(fget=_get_dict, fset=_set_dict)
 
 
 def default_plugin_factory(aclass, config):
@@ -85,7 +88,7 @@ class PluginDict(dict):
     """ A dictionary class to hold plugins.
     """
 
-    def __init__(self, plugin_base_class = Plugin, default_factory = default_plugin_factory, default_package = 'plugins'):
+    def __init__(self, plugin_base_class=Plugin, default_factory=default_plugin_factory, default_package='plugins'):
         """ Initialize dictionary
                 plugin_base_class -- class from which plugins must derive (default Plugin)
                 default_factory   -- method to instantiate a plugin object (default default_plugin_factory)
@@ -135,7 +138,7 @@ class PluginDict(dict):
 
         super(PluginDict, self).__delitem__(key)
 
-    def register(self, name, config = {}, module = '__default__', package = '__default__'):
+    def register(self, name, config={}, module='__default__', package='__default__'):
         """ Loads and register a plugin
                 name    -- plugin name (name of the class)
                 config  -- extra configuration (to be handled to the plugin)
@@ -144,11 +147,11 @@ class PluginDict(dict):
         try:
             if name in self:
                 return
-            if isinstance(name,  self._plugin_base_class):
+            if isinstance(name, self._plugin_base_class):
                 plugin = name
                 name = name.__class__.__name__
                 self[name] = plugin
-            elif isinstance(name,  str):
+            elif isinstance(name, str):
                 if package == '__default__':
                     package = self._default_package
                 elif not package in self.__imported:
@@ -158,15 +161,15 @@ class PluginDict(dict):
                 if module == '__default__':
                     module = name
 
-                imported = __import__("%s.%s" % (package, module), fromlist = name)
-                self[name] = self._default_factory(getattr(imported, name),  config)
+                imported = __import__("%s.%s" % (package, module), fromlist=name)
+                self[name] = self._default_factory(getattr(imported, name), config)
 
             return True
 
-        except Exception,  e:
-            logging.error('Error while registering plugin %s: %s' % (name,  e))
+        except Exception, e:
+            logging.error('Error while registering plugin %s: %s' % (name, e))
 
-    def register_many(self, include = '__all__', exclude = set(), config = dict()):
+    def register_many(self, include='__all__', exclude=set(), config=dict()):
         """ Register multiple plugins
 
                 include -- plugins names to register (default __init__.__all__)
@@ -180,11 +183,11 @@ class PluginDict(dict):
         for plugin in set(include).difference(set(exclude)):
             self.register(plugin, config.get(plugin, {}))
 
-    def reload(self, name, config = {}):
+    def reload(self, name, config={}):
         """ Reload a registered plugins.
         """
-        config = getattr(self[name], 'config',  {})
-        module = __import__(self[name].__module__, fromlist = name)
+        config = getattr(self[name], 'config', {})
+        module = __import__(self[name].__module__, fromlist=name)
         del self[name]
         reload(module)
         self.register(name, config)
@@ -205,7 +208,8 @@ class PluginDict(dict):
             v = set(filter(lambda x: x[0] != plugin, v))
 
     def get_modules(self):
-            return [__import__(self[name].__module__, fromlist = name) for name in self.keys()]
+            return [__import__(self[name].__module__, fromlist=name) for name in self.keys()]
+
 
 class NotAPluginError(Exception):
     """Exception raised when the object added to PluginDict is

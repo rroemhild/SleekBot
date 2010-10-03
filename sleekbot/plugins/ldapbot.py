@@ -31,11 +31,13 @@ import ldap.filter
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
+
 class LdapEntry(dict):
     """Dict for an LDAP entry"""
     def __init__(self, entrie):
         for key in entrie.keys():
             self[key] = entrie[key][0].decode('utf-8')
+
 
 class Options():
     """A dirty hack to set the plugin command usage after the plugin
@@ -49,6 +51,7 @@ class Options():
 
 options = Options()
 
+
 class ldapbot(BotPlugin):
     """Ldapbot allows users to query a LDAP server.
     """
@@ -59,16 +62,16 @@ class ldapbot(BotPlugin):
 
         for option in self.config.findall('option'):
             self.plugin_options[option.attrib['name']] = {
-                'name' : option.attrib['name'],
-                'help' : option.attrib['help'],
-                'usage' : option.attrib['usage'],
-                'basedn' : option.find('basedn').attrib['dn'],
-                'order' : option.find('response').get('order', default='sorted'),
-                'limit' : option.find('response').get('limit'),
-                'delimiter' : option.find('response').get('delimiter', default=", ").replace('\\n', '\n'),
-                'responseMsg' : option.find('response').get('msg', default='').replace('\\n', '\n'),
-                'searchFilter' : option.find('searchFilter').text,
-                'retrieveAttributes' : option.find('retrieveAttributes')}
+                'name': option.attrib['name'],
+                'help': option.attrib['help'],
+                'usage': option.attrib['usage'],
+                'basedn': option.find('basedn').attrib['dn'],
+                'order': option.find('response').get('order', default='sorted'),
+                'limit': option.find('response').get('limit'),
+                'delimiter': option.find('response').get('delimiter', default=", ").replace('\\n', '\n'),
+                'responseMsg': option.find('response').get('msg', default='').replace('\\n', '\n'),
+                'searchFilter': option.find('searchFilter').text,
+                'retrieveAttributes': option.find('retrieveAttributes')}
 
         global options
         options.x = '[%s]' % '|'.join(self.plugin_options)
@@ -113,7 +116,7 @@ class ldapbot(BotPlugin):
         except ldap.LDAPError as e:
             logging.error('LDAP %s' % e)
 
-    @botcmd(name='ldap', usage=options) # options is global
+    @botcmd(name='ldap', usage=options)  # options is global
     def handle_ldapsearch(self, command, args, msg):
         """ Achieve a query on a LDAP Server."""
 

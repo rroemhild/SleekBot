@@ -16,26 +16,26 @@ import string
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
-#make a list of safe functions
-safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', \
+# make a list of safe functions
+safe_list = ['math', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', \
 'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot', 'ldexp', 'log', \
 'log10', 'modf', 'pi', 'pow', 'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh', 'abs']
-#use the list to filter the local namespace
-safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
+# use the list to filter the local namespace
+safe_dict = dict([(k, locals().get(k, None)) for k in safe_list])
+
 
 class botmath(BotPlugin):
     """A nerdy plugin for rolling complex or simple formulas."""
 
-    @botcmd(usage = '[math expression]')
+    @botcmd(usage='[math expression]')
     def calc(self, command, args, msg):
         """Does a mathematical calculation
         You can do simple calculations such as 2+3
         Or more complex such as sin(1.5*pi)
         """
-        return str(eval(args, {"__builtins__":None}, safe_dict))
+        return str(eval(args, {"__builtins__": None}, safe_dict))
 
-
-    @botcmd(usage = '[A B|B]')
+    @botcmd(usage='[A B|B]')
     def random(self, command, args, msg):
         """Returns a random integer in range A - B or 1 - B."""
 
@@ -57,8 +57,7 @@ class botmath(BotPlugin):
             except ValueError:
                 pass
 
-
-    @botcmd(usage = '[dice calculation]')
+    @botcmd(usage='[dice calculation]')
     def roll(self, command, args, msg):
         """Rolls dice for you.
         Example: roll (1 + d6 + 2d10 + 5 + d4) * 2 """
@@ -70,8 +69,7 @@ class botmath(BotPlugin):
             traceback.print_exc()
             return "Invalid dice calculation."
 
-
-    @botcmd(usage = '[alpha|alphanum|numbers|all] [length]')
+    @botcmd(usage='[alpha|alphanum|numbers|all] [length]')
     def passgen(self, command, args, msg):
         """Generates random passwords"""
 
@@ -99,10 +97,10 @@ class botmath(BotPlugin):
             default_length = '8'
             max_length = '100'
 
-        choices = {'alpha' : string.letters,
+        choices = {'alpha': string.letters,
                    'alphanum': string.letters + string.digits,
-                   'num' : string.digits,
-                   'all' : string.letters + string.digits + string.punctuation}
+                   'num': string.digits,
+                   'all': string.letters + string.digits + string.punctuation}
 
         if args.count(" ") > 0:
             (choice, length) = args.split(" ", 1)
@@ -131,7 +129,7 @@ class Die(object):
         self.value = 0
 
     def roll(self):
-        self.value = random.randint(1,self.sides)
+        self.value = random.randint(1, self.sides)
         return self.value
 
     def __mul__(self, other):
@@ -144,7 +142,7 @@ class Die(object):
         if self.value > other.value:
             return 1
         if self.value < other.value:
-            return -1;
+            return -1
         return 0
 
     def __retr__(self):
@@ -166,21 +164,21 @@ class Dice(object):
     def roll(self):
         for ddie in self.dice_list:
             self.total += ddie.roll()
-            time.sleep(random.randint(0,100) * .0001)
+            time.sleep(random.randint(0, 100) * .0001)
         self.base = self.total
         return self.total
 
     def dropLow(self, number):
         self.dice_list.sort()
         sum = 0
-        for die in self.dice_list[number:] :
+        for die in self.dice_list[number:]:
             sum += die.value
         return sum
 
     def dropHigh(self, number):
         self.dice_list.sort()
         sum = 0
-        for die in self.dice_list[:(-1*number)] :
+        for die in self.dice_list[:(-1 * number)]:
             sum += die.value
         return sum
 
@@ -266,7 +264,7 @@ class diceCalc(object):
         for dice in self.dicesets:
             dice.dice_list.sort()
             for die in dice.dice_list:
-                dicelist.append( str(die) )
+                dicelist.append(str(die))
                 numDice += 1
         #if numDice < 2 :
         #    output = ""
@@ -277,7 +275,7 @@ if __name__ == '__main__':
     command = ''
     while command != 'quit':
         if command:
-            print eval(user_func,{"__builtins__":None},safe_dict)
+            print eval(user_func, {"__builtins__": None}, safe_dict)
             d = diceCalc(command)
             print d.show()
         command = raw_input()

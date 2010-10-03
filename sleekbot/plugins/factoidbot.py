@@ -22,12 +22,12 @@ import pickle
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
+
 class factstore(object):
     def __init__(self):
         self.null = None
         self.data = {}
         self.loaddefault()
-
 
     def list_terms(self):
         return self.data.keys()
@@ -37,12 +37,12 @@ class factstore(object):
         self.savedefault()
 
     def get(self, term):
-        if self.data.has_key(term.lower()):
+        if term.lower() in self.data:
             return self.data[term.lower()]
         return "No facts known about " + term
 
     def delete(self, term):
-        if self.data.has_key(term.lower()):
+        if term.lower() in self.data:
             del self.data[term.lower()]
             self.savedefault()
 
@@ -56,7 +56,7 @@ class factstore(object):
         try:
             f = open(filename, 'rb')
         except:
-            logging.warning("Error loading factoids. Cannot open fact file: %s" %  filename)
+            logging.warning("Error loading factoids. Cannot open fact file: %s" % filename)
             return
         self.data = pickle.load(f)
         f.close()
@@ -65,10 +65,11 @@ class factstore(object):
         try:
             f = open(filename, 'wb')
         except IOError:
-            logging.warning("Error saving factoids. Cannot open fact file: %s" %  filename)
+            logging.warning("Error saving factoids. Cannot open fact file: %s" % filename)
             return
         pickle.dump(self.data, f)
         f.close()
+
 
 class factoidbot(BotPlugin):
     """A plugin to remember facts."""
@@ -83,9 +84,9 @@ class factoidbot(BotPlugin):
         term = None
         fact = None
         if args.count(" ") > 1:
-            [subcommand, term, fact] = args.split(" ",2)
+            [subcommand, term, fact] = args.split(" ", 2)
         elif args.count(" ") > 0:
-            [subcommand, term] = args.split(" ",1)
+            [subcommand, term] = args.split(" ", 1)
         else:
             subcommand = args
         admin_commands = ['list', 'add', 'delete']

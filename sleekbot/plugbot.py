@@ -11,7 +11,8 @@ import logging
 from optparse import OptionParser
 from xml.etree import ElementTree as ET
 
-from pluginbase import PluginDict,  Plugin
+from pluginbase import PluginDict, Plugin
+
 
 class BotPlugin(Plugin):
     """ Base class for plugins used with CommandBot
@@ -21,10 +22,11 @@ class BotPlugin(Plugin):
             self.bot.unregister_commands(self)
         else:
             self.bot = value.bot
-            super(BotPlugin,  self)._set_dict(value)
+            super(BotPlugin, self)._set_dict(value)
             self.bot.register_commands(self)
 
-    plugin_dict = property(fget = Plugin._get_dict, fset = _set_dict)
+    plugin_dict = property(fget=Plugin._get_dict, fset=_set_dict)
+
 
 class PlugBot(object):
     """ Base class for bots that are pluggable
@@ -40,11 +42,10 @@ class PlugBot(object):
                 <bot>
     """
 
-
-    def __init__(self, default_package = 'plugins'):
+    def __init__(self, default_package='plugins'):
         """ Initialized the PlugBot by registering the plugins declared in botconfig
         """
-        self.cmd_plugins = PluginDict(plugin_base_class = BotPlugin, default_package = default_package)
+        self.cmd_plugins = PluginDict(plugin_base_class=BotPlugin, default_package=default_package)
         self.cmd_plugins.bot = self
 
         PlugBot.start(self)

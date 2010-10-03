@@ -19,6 +19,7 @@ from sleekbot.plugbot import BotPlugin
 </plugin>
 """
 
+
 class slap(BotPlugin):
     """A plugin to smack people around with enormous iron bars and scary cellos."""
 
@@ -49,9 +50,9 @@ class slap(BotPlugin):
                     rosterNick = msg['mucnick']
 
                 return "/me %(verb)s %(nick)s with %(size)s %(tool)s." % {
-                                'verb' : random.choice(self.slap_verbs),
-                                'nick' : rosterNick,
-                                'size' : random.choice(self.slap_size),
-                                'tool' : random.choice(self.slap_tools)}
+                                'verb': random.choice(self.slap_verbs),
+                                'nick': rosterNick,
+                                'size': random.choice(self.slap_size),
+                                'tool': random.choice(self.slap_tools)}
 
         return "Unknown nickname %s." % args

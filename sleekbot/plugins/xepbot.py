@@ -12,6 +12,7 @@ import math
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
+
 class xepbot(BotPlugin):
     """A plugin for obtaining xep information."""
 
@@ -39,7 +40,7 @@ class xepbot(BotPlugin):
         except:
             logging.info("Loading XEP list file %s failed." % (url))
 
-    @botcmd(name = 'xep', usage = '[number]')
+    @botcmd(name='xep', usage='[number]')
     def handle_xep(self, command, args, msg):
         """Returns details of the specified XEP."""
         self.ensureCacheIsRecent()
