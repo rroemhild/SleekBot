@@ -111,7 +111,7 @@ The best way to get your changes merged back into core is as follows (thanks Gol
    2. Create a thoughtfully named topic branch to contain your change
    3. Hack away
    4. Test, test, test
-   5. Document your code.
+   5. Document your code, run pep8 and make it compliant.
    6. Do not change the version number, I will do that on my end
    7. If necessary, rebase your commits into logical chunks, without errors
    8. Push the branch up to GitHub
