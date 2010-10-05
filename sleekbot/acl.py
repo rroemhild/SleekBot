@@ -6,6 +6,13 @@
 import logging
 from collections import defaultdict
 
+try:
+    import ldap
+    import ldap.filter
+except:
+    logging.error("can not import ldap. LDAP storage for acl" \
+                    " is not available.")
+
 
 def parts_of(address):
     """ Given an e-mail address, generates al possible domains."""
@@ -50,6 +57,13 @@ class ESet(set):
             if super(ESet, self).__contains__(part):
                 return True
         return False
+
+
+class LdapEntry(dict):
+    """ Dict for an LDAP entry."""
+    def __init__(self, entrie):
+        for key in entrie.keys():
+            self[key] = entrie[key][0].decode('utf-8')
 
 
 class VirtualSet(object):
@@ -237,3 +251,75 @@ class ACLdb(ACL):
             cur.execute(query, role)
             return int(cur.fetchone()[0])
 
+
+class ACLldap(ACL):
+    """ LDAP storage for access control lists
+    """
+
+    def __init__(self, caller, config=None):
+        self._post_init()
+        self.config = config
+        self.caller = caller
+        self.searchScope = ldap.SCOPE_SUBTREE
+        self.ldap = self._bind()
+
+    def _bind(self):
+        """Connect to the LDAP Server"""
+
+        l = ldap.initialize(self.config.find('server').get('uri'))
+        l.timeout = 10
+
+        try:
+            l.simple_bind_s(self.config.find('server').get('binddn'),
+                            self.config.find('server').get('secret'))
+        except ldap.INVALID_CREDENTIALS:
+            logging.error("LDAP username or password is incorrect.")
+            return False
+        except ldap.SERVER_DOWN:
+            logging.error("LDAP server %s down" % self.uri)
+            return False
+        except ldap.LDAPError, e:
+            logging.error('LDAP %s' % e)
+            return False
+
+        logging.info('Bind to LDAP Server %s' \
+            % self.config.find('server').get('uri'))
+        return l
+
+    def __getitem__(self, jid):
+        if self.ldap:
+            searchFilter = "(&(objectClass=%s)(memberUid=%s))" \
+                % (self.config.find('groups').get('groupClass', '*'),
+                jid)
+            retrieveAttrib = ['cn']
+            result_set = self.ldap.search_st(
+                    self.config.find('groups').get('basedn'),
+                    self.searchScope, searchFilter, retrieveAttrib, 0,
+                    int(self.config.find('server').get('timeout', 10)))
+            entry = LdapEntry(result_set[0][1])
+            return getattr(self.caller.acl.ROLE, entry['cn'])
+
+    def __contains__(self, jid):
+        if self.ldap:
+            searchFilter = "(&(objectClass=%s)(%s=%s))" \
+                % (self.config.find('groups').get('groupclass', '*'),
+                    self.config.find('groups').get('memberattr', '*'),
+                    jid)
+            retrieveAttrib = ['cn']
+            result_set = self.ldap.search_st(
+                    self.config.find('groups').get('basedn'),
+                    self.searchScope, searchFilter, retrieveAttrib, 0,
+                    int(self.config.find('server').get('timeout', 10)))
+            return len(result_set) > 0
+
+
+if __name__ == '__main__':
+    a = eset(['test@a.new.domain.com'])
+    b = eset(['a.new.domain.com'])
+    c = eset(['domain.com'])
+    xs = ['test@a.new.domain.com', 'test2@a.new.domain.com', \
+         'test3@another.domain.com', 'test4@domain.us', 'us']
+    for s in [a, b, c]:
+        print("---> ", s)
+        for x in xs:
+            print('%s: %s' % (x, x in s))
