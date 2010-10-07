@@ -447,11 +447,18 @@ def parse_args(args, syntax, separator=None):
 
     """
 
-    if getattr(args, 'parsed', False):
+    if getattr(args, 'parsed_', False):
         return args
     o = mstr(args)
-    args = map(str.strip, args.strip().split(separator))
-    args += [None] * (len(syntax) - len(args))
+    args = map(str.strip, args.strip().split(separator, len(syntax)))
+    delta = len(syntax) - len(args)
+    if delta < 0:
+        o.tail_ = args[-1]
+        args = args[0:-1]
+    else:
+        o.tail_ = None
+        args += [None] * delta
+
     for a, s in zip(args, syntax):
         (name, valid) = s
         if isinstance(valid, (list, tuple)):
@@ -480,5 +487,5 @@ def parse_args(args, syntax, separator=None):
         if val is None:
             raise ArgError(name, '%s is a mandatory argument' % name)
         setattr(o, name, val)
-    o.parsed = True
+    o.parsed_ = True
     return o
