@@ -138,3 +138,12 @@ class acl(BotPlugin):
         else:
             return '%s was not found in acl' % args.jid
 
+    @botcmd(hidden=True)
+    def acl_register(self, command, args, msg):
+        """ Register yourself the first time as a bot owner
+        """
+        if self.bot.acl.count() > 0:
+            return
+        rolen = getattr(self.bot.acl.ROLE, 'owner')
+        self.bot.acl[msg['from'].bare] = rolen
+        return "You are now my owner."
