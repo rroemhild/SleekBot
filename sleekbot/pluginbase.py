@@ -8,20 +8,21 @@ __license__ = 'MIT License/X11 license'
 
 import logging
 import inspect
-import imp
 
 from collections import defaultdict
 
 
 def call_on_register(plugin_name):
     """ Decorator to relate a plugin method to the event of another plugin
-         being registered
-            plugin_name -- the name of the plugin or an iterable with plugin names
+        being registered
+            plugin_name -- a plugin name or an iterable with plugin names
     """
-    def __outer(f):
+    def __outer(wrapped):
+        """ wrapped is the function to be decorated. """
         def __inner(*args, **kwargs):
-            return f(*args, **kwargs)
-        if isinstace(plugin_name, 'str'):
+            """ Returned function """
+            return wrapped(*args, **kwargs)
+        if isinstance(plugin_name, str):
             plugin_name = (plugin_name, )
         __inner._call_on_register = plugin_name
     return __outer
@@ -30,12 +31,14 @@ def call_on_register(plugin_name):
 def call_on_unregister(plugin_name):
     """ Decorator to relate a plugin method to the event of another plugin
          being unregistered
-            plugin_name -- the name of the plugin or an iterable with plugin names
+            plugin_name -- a plugin name or an iterable with plugin names
     """
-    def __outer(f):
+    def __outer(wrapped):
+        """ wrapped is the function to be decorated. """
         def __inner(*args, **kwargs):
-            return f(*args, **kwargs)
-        if isinstace(plugin_name, 'str'):
+            """ Returned function """
+            return wrapped(*args, **kwargs)
+        if isinstance(plugin_name, str):
             plugin_name = (plugin_name, )
         __inner._call_on_unregister = plugin_name
     return __outer
@@ -45,35 +48,58 @@ class Plugin(object):
     """ A base class for plugins.
     """
 
-    def __init__(self, config={}):
-        self.config = config
+    def __init__(self, config=None):
+        self.config = config if not config is None else dict()
         self.__plugin_dict = None
 
-    def on_register(self):
+    def about(self):
+        """ About the plugin: returns the docstring."""
+        return self.__doc__
+    
+    def _on_register(self):
+        """ Called when the plugin is added to the PluginDict.
+        Override in your derived class if necessary.
+        """
         pass
-
-    def on_unregister(self):
+    
+    def _on_unregister(self):
+        """ Called when the plugin is removed from the PluginDict.
+        Override in your derived class if necessary.
+        """
         pass
 
     def _register_calls(self):
+        """ Register methods from this plugin that should be executed only
+        if other plugins are present.
+        """
         for name, action in inspect.getmembers(self):
-            if inspect.ismethod(action) and hasattr(action, '_call_on_register'):
-                for related in action._call_on_register:
-                    if related in self.__plugin_dict:
-                        action(related)
-                    self.__plugin_dict._call_on_register[related].add((self, action))
-            if inspect.ismethod(action) and hasattr(action, '_call_on_unregister'):
-                for related in action._call_on_unregister:
-                    if related in self.__plugin_dict:
-                        action(related)
-                    self.__plugin_dict._call_on_unregister[related].add((self, action))
+            self._register_calls_one(action, '_call_on_register', True)
+            self._register_calls_one(action, '_call_on_unregister', False)
+
+
+    def _register_calls_one(self, action, prop, execute_now):
+        """ Register functions in the containing PluginDict,
+        to be called when another plugin is registered/unregistered
+        """
+        pdict = self.__plugin_dict
+        if inspect.ismethod(action) and hasattr(action, prop):
+            for related in getattr(action, prop):
+                if execute_now and related in pdict:
+                    action(related)
+                getattr(pdict, prop)[related].add((self, action))
 
     def _get_dict(self):
+        """ Gets the containing PluginDict."""
         return self.__plugin_dict
 
     def _set_dict(self, value):
+        """ Sets in the plugin a reference to the containing PluginDict."""
         self.__plugin_dict = value
-        self._register_calls()
+        if value is None:
+            self._on_unregister()
+        else:
+            self._on_register()
+            self._register_calls()       
 
     plugin_dict = property(fget=_get_dict, fset=_set_dict)
 
@@ -88,11 +114,16 @@ class PluginDict(dict):
     """ A dictionary class to hold plugins.
     """
 
-    def __init__(self, plugin_base_class=Plugin, default_factory=default_plugin_factory, default_package='plugins'):
+    def __init__(self, plugin_base_class=Plugin,
+                 default_factory=default_plugin_factory,
+                 default_package='plugins'):
         """ Initialize dictionary
-                plugin_base_class -- class from which plugins must derive (default Plugin)
-                default_factory   -- method to instantiate a plugin object (default default_plugin_factory)
-                default_package   -- string specifying where to look for plugins (default 'plugins')
+                plugin_base_class -- class from which plugins must derive
+                                     (default Plugin)
+                default_factory   -- method to instantiate a plugin object
+                                     (default default_plugin_factory)
+                default_package   -- string specifying where to look for plugins
+                                     (default 'plugins')
         """
         super(PluginDict, self).__init__()
         self._plugin_base_class = plugin_base_class
@@ -116,29 +147,28 @@ class PluginDict(dict):
             raise NotAPluginError(value.__name__)
 
         value.plugin_dict = self
-        value.on_register()
         for event in self.__call_on_register[key]:
             event[1](value)
 
-        return super(PluginDict, self).__setitem__(key, value)
+        super(PluginDict, self).__setitem__(key, value)
+        logging.info("%s registered", key)
 
     def __delitem__(self, key):
-        """ Call plugin.on_unregister and then remove it form the dictionary
+        """ Remove plugin from the dicitionary
         """
         if key in self:
             current = super(PluginDict, self).__getitem__(key)
-            current.on_unregister()
             for event in self.__call_on_unregister[key]:
                 event[1](current)
             self._unregister_event(key)
             current.plugin_dict = None
-            logging.info("%s unregistered" % key)
+            logging.info("%s unregistered", key)
         else:
-            logging.warning("Plugin not in dict %s." % key)
+            logging.warning("Plugin not in dict %s.", key)
 
         super(PluginDict, self).__delitem__(key)
 
-    def register(self, name, config={}, module='__default__', package='__default__'):
+    def register(self, name, config=None, module=None, package=None):
         """ Loads and register a plugin
                 name    -- plugin name (name of the class)
                 config  -- extra configuration (to be handled to the plugin)
@@ -152,24 +182,26 @@ class PluginDict(dict):
                 name = name.__class__.__name__
                 self[name] = plugin
             elif isinstance(name, str):
-                if package == '__default__':
+                if package is None:
                     package = self._default_package
                 elif not package in self.__imported:
                     __import__(package)
                     self.__imported.add(package)
-                    logging.debug('Imported package %s' % package)
-                if module == '__default__':
-                    module = name
+                    logging.debug('Imported package %s', package)
+                if module is None:
+                    module = name.lower()
 
-                imported = __import__("%s.%s" % (package, module), fromlist=name)
-                self[name] = self._default_factory(getattr(imported, name), config)
+                imported = __import__("%s.%s" % (package, module),
+                                      fromlist=name)
+                self[name] = self._default_factory(getattr(imported, name),
+                                                   config or dict())
 
             return True
 
-        except Exception, e:
-            logging.error('Error while registering plugin %s: %s' % (name, e))
+        except Exception as ex:
+            logging.error('Error while registering plugin %s: %s', name, ex)
 
-    def register_many(self, include='__all__', exclude=set(), config=dict()):
+    def register_many(self, include='__all__', exclude=None, config=None):
         """ Register multiple plugins
 
                 include -- plugins names to register (default __init__.__all__)
@@ -177,20 +209,27 @@ class PluginDict(dict):
                 config  -- dict plugin_name:config (default empty dict)
         """
 
+        if config is None:
+            config = dict()
+
+        if exclude is None:
+            exclude = set()
+
         if not include:
-            include = __all__
+            include = '__all__'
 
         for plugin in set(include).difference(set(exclude)):
             self.register(plugin, config.get(plugin, {}))
 
-    def reload(self, name, config={}):
+    def reload(self, name):
         """ Reload a registered plugins.
         """
         config = getattr(self[name], 'config', {})
         module = __import__(self[name].__module__, fromlist=name)
         del self[name]
         reload(module)
-        self.register(name, config)
+        self.register(name, config=config, 
+                      module=module.__name__.split('.')[-1])
 
     def reload_all(self):
         """ Reload all registered plugins.
@@ -202,13 +241,16 @@ class PluginDict(dict):
     def _unregister_event(self, plugin):
         """ Unregister events associated with a plugin
         """
-        for v in self.__call_on_register.values():
-            v = set(filter(lambda x: x[0] != plugin, v))
-        for v in self.__call_on_unregister.values():
-            v = set(filter(lambda x: x[0] != plugin, v))
+        for value in self.__call_on_register.values():
+            value = set(filter(lambda x: x[0] != plugin, value))
+        for value in self.__call_on_unregister.values():
+            value = set(filter(lambda x: x[0] != plugin, value))
 
     def get_modules(self):
-            return [__import__(self[name].__module__, fromlist=name) for name in self.keys()]
+        """ Imports and returns an list of modules
+        """
+        return [__import__(self[name].__module__, fromlist=name)
+                for name in self.keys()]
 
 
 class NotAPluginError(Exception):
@@ -220,4 +262,5 @@ class NotAPluginError(Exception):
     """
 
     def __init__(self, classname):
+        super(NotAPluginError, self).__init__()
         self.classname = classname

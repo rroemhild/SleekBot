@@ -7,9 +7,11 @@
 <plugin name="ldapbot">
     <config>
         <server uri="ldap://server.com:389" binddn="" secret="" />
-        <option name="user" help="Returns some user info" usage="user [givenname|surname|uid]">
+        <option name="user" help="Returns some user info" 
+                usage="user [givenname|surname|uid]">
             <basedn dn="ou=people,dc=domain,dc=tld" />
-            <searchFilter>(&amp;(account=active)(|(uid=*%s*)(sn=*%s*)(givenName=*%s*)(displayName=*%s*)))</searchFilter>
+            <searchFilter>(&amp;(account=active)(|(uid=*%s*)(sn=*%s*)
+                          (givenName=*%s*)(displayName=*%s*)))</searchFilter>
             <retrieveAttributes>
                 <attr name="sn" />
                 <attr name="givenName" />
@@ -17,7 +19,9 @@
                 <attr name="ou" />
                 <attr name="telephoneNumber" />
             </retrieveAttributes>
-            <response msg="%(givenName)s %(sn)s\nOrg: %(ou)s\nE-Mail: %(mail)s\nPhone: %(telephoneNumber)s" order="sorted" delimiter="\n" limit="1" />
+            <response msg="%(givenName)s %(sn)s\nOrg: %(ou)s\n
+                           E-Mail: %(mail)s\nPhone: %(telephoneNumber)s" 
+                           order="sorted" delimiter="\n" limit="1" />
         </option>
     </config>
 </plugin>
@@ -44,37 +48,41 @@ class Options():
     was registerd with the bot.
     """
     def __init__(self):
-        self.x = ''
+        self.value = ''
 
     def __str__(self):
-        return self.x
+        return self.value
 
-options = Options()
+OPTIONS = Options()
 
 
-class ldapbot(BotPlugin):
+class LDAPBot(BotPlugin):
     """Ldapbot allows users to query a LDAP server.
     """
 
-    def on_register(self):
+    def _on_register(self):
+        """ Parses config. """
         self.ldap = None
         self.plugin_options = {}
 
         for option in self.config.findall('option'):
+            res = option.find('response')
             self.plugin_options[option.attrib['name']] = {
                 'name': option.attrib['name'],
                 'help': option.attrib['help'],
                 'usage': option.attrib['usage'],
                 'basedn': option.find('basedn').attrib['dn'],
-                'order': option.find('response').get('order', default='sorted'),
-                'limit': option.find('response').get('limit'),
-                'delimiter': option.find('response').get('delimiter', default=", ").replace('\\n', '\n'),
-                'responseMsg': option.find('response').get('msg', default='').replace('\\n', '\n'),
-                'searchFilter': option.find('searchFilter').text,
-                'retrieveAttributes': option.find('retrieveAttributes')}
+                'order': res.get('order', default='sorted'),
+                'limit': res.get('limit'),
+                'delimiter': res.get('delimiter', default=", ").replace('\\n', 
+                                                                        '\n'),
+                'response_msg': res.get('msg', default='').replace('\\n', '\n'),
+                'search_filter': option.find('search_filter').text,
+                'retrieve_attributes': option.find('retrieve_attributes')}
 
-        global options
-        options.x = '[%s]' % '|'.join(self.plugin_options)
+        global OPTIONS
+        self.timeout = int(self.config.find('server').get('timeout', 10))
+        OPTIONS.value = '[%s]' % '|'.join(self.plugin_options)
 
     def get_available_commands(self, options):
         """ Return a list with search commands
@@ -93,30 +101,31 @@ class ldapbot(BotPlugin):
             limit = default
         return int(limit)
 
-    def ldap_search(self, searchFilter, retrieveAttrib, option):
+    def ldap_search(self, search_filter, retrieve_attrib, option):
         """ Run a search on LDAP server
         """
-        logging.debug('Connecting to ldap server %s' % self.config.find('server').attrib['uri'])
+        logging.debug('Connecting to ldap server %s', 
+                      self.config.find('server').attrib['uri'])
         self.ldap = ldap.initialize(self.config.find('server').attrib['uri'])
         try:
             self.ldap.simple_bind_s(self.config.find('server').get('binddn'),
                                     self.config.find('server').get('secret'))
             logging.debug('Connected to ldap server.')
-        except ldap.LDAPError as e:
-            logging.error('LDAP %s' % e)
+        except ldap.LDAPError as ex:
+            logging.error('LDAP %s' % ex)
 
-        searchScope = ldap.SCOPE_SUBTREE
+        search_scope = ldap.SCOPE_SUBTREE
         try:
-            result_set = self.ldap.search_st(option['basedn'], searchScope,
-                                            searchFilter, retrieveAttrib, 0,
-                                            int(self.config.find('server').get('timeout', 10)))
+            result_set = self.ldap.search_st(option['basedn'], search_scope,
+                                            search_filter, retrieve_attrib, 0,
+                                            self.timeout)
             self.ldap.unbind_s()
             logging.debug('Disconnected from LDAP server.')
             return result_set
-        except ldap.LDAPError as e:
-            logging.error('LDAP %s' % e)
+        except ldap.LDAPError as ex:
+            logging.error('LDAP %s' % ex)
 
-    @botcmd(name='ldap', usage=options)  # options is global
+    @botcmd(name='ldap', usage=OPTIONS)  # options is global
     def handle_ldapsearch(self, command, args, msg):
         """ Achieve a query on a LDAP Server."""
 
@@ -127,7 +136,7 @@ class ldapbot(BotPlugin):
         if ' ' in args:
             query = ldap.filter.escape_filter_chars(args.split(' ', 1)[-1])
 
-        responseTemp = []
+        response_temp = []
 
         if opt in self.plugin_options:
             option = self.plugin_options[opt]
@@ -135,35 +144,35 @@ class ldapbot(BotPlugin):
             # Returns plugin command help if there is no query
             if query == '':
                 return "ldap %s -- %s\nUsage: %s\n" % (opt,
-                                                        option['help'],
-                                                        option['usage'])
+                                                       option['help'],
+                                                       option['usage'])
 
-            searchFilter = ''
-            searchFilter = option['searchFilter'].replace('%s', query)
-            logging.debug('LDAP search filter: %s' % searchFilter)
+            search_filter = ''
+            search_filter = option['search_filter'].replace('%s', query)
+            logging.debug('LDAP search filter: %s', search_filter)
 
             # responseable message attributes
-            retrieveAttributes = []
-            for sr in option['retrieveAttributes'].findall('attr'):
-                retrieveAttributes.append(sr.attrib['name'])
+            retrieve_att = []
+            for att in option['retrieve_attributes'].findall('attr'):
+                retrieve_att.append(att.attrib['name'])
 
             # ldap search
-            results = self.ldap_search(searchFilter, retrieveAttributes, option)
-            logging.debug('LDAP search results: %s' % results)
+            results = self.ldap_search(search_filter, retrieve_att, option)
+            logging.debug('LDAP search results: %s', results)
 
             # response
             entries = []
             if results:
-                for e in results:
-                    entries.append(LdapEntry(e[1]))
+                for result in results:
+                    entries.append(LdapEntry(result[1]))
                 if option['order'] == 'sorted':
                     entries.sort()
             limit = self.get_entries_limit(option['limit'], len(entries))
             for entry in entries[:limit]:
-                responseTemp.append(option['responseMsg'] % entry)
+                response_temp.append(option['response_msg'] % entry)
 
-            if len(responseTemp) > 0:
-                return "%s" % option['delimiter'].join(responseTemp)
+            if len(response_temp) > 0:
+                return "%s" % option['delimiter'].join(response_temp)
             else:
                 return "No search result."
 

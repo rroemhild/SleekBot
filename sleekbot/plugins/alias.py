@@ -42,9 +42,9 @@ class AliasStore(object):
 
     def create_table(self):
         """ Create the alias table.
-        """
+        """        
         with self.store.context_cursor() as cur:
-            if not len(cur.execute("pragma table_info('alias')").fetchall()) > 0:
+            if not self.store.has_table(cur,'alias'):
                 cur.execute("""CREATE TABLE "alias" (
                             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
                             "jid" VARCHAR(256), "alias" VARCHAR(256),
@@ -103,30 +103,30 @@ class AliasStore(object):
                     (aliascmd.jid, aliascmd.alias))
 
 
-class alias(BotPlugin):
+class Alias(BotPlugin):
     """ A plugin for global and user defined aliases.
     """
 
     freetextRegex = ''
 
-    def on_register(self):
+    def _on_register(self):
         """ On plugin load parse the freetextRegex together and set it global
         so botfreetext can use it later.
         """
-        self.im_prefix = self.bot.im_prefix
+        self.chat_prefix = self.bot.chat_prefix
         self.muc_prefix = self.bot.muc_prefix
         self.alias_store = AliasStore(self.bot.store)
-
+        
         # botfreetext regex string with im and mux prefix
         global freetextRegex
         freetextRegex = "^[\%s\%s][a-zA-Z].*$" \
-                        % (self.im_prefix, self.muc_prefix)
+                        % (self.chat_prefix, self.muc_prefix)
 
         # global aliases
         self.global_aliases = {}
         if self.config:
             for aliascmd in self.config.findall('alias'):
-                logging.debug("Load global alias: %s" % aliascmd.attrib['name'])
+                logging.debug("Load global alias: %s", aliascmd.attrib['name'])
                 self.global_aliases[aliascmd.attrib['name']] = AliasCmd(None,
                                                   aliascmd.attrib['name'],
                                                   aliascmd.attrib['command'])
@@ -142,7 +142,7 @@ class alias(BotPlugin):
         if msg['type'] == 'groupchat':
             prefix = self.muc_prefix
         else:
-            prefix = self.im_prefix
+            prefix = self.chat_prefix
         command = msg.get('body', '').strip().split(' ', 1)[0]
         if ' ' in msg.get('body', ''):
             args = msg['body'].split(' ', 1)[-1].strip()
@@ -184,7 +184,7 @@ class alias(BotPlugin):
         except ArgError as error:
             return error.msg
 
-        bot_commands = dict(self.bot.im_commands.items()
+        bot_commands = dict(self.bot.chat_commands.items()
                             + self.bot.muc_commands.items())
 
         if not args.alias in bot_commands:

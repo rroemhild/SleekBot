@@ -3,15 +3,11 @@
     See the README file for more information.
 """
 
-import logging
-import datetime
-import time
-
 from sleekbot.commandbot import botcmd, CommandBot, denymsg
 from sleekbot.plugbot import BotPlugin
 
 
-class others(BotPlugin):
+class Others(BotPlugin):
     """A plugin to interact with and obtain information about other users."""
 
     @botcmd(usage='[muc] [text]', allow=CommandBot.msg_from_owner)
@@ -45,5 +41,6 @@ class others(BotPlugin):
         if latency == None:
             response = "No response when pinging " + args
         else:
-            response = "Ping response received from %s in %d seconds." % (args, latency)
+            response = "Ping response received from %s in %d seconds." % \
+                       (args, latency)
         return response

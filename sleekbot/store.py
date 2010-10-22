@@ -12,13 +12,14 @@ class CMCursor(object):
 
     def __init__(self, call_to_connect):
         self.__connect = call_to_connect
+        self.__con = None
 
     def __enter__(self):
         self.__con = self.__connect()
         return self.__con.cursor()
 
-    def __exit__(self, type, value, tb):
-        if tb is None:
+    def __exit__(self, typ, value, table):
+        if table is None:
             self.__con.commit()
             self.__con.close()
             self.__con = None
@@ -27,17 +28,30 @@ class CMCursor(object):
             self.__con.close()
             self.__con = None
 
-
-class store(object):
+              
+class Store(object):
     """ Store persistent data in sqlite3.
     """
     def __init__(self, filename):
         self.filename = filename
 
-    def getDb(self):
+    def get_db(self):
         """ Return a new DB connection
         """
         return sqlite3.connect(self.filename)
 
     def context_cursor(self):
-        return CMCursor(self.getDb)
+        """ Return a DB cursor with context management
+        """
+        return CMCursor(self.get_db)
+        
+    @staticmethod
+    def has_table(cur, name):
+        """ Checks if a table exists
+                cur   -- a cursor
+                name  -- the name of the table to check
+        """
+        cnt = cur.execute("SELECT count(*) FROM sqlite_master " 
+                          "WHERE type='table' AND name=?", (name, ))
+        return cnt.fetchone()[0] > 0
+       

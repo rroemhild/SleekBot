@@ -3,17 +3,16 @@
     See the README file for more information.
 """
 
-import logging
-import re
 import random
-from xml.etree import ElementTree as ET
 
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
 
-class robberFilter():
-    def filter(self, text):
+class RobberFilter():
+    """ Replace each consonant X by XoX
+    """
+    def __call__(self, text):
         consonants = 'bcdfghjklmnpqrstvwxz'
         outstring = ''
         for char in text:
@@ -24,7 +23,9 @@ class robberFilter():
         return outstring
 
 
-class leetFilter():
+class LeetFilter():
+    """ Replace each letter with a random symbol taken from a list
+    """
     def __init__(self):
         self.mappings = {
             'a': ['4', '/\\', '@', '/-\\', '^'],
@@ -56,7 +57,8 @@ class leetFilter():
         }
         pass
 
-    def filter(self, text):
+    def __call__(self, text):
+        """ Filter text. """
         result = ''
         for char in text:
             leets = self.mappings.get(char, [char])
@@ -66,7 +68,7 @@ class leetFilter():
         return result
 
 
-class chefFilter(object):
+class ChefFilter(object):
     """    -------------------- Swedish Chef -----------------------
 
     chef = {
@@ -113,18 +115,20 @@ class chefFilter(object):
     def __init__(self):
         pass
 
-    def filter(self, text):
-        pass
+    def __call__(self, text):
+        return text
 
 
-class filter(BotPlugin):
+class Filter(BotPlugin):
     """A plugin to filter text."""
 
-    def on_register(self):
-        self.availableFilters = {}
-        self.availableFilters['leet'] = leetFilter()
+    def _on_register(self):
+        """ Register available filters.
+        """
+        self.available_filters = {}
+        self.available_filters['leet'] = LeetFilter()
 #        self.availableFilters['chef'] = chefFilter()
-        self.availableFilters['robber'] = robberFilter()
+        self.available_filters['robber'] = RobberFilter()
 
     @botcmd(name='filter', usage='[filter type] [text]')
     def handle_filter(self, command, args, msg):
@@ -133,6 +137,6 @@ class filter(BotPlugin):
             return "Insufficient information, please check help."
         language = args.split(" ")[0].lower()
         text = " ".join(args.split(" ")[1:])
-        if language not in self.availableFilters.keys():
+        if language not in self.available_filters.keys():
             return "Language %s not available" % language
-        return self.availableFilters[language].filter(text)
+        return self.available_filters[language](text)

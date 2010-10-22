@@ -3,21 +3,19 @@
     See the README file for more information.
 """
 
-import logging
-import datetime
-import time
-
-from sleekbot.commandbot import botcmd, CommandBot, denymsg, parse_args, ArgError
+from sleekbot.commandbot import botcmd, CommandBot, denymsg
+from sleekbot.commandbot import parse_args, ArgError
 from sleekbot.plugbot import BotPlugin
 
 
-class admin(BotPlugin):
-    """A plugin to allows a bot owner to perform tasks such as rehashing a bot remotely."""
+class Admin(BotPlugin):
+    """A plugin to manage the bot."""
 
     @botcmd(name='rehash', allow=CommandBot.msg_from_owner)
     @denymsg('You are insufficiently cool, go away')
     def handle_rehash(self, command, args, msg):
-        """ Reload the bot config and plugins without dropping the XMPP stream."""
+        """ Reload the bot config and plugins without dropping the XMPP stream.
+        """
 
         self.bot.rehash()
         return "Rehashed boss"
@@ -46,17 +44,19 @@ class admin(BotPlugin):
         return "Reloaded boss"
 
 
-class acl(BotPlugin):
-    """ Allows managing users"""
+class ACL(BotPlugin):
+    """ A plugin to manage users."""
 
-    @botcmd(usage='[add | del | see | test] jid role', allow=CommandBot.msg_from_admin)
+    @botcmd(usage='[add|del|see|test] jid role', 
+            allow=CommandBot.msg_from_admin)
     def acl(self, command, args, msg):
         """ Access control list management
         """
         try:
-            args = parse_args(args, (('action', ('add', 'del', 'see', 'test')), ('jid', str), ('role', 'user')))
-        except ArgError as e:
-            return e.msg
+            args = parse_args(args, (('action', ('add', 'del', 'see', 'test')), 
+                                     ('jid', str), ('role', 'user')))
+        except ArgError as ex:
+            return ex.msg
 
         return getattr(self, 'acl_' + args.action,)(command, args, msg)
 
@@ -67,12 +67,12 @@ class acl(BotPlugin):
         """
         try:
             args = parse_args(args, (('jid', str), ('role', 'user')))
-        except ArgError as e:
-            return e.msg
+        except ArgError as ex:
+            return ex.msg
 
         try:
             rolen = getattr(self.bot.acl.ROLE, args.role)
-        except:
+        except AttributeError as ex:
             return '%s is not a valid role' % args.role
 
         present = args.jid in self.bot.acl
@@ -88,8 +88,8 @@ class acl(BotPlugin):
         """
         try:
             args = parse_args(args, (('jid', str), ))
-        except ArgError as e:
-            return e.msg
+        except ArgError as ex:
+            return ex.msg
 
         present = args.jid in self.bot.acl
         if present:
@@ -104,15 +104,17 @@ class acl(BotPlugin):
         """
         try:
             args = parse_args(args, (('jid', str), ))
-        except ArgError as e:
-            return e.msg
+        except ArgError as ex:
+            return ex.msg
 
-        p = self.bot.acl.find_part(args.jid)
-        if p:
-            if p == args.jid:
-                return '%s is %s' % (args.jid, self.bot.acl.ROLE[self.bot.acl[args.jid]])
+        part = self.bot.acl.find_part(args.jid)
+        if part:
+            if part == args.jid:
+                return '%s is %s' % \
+                        (args.jid, self.bot.acl.ROLE[self.bot.acl[args.jid]])
             else:
-                return '%s through %s is %s' % (args.jid, p, self.bot.acl.ROLE[self.bot.acl[p]])
+                return '%s through %s is %s' % \
+                       (args.jid, part, self.bot.acl.ROLE[self.bot.acl[part]])
         else:
             return '%s was not found in acl' % args.jid
 
@@ -122,8 +124,8 @@ class acl(BotPlugin):
         """
         try:
             args = parse_args(args, (('jid', str), ('role', 'user')))
-        except ArgError as e:
-            return e.msg
+        except ArgError as ex:
+            return ex.msg
         try:
             rolen = getattr(self.bot.acl.ROLE, args.role)
         except:

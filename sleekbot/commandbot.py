@@ -6,9 +6,9 @@
 __author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
 __license__ = 'MIT License/X11 license'
 
-from functools import wraps
+from abc import ABCMeta, abstractmethod, abstractproperty
+from functools import wraps, update_wrapper
 
-import collections
 import logging
 import inspect
 import threading
@@ -28,74 +28,86 @@ def get_class(class_string):
     module_name, _, class_name = class_string.rpartition('.')
     if module_name == '':
         raise ValueError('Class name must contain module part.')
-    return getattr(__import__(module_name, globals(), locals(), \
+    return getattr(__import__(module_name, globals(), locals(),
                              [class_name], -1), class_name)
 
 
 def denymsg(msg):
     """ Method decorator to add a denymsg property to a method."""
-    def _outer(f):
-        @wraps(f)
+    def _outer(wrapped):
+        """ wrapped is the function to be decorated."""
+        @wraps(wrapped)
         def _inner(*args, **kwargs):
-            return f(*args, **kwargs)
-        _inner.denymsg = msg
+            """ Returned function."""
+            return wrapped(*args, **kwargs)
+        _inner._denymsg = msg
         return _inner
     return _outer
 
 
-def botcmd(name='', usage='', title='', doc='', IM=True, MUC=True, hidden=False, allow=True):
+def botcmd(name='', usage='', title='', doc='', chat=True, muc=True,
+           hidden=False, allow=True):
     """ Method decorator to declare a bot command
-        The method signature has to be (self, cmd, args, msg):
-            cmd  -- string with the command
-            args -- string with the arguments
-            msg  -- dictionary containing message properties (see SleekXMPP)
+    The method signature has to be (self, cmd, args, msg):
+        cmd  -- string with the command
+        args -- string with the arguments
+        msg  -- dictionary containing message properties (see SleekXMPP)
 
-            returns reply string
+        returns reply string
 
-        Decorator arguments:
+    Decorator arguments:
             name   -- name of the command (default method's name)
             usage  -- one line usage instructions (default empty)
             title  -- one line description of the command
                         (default docstring first line)
             doc    -- extensive description of the command.
                         (default docstring without first line)
-            IM     -- command will be available in IM (default True)
-            MUC    -- command will be available in MUC (default True)
+            chat   -- command will be available in im (default True)
+            muc    -- command will be available in muc (default True)
             hidden -- command will not be displayed in the help (default False)
-            allow  -- callable to check if the user has permissions to run the command
+            allow  -- callable to check if the user has permissions to run
                         (default True)
-    """
-    def _outer(f):
-        if allow is True:  # Warning this is not the same as if allow:
-            @wraps(f)
-            def _inner(*args, **kwargs):
-                return f(*args, **kwargs)
+        """
 
-        else:
-            @wraps(f)
-            def _inner(*args, **kwargs):
-                if allow(args[0].bot, args[-1]):
-                    return f(*args, **kwargs)
-                else:
-                    return getattr(f, 'denymsg', None) or getattr(allow, 'denymsg', 'You are not allowed to execute this command.')
+    def _outer(wrapped):
+        """ wrapped is the function to be decorated."""
+        def _nocheck(*args, **kwargs):
+            """ No security check. Returns the function.
+            """
+            return wrapped(*args, **kwargs)
 
-        if not f.__doc__:
-            f.__doc__ = ''
+        def _check(*args, **kwargs):
+            """ Perform security check and return function if successful
+            """
+            if allow(args[0].bot, args[-1]):
+                return wrapped(*args, **kwargs)
+            else:
+                return getattr(wrapped, '_denymsg', None) or \
+                       getattr(allow, 'denymsg',
+                       'You are not allowed to execute this command.')
 
-        _inner._botcmd = dict()
-        _inner._botcmd['hidden'] = hidden
-        _inner._botcmd['name'] = name or f.__name__.replace('_', '-')
-        _inner._botcmd['title'] = title or f.__doc__.split('\n', 1)[0] or ''
-        _inner._botcmd['doc'] = doc or f.__doc__ or 'undocumented'
-        _inner._botcmd['usage'] = usage or ''
-        _inner._botcmd['IM'] = IM
-        _inner._botcmd['MUC'] = MUC
-        _inner._botcmd['allow'] = allow
+        # Warning this is not the same as if allow:
+        _inner = _nocheck if allow is True else _check
+        update_wrapper(_inner, wrapped)
+        if not wrapped.__doc__:
+            wrapped.__doc__ = ''
+
+        _inner.botcmd_info = dict()
+        _inner.botcmd_info['hidden'] = hidden
+        _inner.botcmd_info['name'] = name or wrapped.__name__.replace('_', '-')
+        _inner.botcmd_info['title'] = title or \
+                                      wrapped.__doc__.split('\n', 1)[0] or \
+                                      ''
+        _inner.botcmd_info['doc'] = doc or wrapped.__doc__ or 'undocumented'
+        _inner.botcmd_info['usage'] = usage or ''
+        _inner.botcmd_info['chat'] = chat
+        _inner.botcmd_info['muc'] = muc
+        _inner.botcmd_info['allow'] = allow
         return _inner
     return _outer
 
 
-class botfreetxt(object):
+def botfreetxt(priority=1, regex=None):
     """ Method decorator to declare a bot free text parser
         The method signature has to be (self, text, msg, command_found, freetext_found, match):
             text           -- body of the message
@@ -111,34 +123,41 @@ class botfreetxt(object):
             regex    -- regex string or regex object to be matched (default None)
     """
 
-    def __init__(self, priority=1, regex=None):
-        self.priority = priority
+    def _outer(wrapped):
+        """ wrapped is the function to be decorated."""
         if isinstance(regex, str):
             try:
-                self.regex = re.compile(regex)
-            except:
-                self.regex = None
-        elif not isinstance(regex, re.RegexObject):
-            self.regex = None
+                cregex = re.compile(regex)
+            except TypeError:
+                cregex = None
+        elif inspect.ismethod(getattr(regex, 'search', None)):
+            cregex = regex
+        else:
+            cregex = None
 
-    def __call__(self, f):
-        def _inner(self_inner, text, msg, command_found, freetext_found, match=None):
-            if self.regex:
-                match = self.regex.search(text)
-                if match:
-                    return f(self_inner, text, msg, command_found, freetext_found, match)
-                else:
-                    return None
+        def _nocheck(obj, text, msg, command_found, freetext_found):
+            """ No regex given. Returns the wrapped function.
+            """
+            return wrapped(obj, text, msg, command_found, freetext_found, '')
+
+        def _check(obj, text, msg, command_found, freetext_found):
+            """ Regex given. If text matches, returns the wrapped function.
+            """
+            match = cregex.search(text)
+            if match:
+                return wrapped(obj, text, msg, command_found,
+                               freetext_found, match)
             else:
-                return f(self_inner, text, msg, command_found, freetext_found)
+                return None
 
-        if not f.__doc__:
-            f.__doc__ = ''
+        _inner = _nocheck if cregex is None else _check
+        update_wrapper(_inner, wrapped)
 
-        _inner._botfreetxt = dict()
-        _inner._botfreetxt['regex'] = self.regex
-        _inner._botfreetxt['priority'] = self.priority
+        _inner.botfreetxt_info = dict()
+        _inner.botfreetxt_info['regex'] = cregex
+        _inner.botfreetxt_info['priority'] = priority
         return _inner
+    return _outer
 
 
 class CommandBot(object):
@@ -150,7 +169,7 @@ class CommandBot(object):
         as defined in SleekXMPP
         and a property named:
             botconfig -- XML ElementTree from the config file. For example:
-                <prefix im='/' muc='!' />
+                <prefix chat='/' muc='!' />
                 <acl>
                     <owner>
                         <jid>owner1@server.com</jid>
@@ -168,51 +187,97 @@ class CommandBot(object):
                 </acl>
     """
 
-    def __init__(self, im_prefix='/', muc_prefix='!'):
+    __metaclass__ = ABCMeta
+
+    def __init__(self, chat_prefix='/', muc_prefix='!'):
         """ Initializes the CommandBot by registering commands in self
             and message handler
-                im_prefix  -- prefix to be used for private messages commands (default '/')
-                muc_prefix -- prefix to be used for muc messages commands (default '!')
-            '
+                chat_prefix  -- prefix to be used for private messages commands
+                              (default '/')
+                muc_prefix -- prefix to be used for muc messages commands
+                              (default '!')
+
             Prefixes specified in botconfig has precedence.
         """
 
         prefix = self.botconfig.find('prefix')
         if prefix is None:
-            self.im_prefix = im_prefix
+            self.chat_prefix = chat_prefix
             self.muc_prefix = muc_prefix
         else:
-            self.im_prefix = prefix.attrib.get('im', im_prefix)
+            self.chat_prefix = prefix.attrib.get('chat', chat_prefix)
             self.muc_prefix = prefix.attrib.get('muc', muc_prefix)
+
+        self.chat_commands = {}
+        self.muc_commands = {}
+        self.freetext = []
+        self.acl = None
+        self.require_membership = True
 
         self.__event = threading.Event()
         CommandBot.start(self)
+
+    @abstractmethod
+    def send_message(self, *args, **kwargs):
+        """ Sends an XMPP message
+        """
+        pass
+
+    @abstractmethod
+    def add_event_handler(self, name, pointer, threaded=False,
+                          disposable=False):
+        """ Adds a handler for an event
+        """
+        pass
+
+    @abstractmethod
+    def del_event_handler(self, name, pointer):
+        """ Removes a handler for an event.
+        """
+        pass
+
+    @abstractmethod
+    def get_real_jid(self, msg):
+        """ Returns the real jid of a msg
+        """
+        pass
+
+    @abstractmethod
+    def mucnick_to_jid(self, mucroom, mucnick):
+        """ Returns the jid associated with a mucnick and mucroom
+        """
+
+    @abstractproperty
+    def botconfig(self):
+        """ XML ElementTree from the config file
+        """
+        pass
 
     def register_commands(self, obj):
         """ Register bot methods from an object
                 obj -- object containing bot methods
         """
-        for name, f in inspect.getmembers(obj):
-            if inspect.ismethod(f) and hasattr(f, '_botcmd'):
-                if f._botcmd['IM']:
-                    self.im_commands[f._botcmd['name']] = f
-                if f._botcmd['MUC']:
-                    self.muc_commands[f._botcmd['name']] = f
-            elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
-                heappush(self.freetext, (f._botfreetxt['priority'], f))
+        for name, fun in inspect.getmembers(obj, inspect.ismethod):
+            if hasattr(fun, 'botcmd_info'):
+                if fun.botcmd_info['chat']:
+                    self.chat_commands[fun.botcmd_info['name']] = fun
+                if fun.botcmd_info['muc']:
+                    self.muc_commands[fun.botcmd_info['name']] = fun
+            elif hasattr(fun, 'botfreetxt_info'):
+                heappush(self.freetext, (fun.botfreetxt_info['priority'], fun))
 
     def unregister_commands(self, obj):
         """ Unregister bot methods from an object
                 obj -- object containing bot methods
         """
-        for name, f in inspect.getmembers(obj):
-            if inspect.ismethod(f) and hasattr(f, '_botcmd'):
-                if f._botcmd['IM']:
-                    del self.im_commands[f._botcmd['name']]
-                if f._botcmd['MUC']:
-                    del self.muc_commands[f._botcmd['name']]
-            elif inspect.ismethod(f) and hasattr(f, '_botfreetxt'):
-                self.freetext.remove((f._botfreetxt['priority'], f))
+        for name, fun in inspect.getmembers(obj):
+            if hasattr(fun, 'botcmd_info'):
+                if fun.botcmd_info['chat']:
+                    del self.chat_commands[fun.botcmd_info['name']]
+                if fun.botcmd_info['muc']:
+                    del self.muc_commands[fun.botcmd_info['name']]
+            elif hasattr(fun, 'botfreetxt_info'):
+                self.freetext.remove((fun.botfreetxt_info['priority'], fun))
 
     def start(self):
         """ Mesages will be received and processed
@@ -225,18 +290,20 @@ class CommandBot(object):
     def reset(self):
         """ Reset commands and users
         """
-        self.im_commands = {}
+        self.chat_commands = {}
         self.muc_commands = {}
 
         self.freetext = []
         self.register_commands(self)
 
         aclnode = self.botconfig.find('acl')
-        self.acl = get_class(aclnode.attrib.get('classname', 'acl.ACL'))(self, aclnode.find('config'))
+        self.acl = get_class(aclnode.attrib.get('classname', 'acl.ACL')) \
+                  (self, aclnode.find('config'))
         self.acl.update_from_xml(aclnode)
-        self.require_membership = self.botconfig.find('require-membership') != None
-        logging.info('%d owners, %d admins, %d users, %d banned. Require-membership %s' % \
-                    (len(self.acl.owners), len(self.acl.admins), len(self.acl.users), len(self.acl.banned), self.require_membership))
+        self.require_membership = \
+                              self.botconfig.find('require-membership') != None
+        logging.info(self.acl.summarize() + \
+                     'Require membership %s', self.require_membership)
 
     def stop(self):
         """ Messages will not be received
@@ -279,8 +346,8 @@ class CommandBot(object):
             prefix = self.muc_prefix
             commands = self.muc_commands
         else:
-            prefix = self.im_prefix
-            commands = self.im_commands
+            prefix = self.chat_prefix
+            commands = self.chat_commands
         command = msg.get('body', '').strip().split(' ', 1)[0]
         if ' ' in msg.get('body', ''):
             args = msg['body'].split(' ', 1)[-1].strip()
@@ -295,8 +362,8 @@ class CommandBot(object):
                 self.reply(msg, response)
 
         freetext_found = False
-        for (p, f) in self.freetext:
-            response = f(msg['body'], msg, command_found, freetext_found)
+        for name, method in self.freetext:
+            response = method(msg['body'], msg, command_found, freetext_found)
             if not response is None:
                 freetext_found = True
                 self.reply(msg, response)
@@ -304,13 +371,17 @@ class CommandBot(object):
         self.handle_msg_event(msg, command_found, freetext_found)
 
     def reply(self, msg, response):
-        """ Reply to a message. This will not be needed when msg.reply works for all cases in SleekXMPP
+        """ Reply to a message.
+        This will not be needed when msg.reply works for all cases in SleekXMPP
         """
 
         if msg['type'] == 'groupchat':
-            self.send_message("%s" % msg['mucroom'], response, mtype=msg.get('type', 'groupchat'))
+            self.send_message("%s" % msg['mucroom'], response,
+                              mtype=msg.get('type', 'groupchat'))
         else:
-            self.send_message("%s/%s" % (msg['from'].bare, msg['from'].resource), response, mtype=msg.get('type', 'chat'))
+            self.send_message("%s/%s" % (msg['from'].bare,
+                              msg['from'].resource), response,
+                              mtype=msg.get('type', 'chat'))
 
     @botcmd(name='help', usage='help [topic]')
     def handle_help(self, command, args, msg):
@@ -321,26 +392,31 @@ class CommandBot(object):
             commands = self.muc_commands
             prefix = self.muc_prefix
         else:
-            commands = self.im_commands
-            prefix = self.im_prefix
+            commands = self.chat_commands
+            prefix = self.chat_prefix
 
         response = ''
         args = args.strip()
         if args:
-            if args in commands and (commands[args]._botcmd['allow'] is True or commands[args]._botcmd['allow'](self, msg)):
-                f = commands[args]
-                response += '%s -- %s\n' % (args, f._botcmd['title'])
-                response += ' %s\n' % f._botcmd['doc']
-                response += "Usage: %s%s %s\n" % (prefix, args, f._botcmd['usage'])
+            if args in commands and \
+               (commands[args].botcmd_info['allow'] is True or \
+               commands[args].botcmd_info['allow'](self, msg)):
+                fun = commands[args]
+                response += '%s -- %s\n' % (args, fun.botcmd_info['title'])
+                response += ' %s\n' % fun.botcmd_info['doc']
+                response += 'Usage: %s%s %s\n' % \
+                            (prefix, args, fun.botcmd_info['usage'])
                 return response
             else:
                 response += '%s is not a valid command' % args
 
         response += "Commands:\n"
         for command in sorted(commands.keys()):
-            f = commands[command]
-            if not f._botcmd['hidden'] and (f._botcmd['allow'] is True or f._botcmd['allow'](self, msg)):
-                response += "%s -- %s\n" % (command, f._botcmd['title'])
+            fun = commands[command]
+            if not fun.botcmd_info['hidden'] and \
+               (fun.botcmd_info['allow'] is True or \
+               fun.botcmd_info['allow'](self, msg)):
+                response += "%s -- %s\n" % (command, fun.botcmd_info['title'])
         response += "---------\n"
         return response
 
@@ -363,35 +439,13 @@ class CommandBot(object):
         """ Was this message sent from a bot member?
         """
         jid = self.get_real_jid(msg)
-        return jid in self.acl.owners or jid in self.acl.admins or jid in self.acl.users
-
-    def mucnick_to_jid(self, mucroom, mucnick):
-        """ Returns the jid associated with a mucnick and mucroom
-        """
-        if mucroom in self.plugin['xep_0045'].getJoinedRooms():
-            logging.debug("Checking real jid for %s %s" % (mucroom, mucnick))
-            real_jid = self.plugin['xep_0045'].getJidProperty(mucroom, mucnick, 'jid')
-            logging.debug(real_jid)
-            if real_jid:
-                return real_jid
-            else:
-                return None
-        return None
-
-    def get_real_jid(self, msg):
-        """ Returns the real jid of a msg
-        """
-        if msg['type'] == 'groupchat' and msg['mucnick'] != msg['mucroom']:
-            return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
-        else:
-            if msg['jid'] in self['xep_0045'].getJoinedRooms():
-                return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
-            else:
-                return msg['from'].bare
-        return None
+        return jid in self.acl.owners or \
+               jid in self.acl.admins or \
+               jid in self.acl.users
 
     def should_answer_msg(self, msg):
-        """ Checks whether the bot is configured to respond to the sender of a message.
+        """ Checks whether the bot is configured to respond to
+            the sender of a message.
             Overload if needed
         """
         jid = self.get_real_jid(msg)
@@ -404,11 +458,11 @@ class CommandBot(object):
         return False
 
 
-class mstr(str):
+class Mstr(str):
     """ A string class to which properties can be added."""
 
     def __new__(cls, string):
-        return super(mstr, cls).__new__(cls, string)
+        return super(Mstr, cls).__new__(cls, string)
 
 
 class ArgError(Exception):
@@ -420,6 +474,7 @@ class ArgError(Exception):
     """
 
     def __init__(self, var, msg):
+        Exception.__init__()
         self.var = var
         self.msg = msg
 
@@ -430,7 +485,7 @@ class ArgError(Exception):
         return self.msg
 
 
-def parse_args(args, syntax, separator=None):
+def parse_args(cargs, syntax, separator=None):
     """ Helper function to parse and cast botcmd arguments.
     Returns a string-like object where each argument is added as a property.
 
@@ -447,20 +502,20 @@ def parse_args(args, syntax, separator=None):
 
     """
 
-    if getattr(args, 'parsed_', False):
-        return args
-    o = mstr(args)
-    args = map(str.strip, args.strip().split(separator, len(syntax)))
-    delta = len(syntax) - len(args)
+    if getattr(cargs, 'parsed_', False):
+        return cargs
+    out = Mstr(cargs)
+    cargs = map(str.strip, cargs.strip().split(separator, len(syntax)))
+    delta = len(syntax) - len(cargs)
     if delta < 0:
-        o.tail_ = args[-1]
-        args = args[0:-1]
+        out.tail_ = cargs[-1]
+        cargs = cargs[0:-1]
     else:
-        o.tail_ = None
-        args += [None] * delta
+        out.tail_ = None
+        cargs += [None] * delta
 
-    for a, s in zip(args, syntax):
-        (name, valid) = s
+    for arg, syn in zip(cargs, syntax):
+        (name, valid) = syn
         if isinstance(valid, (list, tuple)):
             val = valid[0]
         else:
@@ -473,19 +528,21 @@ def parse_args(args, syntax, separator=None):
         else:
             typ = type(val)
 
-        if not a is None:
+        if not arg is None:
             if typ is str:
-                val = a
+                val = arg
             else:
                 try:
-                    val = typ(a)
+                    val = typ(arg)
                 except:
-                    raise ArgError(name, '%s cannot be converted to %s' % (a, typ.__name__))
+                    raise ArgError(name, '%s cannot be converted to %s' %
+                                         (arg, typ.__name__))
             if isinstance(valid, (list, tuple)) and not val in valid:
-                raise ArgError(name, '%s is not a valid value for %s. Valid: %s' % (val, name, valid))
+                raise ArgError(name, '%s is not a valid value for %s. '
+                                     'Valid: %s' % (val, name, valid))
 
         if val is None:
             raise ArgError(name, '%s is a mandatory argument' % name)
-        setattr(o, name, val)
-    o.parsed_ = True
-    return o
+        setattr(out, name, val)
+    out.parsed_ = True
+    return out

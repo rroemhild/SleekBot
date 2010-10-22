@@ -23,7 +23,9 @@ from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
 
-class factstore(object):
+class FactStore(object):
+    """ Storage for facts """
+    
     def __init__(self):
         self.null = None
         self.data = {}
@@ -56,7 +58,8 @@ class factstore(object):
         try:
             f = open(filename, 'rb')
         except:
-            logging.warning("Error loading factoids. Cannot open fact file: %s" % filename)
+            logging.warning("Error loading factoids. Cannot open fact file: %s",
+                            filename)
             return
         self.data = pickle.load(f)
         f.close()
@@ -65,17 +68,18 @@ class factstore(object):
         try:
             f = open(filename, 'wb')
         except IOError:
-            logging.warning("Error saving factoids. Cannot open fact file: %s" % filename)
+            logging.warning("Error saving factoids. Cannot open fact file: %s",
+                            filename)
             return
         pickle.dump(self.data, f)
         f.close()
 
 
-class factoidbot(BotPlugin):
+class Factoid(BotPlugin):
     """A plugin to remember facts."""
 
-    def on_register(self):
-        self.factstore = factstore()
+    def _on_register(self):
+        self.factstore = FactStore()
 
     @botcmd(name='fact', usage='fact [topic]')
     def handle_fact(self, command, args, msg):
@@ -93,7 +97,8 @@ class factoidbot(BotPlugin):
 
         #non-admin commands
         if subcommand not in admin_commands:
-            response = "facts for " + args + "\n" + args + ": " + self.factstore.get(args)
+            response = "facts for " + args + "\n" + args + ": " + \
+                       self.factstore.get(args)
             return response
 
         #admin commands
@@ -112,7 +117,8 @@ class factoidbot(BotPlugin):
                 self.factstore.add(term, fact)
                 response = "Fact added"
             else:
-                response = "To add a fact, both a topic and description are needed."
+                response = "To add a fact, both a topic and " + \ 
+                           "description are needed."
         elif "delete" == subcommand:
             if not self.bot.msg_from_admin(msg):
                 response = "You do not have access to this function"

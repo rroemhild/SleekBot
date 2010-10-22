@@ -3,53 +3,62 @@
     See the README file for more information.
 """
 
-import logging
 from xml.etree import cElementTree as ET
 
-class oauth(object):
+OAUTH_REQ = "<iq type='get' xmlns='jabber:client'>" + \
+            "<query xmlns='urn:xmpp:oauth:request' /></iq>"
+OAUTH_ACC = "<iq type='get' xmlns='jabber:client'>" + \
+            "<query xmlns='urn:xmpp:oauth:access' /></iq>"
+            
+class OAuth(object):
+    """ A Plugin to provide OAuth authentication. """
+    
     def __init__(self, bot, config):
         self.bot = bot
         #print dir(self.bot)
         self.config = config
         self.xmpp = self.bot
-        self.bot.add_handler("<iq type='get' xmlns='jabber:client'><query xmlns='urn:xmpp:oauth:request' /></iq>", self.handleOAuthRequest, threaded=True)
-        self.bot.add_handler("<iq type='get' xmlns='jabber:client'><query xmlns='urn:xmpp:oauth:access' /></iq>", self.handleOAuthAccess, threaded=True)
+        self.bot.add_handler(OAUTH_REQ, self.handle_request, threaded=True)
+        self.bot.add_handler(OAUTH_ACC, self.handle_access, threaded=True)
 
-    def handleOAuthRequest(self, xml):
+    def handle_request(self, xml):
+        """ Handles a OAuth request. """
         oauth = xml.find('{urn:xmpp:oauth:request}query/{urn:xmpp:oauth}oauth')
-        id = xml.get('id','0')
+        oid = xml.get('id','0')
         if oauth is None:
-            error = self.xmpp.makeIqError(id)
-            error.append(self.xmpp.makeStanzaError(self.xmpp.makeStanzaErrorCondition('bad-request'), 'cancel'))
+            error = self.xmpp.makeIqError(oid)
+            error.append(self.make_error())
             self.xmpp.send(error)
             return
         # check signature
         # generate random token and secret
         # store in DB
-        r = self.xmpp.makeIqResult(id)
-        q = ET.Element('{urn:xmpp:oauth:request}query')
-        r.append(q)
-        q.append(self.makeOAuthToken('requestkey', 'requestsecret'))
-        self.xmpp.send(r)
+        res = self.xmpp.makeIqResult(oid)
+        que = ET.Element('{urn:xmpp:oauth:request}query')
+        res.append(que)
+        que.append(self.makeOAuthToken('requestkey', 'requestsecret'))
+        self.xmpp.send(res)
 
-    def handleOAuthAccess(self, xml):
+    def handle_access(self, xml):
+        """ Handles a OAuth access. """
         oauth = xml.find('{urn:xmpp:oauth:access}query/{urn:xmpp:oauth}oauth')
-        id = xml.get('id','0')
+        oid = xml.get('id','0')
         if oauth is None:
-            error = self.xmpp.makeIqError(id)
-            error.append(self.xmpp.makeStanzaError(self.makeStanzaErrorCondition('bad-request'), 'cancel'))
+            error = self.xmpp.makeIqError(oid)
+            error.append(self.make_error())
             return
         # check signature
         # check status of request token
         # generate random token and secret
         # store in DB
-        r = self.xmpp.makeIqResult(id)
-        q = ET.Element('{urn:xmpp:oauth:request}query')
-        r.append(q)
-        q.append(self.makeOAuthToken('accesskey', 'accesssecret'))
-        self.xmpp.send(r)
+        res = self.xmpp.makeIqResult(oid)
+        que = ET.Element('{urn:xmpp:oauth:request}query')
+        res.append(que)
+        que.append(self.make_token('accesskey', 'accesssecret'))
+        self.xmpp.send(res)
 
-    def makeOAuthToken(self, token, secret):
+    def make_token(self, token, secret):
+        """ Makes an OAuth token. """
         oauth = ET.Element('{urn:xmpp:oauth:token}oauth')
         tokenxml = ET.Element('oauth_token')
         tokenxml.text = token
@@ -58,3 +67,8 @@ class oauth(object):
         oauthxml.append(tokenxml)
         oauth.append(secretxml)
         return oauth
+        
+    def make_error(self):
+        """ Makes an error. """
+        cond = self.makeStanzaErrorCondition('bad-request')
+        return self.xmpp.makeStanzaError(cond , 'cancel')

@@ -26,7 +26,7 @@ setup(
         ],
     requires=['sleekxmpp'],
     scripts=['scripts/runbot.py'],
-    long_description="""\
+    long_description="""
 SleekBot
 -------------------------------------
 
