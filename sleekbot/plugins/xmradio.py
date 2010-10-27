@@ -12,7 +12,7 @@ from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
 
 
-class xmradio(BotPlugin):
+class XMRadio(BotPlugin):
     """A plugin for seeing what's on XM Radio."""
 
     @botcmd(name='xm', usage='[channel number]')
@@ -20,20 +20,25 @@ class xmradio(BotPlugin):
         """Tells you what's on XM.
         Example: !xm 47"""
         try:
-            xmChan = xmChannel(args)
-            return xmChan.show()
+            chan = XMChannel(args)
+            return chan.show()
         except:
             traceback.print_exc()
             return "Invalid command. Usage: xm [channel number]"
 
 
-class xmChannel(object):
+class XMChannel(object):
+    """ An XMChannel"""
+    
+    url = 'http://xmradio.com/padData/pad_provider.jsp?channel='
     def __init__(self, inputstr):
-        datapointer = urllib2.urlopen("http://xmradio.com/padData/pad_provider.jsp?channel=" + inputstr)
+        datapointer = urllib2.urlopen(xmChannel.url + inputstr)
         self.data = datapointer.read()
         datapointer.close()
 
     def show(self):
+        """ Returns what is playing on the channel.
+        """
 
         begindex = self.data.find("<artist>") + 8
         endex = self.data.find("</artist>") + 0
@@ -45,13 +50,14 @@ class xmChannel(object):
 
         begindex = self.data.find("<channelname>") + 13
         endex = self.data.find("</channelname>") + 0
-        channelName = self.data[begindex:endex]
+        channel_name = self.data[begindex:endex]
 
         begindex = self.data.find("<channelnumber>") + 15
         endex = self.data.find("</channelnumber>") + 0
-        channelNumber = self.data[begindex:endex]
+        channel_number = self.data[begindex:endex]
 
-        output = channelNumber + " - " + channelName + " is playing \"" + title + "\" by " + artist
+        output = channel_number + " - " + channel_name + " is playing \"" + \
+                 title + "\" by " + artist
         if output.find("<paddata>") > 0:
             raise Exception, "No channel info found."
         return output

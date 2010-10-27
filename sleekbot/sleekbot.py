@@ -18,21 +18,18 @@ __author__ = 'Hernan E. Grecco <hernan.grecco@gmail.com>'
 __license__ = 'MIT License/X11 license'
 
 
-import os
-import time
-import sys
 import logging
-
-from store import store
-from optparse import OptionParser
 from xml.etree import ElementTree as ET
 
 import sleekxmpp
-from sleekxmpp.xmlstream.stanzabase import JID
 
-from commandbot import CommandBot
-from plugbot import PlugBot
+from .commandbot import CommandBot
+from .plugbot import PlugBot
+from .store import Store
 
+from .acl import Enum
+
+END_STATUS = Enum(['none', 'restart', 'reload', 'die'])
 
 class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
     """ SleekBot is a pluggable Jabber/XMPP bot based on SleekXMPP
@@ -41,28 +38,38 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         This fork is maintained by Hernan E. Grecco
     """
 
-    def __init__(self, config_file, ssl=False, plugin_config={}):
+    
+
+    def __init__(self, config_file, ssl=False, plugin_config=None):
         """ Initializes the bot
                 config_file -- string pointing to an xml configuration file
         """
-        self.config_file = config_file
-        self.botconfig = self.load_config(config_file)
+        self._config_file = None
+        self._botconfig = None
+        self.botconfig = config_file
         auth = self.botconfig.find('auth')
-        logging.info("Logging in as %s" % auth.attrib['jid'])
-        sleekxmpp.ClientXMPP.__init__(self, auth.attrib['jid'], auth.attrib['pass'], auth.get('ssl', True), plugin_config)
-        storageXml = self.botconfig.find('storage')
-        if storageXml is not None:
-            self.store = store(storageXml.attrib['file'])
+        logging.info("Logging in as %s", auth.attrib['jid'])
+        sleekxmpp.ClientXMPP.__init__(self, auth.attrib['jid'], \
+                                      auth.attrib['pass'], \
+                                      auth.get('ssl', True), \
+                                      plugin_config or dict())
+        storage_xml = self.botconfig.find('storage')
+        if storage_xml is not None:
+            self.store = Store(storage_xml.attrib['file'])
         else:
-            logging.warning("No storage element found in config file - proceeding with no persistent storage, plugin behaviour may be undefined.")
+            logging.warning("No storage element found in config file - " \
+                            "proceeding with no persistent storage, " \
+                            "plugin behaviour may be undefined.")
         self.rooms = {}
-        self.add_event_handler("session_start", self.handle_session_start, threaded=True)
+        self.add_event_handler("session_start", self.handle_session_start, \
+                               threaded=True)
         self.register_xmpp_plugins()
         CommandBot.__init__(self)
         PlugBot.__init__(self, default_package='sleekbot.plugins')
         self.register_adhocs()
+        self.end_status = END_STATUS.none
 
-    def connect(self):
+    def start(self):
         """ Connects to the server
         """
         auth = self.botconfig.find('auth')
@@ -71,15 +78,29 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
             # we don't know the server, but the lib can probably figure it out
             super(SleekBot, self).connect()
         else:
-            super(SleekBot, self).connect((auth.attrib['server'], auth.get('port', 5222)))
+            super(SleekBot, self).connect((auth.attrib['server'], \
+                                           auth.get('port', 5222)))
 
-    def load_config(self, config_file=None):
-        """ Load the specified config. Does not attempt to make changes based upon config.
+    def get_botconfig(self):
+        """ Gets config elementtree 
         """
-        if config_file:
-            return ET.parse(config_file)
-        else:
-            return ET.parse(self.config_file)
+        return self._botconfig
+        
+    def set_botconfig(self, value):
+        """ Sets the config elementtree
+                value is None: loads the previous config file
+                type of value is str: use is as the name of the config file
+        """
+        if value is None:
+            self._botconfig = ET.parse(self._config_file)
+        elif isinstance(value, str):
+            self._config_file = value
+            self._botconfig = ET.parse(value)
+        elif isinstance(value, ET.ElementTree):
+            self._botconfig = value
+        
+    botconfig = property(get_botconfig, set_botconfig, None, \
+                         'XML ElementTree from the config file')
 
     def register_adhocs(self):
         """ Register all ad-hoc commands with SleekXMPP.
@@ -94,7 +115,8 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         plugins = pluginform.addField('option', 'list-single', 'Commands')
         plugins.addOption('about', 'About')
         #plugins.addOption('config', 'Configure')
-        self.plugin['xep_0050'].addCommand('plugins', 'Plugins', pluginform, self.form_plugin_command, True)
+        self.plugin['xep_0050'].addCommand('plugins', 'Plugins', pluginform,
+                                           self.form_plugin_command, True)
 
     def form_plugin_command(self, form, sessid):
         """ Take appropriate action when a plugin ad-hoc request is received.
@@ -103,8 +125,10 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         option = value['option']
         plugin = value['plugin']
         if option == 'about':
-            aboutform = self.plugin['xep_0004'].makeForm('form', "About SleekBot")
-            aboutform.addField('about', 'fixed', value=getattr(self.cmd_plugins[plugin], 'about', self.cmd_plugins[plugin].__doc__))
+            aboutform = self.plugin['xep_0004'].makeForm('form', 
+                                                         'About SleekBot')
+            aboutform.addField('about', 'fixed',
+                               value=self.cmd_plugins[plugin].about())
             return aboutform, None, False
         elif option == 'config':
             pass
@@ -121,14 +145,43 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
                         self.registerPlugin(plugin.attrib['name'])
                     else:
                         self.registerPlugin(plugin.attrib['name'], config)
-                    logging.info("Registering XMPP plugin %s OK" % (plugin.attrib['name']))
-                except Exception as e:
-                    logging.info("Registering XMPP plugin %s FAILED: %s" % (plugin.attrib['name'], e))
+                    logging.info("Registering XMPP plugin %s OK", \
+                                 plugin.attrib['name'])
+                except Exception as ex:
+                    logging.info("Registering XMPP plugin %s FAILED: %s", \
+                                 plugin.attrib['name'], ex)
 
     def handle_session_start(self, event):
+        """ Event runnning when the session is established.
+        """
         self.getRoster()
-        self.sendPresence(ppriority=self.botconfig.find('auth').get('priority', '1'))
+        priority = self.botconfig.find('auth').get('priority', '1')
+        self.sendPresence(ppriority=priority)
         self.join_rooms()
+
+    def join_rooms(self):
+        """ Join to MUC rooms
+        """
+        logging.info("Joining MUC rooms")
+        xrooms = self.botconfig.findall('rooms/muc')
+        rooms = {}
+        for xroom in xrooms:
+            rooms[xroom.attrib['room']] = xroom.attrib['nick']
+        for room in set(self.rooms.keys()).difference(rooms.keys()):
+            logging.info("Parting room %s.", room)
+            self.plugin['xep_0045'].leaveMUC(room, self.rooms[room])
+            del self.rooms[room]
+        for room in set(rooms.keys()).difference(self.rooms.keys()):
+            self.rooms[room] = rooms[room]
+            logging.info("Joining room %s as %s.", room, rooms[room])
+            self.plugin['xep_0045'].joinMUC(room, rooms[room])
+
+    def restart(self):
+        """ Cause the bot to be completely restarted (will reconnect etc.)
+        """
+        self.end_status = END_STATUS.restart
+        logging.info("Restarting bot")
+        self.die()
 
     def rehash(self):
         """ Re-reads the config file, making appropriate runtime changes.
@@ -141,7 +194,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         PlugBot.stop(self)
 
         logging.info("Reloading config file")
-        self.botconfig = self.load_config(self.config_file)
+        self.botconfig = None
         for module in modules:
             reload(module)
         CommandBot.reset(self)
@@ -149,23 +202,6 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         PlugBot.start(self)
         CommandBot.resume(self)
         self.join_rooms()
-
-    def join_rooms(self):
-        """ Join to MUC rooms
-        """
-        logging.info("Joining MUC rooms")
-        xrooms = self.botconfig.findall('rooms/muc')
-        rooms = {}
-        for xroom in xrooms:
-            rooms[xroom.attrib['room']] = xroom.attrib['nick']
-        for room in set(self.rooms.keys()).difference(rooms.keys()):
-            logging.info("Parting room %s." % room)
-            self.plugin['xep_0045'].leaveMUC(room, self.rooms[room])
-            del self.rooms[room]
-        for room in set(rooms.keys()).difference(self.rooms.keys()):
-            self.rooms[room] = rooms[room]
-            logging.info("Joining room %s as %s." % (room, rooms[room]))
-            self.plugin['xep_0045'].joinMUC(room, rooms[room])
 
     def die(self):
         """ Kills the bot.
@@ -176,40 +212,29 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         logging.info("Disconnecting bot")
         self.disconnect()
 
-    def restart(self):
-        """ Cause the bot to be completely restarted (will reconnect etc.)
+    def mucnick_to_jid(self, mucroom, mucnick):
+        """ Returns the jid associated with a mucnick and mucroom
         """
-        global shouldRestart
-        shouldRestart = True
-        logging.info("Restarting bot")
-        self.die()
+        if mucroom in self.plugin['xep_0045'].getJoinedRooms():
+            logging.debug("Checking real jid for %s %s", mucroom, mucnick)
+            real_jid = self.plugin['xep_0045'].getJidProperty(mucroom, \
+                                                              mucnick, 'jid')
+            logging.debug(real_jid)
+            if real_jid:
+                return real_jid
+            else:
+                return None
+        return None
 
-    #TODO: temporary until SleekXMPP is PEP8 compliant
-    def send_message(self, *args, **kwargs):
-        self.sendMessage(*args, **kwargs)
-
-
-if __name__ == '__main__':
-    #parse command line arguements
-    optp = OptionParser()
-    optp.add_option('-q', '--quiet', help='set logging to ERROR', action='store_const', dest='loglevel', const=logging.ERROR, default=logging.INFO)
-    optp.add_option('-d', '--debug', help='set logging to DEBUG', action='store_const', dest='loglevel', const=logging.DEBUG, default=logging.INFO)
-    optp.add_option('-v', '--verbose', help='set logging to COMM', action='store_const', dest='loglevel', const=5, default=logging.INFO)
-    optp.add_option("-c", '--config', dest='config_file', default='config.xml', help='set config file to use')
-    opts, args = optp.parse_args()
-
-    logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
-
-    global shouldRestart
-    shouldRestart = True
-    while shouldRestart:
-        shouldRestart = False
-        logging.info("Loading config file: %s" % opts.config_file)
-        bot = SleekBot(opts.config_file, plugin_config=plugin_config)
-        bot.connect()
-        bot.process(threaded=False)
-        while not bot.state['disconnecting']:
-            time.sleep(1)
-        #this does not work properly. Some thread is runnng
-
-    logging.info("SleekBot finished")
+    def get_real_jid(self, msg):
+        """ Returns the real jid of a msg
+        """
+        if msg['type'] == 'groupchat' and msg['mucnick'] != msg['mucroom']:
+            return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
+        else:
+            if msg['jid'] in self['xep_0045'].getJoinedRooms():
+                return self.mucnick_to_jid(msg['mucroom'], msg['mucnick']).bare
+            else:
+                return msg['from'].bare
+        return None
+        

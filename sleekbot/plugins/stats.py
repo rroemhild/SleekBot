@@ -42,7 +42,7 @@ class CmdStore(object):
         """ Create the cmdstore table."""
 
         with self.store.context_cursor() as cur:
-            if not len(cur.execute("pragma table_info('stats_botcmd')").fetchall()) > 0:
+            if not self.store.has_table(cur, 'stats_botcmd'):
                 cur.execute("""CREATE TABLE "stats_botcmd" (
                             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
                             "cmd" VARCHAR(256), "args" VARCHAR(256),
@@ -78,7 +78,7 @@ class CmdStore(object):
             return response
 
 
-class cmdstats(BotPlugin):
+class CmdStats(BotPlugin):
     """A Plugin for logging command usage to the database"""
     
     """ Configuration example:
@@ -87,15 +87,16 @@ class cmdstats(BotPlugin):
 
     freetextRegex = ''
 
-    def on_register(self):
-        self.im_prefix = self.bot.im_prefix
+    def _on_register(self):
+        """ Create regular expression. """
+        self.chat_prefix = self.bot.chat_prefix
         self.muc_prefix = self.bot.muc_prefix
         self.cmd_store = CmdStore(self.bot.store)
 
         # botfreetext regex string with im and mux prefix
         global freetextRegex
         freetextRegex = "^[\%s\%s][a-zA-Z].*$" \
-            % (self.im_prefix, self.muc_prefix)
+            % (self.chat_prefix, self.muc_prefix)
 
     @botfreetxt(priority=100, regex=freetextRegex)
     def commandevent(self, text, msg, command_found, freetext_found, match):
@@ -110,7 +111,7 @@ class cmdstats(BotPlugin):
             prefix = self.muc_prefix
             msg_type = CmdEvent.mucMessage
         else:
-            prefix = self.im_prefix
+            prefix = self.chat_prefix
             msg_type = CmdEvent.imMessage
         command = msg.get('body', '').strip().split(' ', 1)[0]
         if ' ' in msg.get('body', ''):
@@ -126,13 +127,14 @@ class cmdstats(BotPlugin):
                                 now.strftime("%Y-%m-%d %H:%M:%S")))
 
 
-class stats(BotPlugin):
+class Stats(BotPlugin):
     """A plugin to obtain statistics and information about the bot."""
 
     def __init__(self, *args, **kwargs):
         self.cmd_store = None
 
-    def on_register(self):
+    def _on_register(self):
+        """ Create CmdStore """
         self.cmd_store = CmdStore(self.bot.store)
 
     @botcmd(usage='[cmd]', allow=CommandBot.msg_from_owner)
@@ -172,7 +174,7 @@ class stats(BotPlugin):
         return response
 
 
-class info(BotPlugin):
+class Info(BotPlugin):
     """A plugin to obtain information about the bot."""
 
     def __init__(self, *args, **kwargs):
@@ -180,12 +182,13 @@ class info(BotPlugin):
             from guppy import hpy
             self.hpy = hpy()
         except:
-            delattr(info, 'mem')
+            delattr(Info, 'mem')
             logging.warning("guppy not present. mem plugin not available")
-        super(info, self).__init__(*args, **kwargs)
+        super(Info, self).__init__(*args, **kwargs)
         self.started = False
 
-    def on_register(self):
+    def _on_register(self):
+        """ Starting time. """
         self.started = datetime.datetime.now()
 
     @botcmd()
@@ -196,7 +199,8 @@ class info(BotPlugin):
         weeks, days = divmod(difference.days, 7)
         minutes, seconds = divmod(difference.seconds, 60)
         hours, minutes = divmod(minutes, 60)
-        return "%s weeks %s days %s hours %s minutes %s seconds" % (weeks, days, hours, minutes, seconds)
+        return "%s weeks %s days %s hours %s minutes %s seconds" % \
+                (weeks, days, hours, minutes, seconds)
 
     @botcmd(allow=CommandBot.msg_from_owner)
     def mem(self, command, args, msg):
