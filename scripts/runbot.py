@@ -17,7 +17,15 @@ import sys
 
 from optparse import OptionParser
 
-from sleekbot.sleekbot import SleekBot
+try:
+    from sleekbot.sleekbot import SleekBot
+except:
+    path = os.getcwd()
+    if 'scripts' in path:
+        (path, _) = os.path.split(path)
+    print path
+    sys.path.append(path)
+    from sleekbot.sleekbot import SleekBot
 
 if __name__ == '__main__':
     optp = OptionParser(usage="usage: %prog [options] configuration_file")
