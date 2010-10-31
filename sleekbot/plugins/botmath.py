@@ -38,8 +38,8 @@ class BotMath(BotPlugin):
 
         try:
             args = parse_args(args, (('first', int), ('second', 1)))
-        except ArgError as ex:
-            return ex.msg
+        except ArgError as error:
+            return error.msg
 
         if args.first > args.second:
             args.first, args.second = args.second, args.first

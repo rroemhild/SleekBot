@@ -18,17 +18,7 @@ import time
 
 from optparse import OptionParser
 
-
-try:
-    from sleekbot.sleekbot import SleekBot, END_STATUS
-except:
-    path = os.getcwd()
-    if 'scripts' in path:
-        (path, _) = os.path.split(path)
-    print path
-    sys.path.append(path)
-    from sleekbot.sleekbot import SleekBot
-
+from sleekbot.sleekbot import SleekBot, END_STATUS
 
 if __name__ == '__main__':
     OPTP = OptionParser(usage="usage: %prog [options] configuration_file")

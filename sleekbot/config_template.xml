@@ -1,5 +1,5 @@
 <config>
-    <prefix im='/' muc='!' />
+    <prefix chat='/' muc='!' />
     <!--Bot authorization details-->
     <auth jid='botname@server' pass='password' priority='10' server='servername' />
     <rooms>

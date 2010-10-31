@@ -6,7 +6,7 @@
 """ Configuration example
 <!-- <alias /> is optinal and for global aliases. Alias specified by
 the user has precedence. -->
-<plugin name="alias">
+<plugin name="Alias">
     <config>
         <alias name="r" command="rehash" />
         <alias name="r100" command="random 100" />
@@ -126,7 +126,7 @@ class Alias(BotPlugin):
         self.global_aliases = {}
         if self.config:
             for aliascmd in self.config.findall('alias'):
-                logging.debug("Load global alias: %s" % aliascmd.attrib['name'])
+                logging.debug("Load global alias: %s", aliascmd.attrib['name'])
                 self.global_aliases[aliascmd.attrib['name']] = AliasCmd(None,
                                                   aliascmd.attrib['name'],
                                                   aliascmd.attrib['command'])
@@ -179,7 +179,7 @@ class Alias(BotPlugin):
         """ Add an alias with the given command and options.
         """
         try:
-            args = parse_args(args, (('action', ''), ('alias', str),
+            args = parse_args(args, (('action', (str, 'add')), ('alias', str),
                     ('command', str)))
         except ArgError as error:
             return error.msg
@@ -203,7 +203,7 @@ class Alias(BotPlugin):
         """ Delete an alias.
         """
         try:
-            args = parse_args(args, (('action', ''), ('alias', str)))
+            args = parse_args(args, (('action', (str, 'del')), ('alias', str)))
         except ArgError as error:
             return error.msg
 
