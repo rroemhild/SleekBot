@@ -117,7 +117,7 @@ class Factoid(BotPlugin):
                 self.factstore.add(term, fact)
                 response = "Fact added"
             else:
-                response = "To add a fact, both a topic and " + \ 
+                response = "To add a fact, both a topic and " + \
                            "description are needed."
         elif "delete" == subcommand:
             if not self.bot.msg_from_admin(msg):

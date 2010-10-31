@@ -48,6 +48,7 @@ class CmdStore(object):
                             "cmd" VARCHAR(256), "args" VARCHAR(256),
                             "type" INTEGER,
                             "time" DATETIME)""")
+                logging.debug("stats table created")
 
     def insert(self, event):
         """ Insert a command usage."""
@@ -79,11 +80,7 @@ class CmdStore(object):
 
 
 class CmdStats(BotPlugin):
-    """A Plugin for logging command usage to the database"""
-    
-    """ Configuration example:
-        <plugin name="cmdstats" module="stats" />
-    """
+    """A Plugin for logging command usage to the database."""
 
     freetextRegex = ''
 
@@ -130,17 +127,14 @@ class CmdStats(BotPlugin):
 class Stats(BotPlugin):
     """A plugin to obtain statistics and information about the bot."""
 
-    def __init__(self, *args, **kwargs):
-        self.cmd_store = None
-
     def _on_register(self):
         """ Create CmdStore """
         self.cmd_store = CmdStore(self.bot.store)
 
     @botcmd(usage='[cmd]', allow=CommandBot.msg_from_owner)
     def stats(self, command, args, msg):
-        """ Get command usage statistics
-        """
+        """ Get command usage statistics."""
+        
         try:
             args = parse_args(args, (('cmd', ''), ))
         except ArgError as error:

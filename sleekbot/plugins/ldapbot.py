@@ -111,8 +111,8 @@ class LDAPBot(BotPlugin):
             self.ldap.simple_bind_s(self.config.find('server').get('binddn'),
                                     self.config.find('server').get('secret'))
             logging.debug('Connected to ldap server.')
-        except ldap.LDAPError as ex:
-            logging.error('LDAP %s' % ex)
+        except ldap.LDAPError as error:
+            logging.error('LDAP %s', error)
 
         search_scope = ldap.SCOPE_SUBTREE
         try:
@@ -122,8 +122,8 @@ class LDAPBot(BotPlugin):
             self.ldap.unbind_s()
             logging.debug('Disconnected from LDAP server.')
             return result_set
-        except ldap.LDAPError as ex:
-            logging.error('LDAP %s' % ex)
+        except ldap.LDAPError as error:
+            logging.error('LDAP %s', error)
 
     @botcmd(name='ldap', usage=OPTIONS)  # options is global
     def handle_ldapsearch(self, command, args, msg):

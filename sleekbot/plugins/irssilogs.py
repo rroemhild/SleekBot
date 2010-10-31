@@ -131,7 +131,7 @@ class IrssiLogs(object):
         self.check_for_date_change(presence['dateTime'])
         if not presence['room'] in self.room_log_files:
             return
-        if presence.get('type', None) == 'unavailable' or 
+        if presence.get('type', None) == 'unavailable' or \
            presence['nick'] not in self.room_members[presence['room']]:
             self.room_log_files[presence['room']].log_presence(presence)
             if presence.get('type', None) == 'unavailable':

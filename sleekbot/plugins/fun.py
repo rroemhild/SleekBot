@@ -5,7 +5,7 @@
 
 import random
 
-from sleekbot.commandbot import botcmd
+from sleekbot.commandbot import botcmd, parse_args, ArgError
 from sleekbot.plugbot import BotPlugin
 
 """ Configuraton Example:
@@ -34,12 +34,14 @@ class Slap(BotPlugin):
         self.slap_tools = self.config.find('tools').text.split(',')
         self.slap_size = self.config.find('size').text.split(',')
 
-    @botcmd(usage='[nickname]', IM=False)
+    @botcmd(usage='[nickname]', chat=False)
     def slap(self, command, args, msg):
         """Smack people with enormous iron bars and scary cellos."""
 
-        if args == None or args == '':
-            return "Please supply a nickname."
+        try:
+            args = parse_args(args, (('nickname', str), ))
+        except ArgError as error:
+            return error.msg
             
         room = msg['mucroom']
 
@@ -51,7 +53,7 @@ class Slap(BotPlugin):
                 nick_real_jid = self.bot.mucnick_to_jid(room, 
                                                         roster_nick)
                 if nick_real_jid != None:
-                    if nick_real_jid.bare in self.bot.owners:
+                    if nick_real_jid.bare in self.bot.acl.owners:
                         return "I don't slap my owner!"
 
                 # Do not slap the bot he will slap back

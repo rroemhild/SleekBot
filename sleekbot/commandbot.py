@@ -474,7 +474,6 @@ class ArgError(Exception):
     """
 
     def __init__(self, var, msg):
-        Exception.__init__()
         self.var = var
         self.msg = msg
 
