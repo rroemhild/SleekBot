@@ -17,8 +17,8 @@ class CmdEvent(object):
     """ Represent an bot command event
     """
 
-    imMessage = 0
-    mucMessage = 1
+    chat_message = 0
+    muc_message = 1
 
     def __init__(self, cmd, args, mtype, timestamp):
         """ Initialise aliascmd
@@ -106,10 +106,10 @@ class CmdStats(BotPlugin):
 
         if msg['type'] == 'groupchat':
             prefix = self.muc_prefix
-            msg_type = CmdEvent.mucMessage
+            msg_type = CmdEvent.muc_message
         else:
             prefix = self.chat_prefix
-            msg_type = CmdEvent.imMessage
+            msg_type = CmdEvent.chat_message
         command = msg.get('body', '').strip().split(' ', 1)[0]
         if ' ' in msg.get('body', ''):
             args = msg['body'].split(' ', 1)[-1].strip()
@@ -183,13 +183,15 @@ class Info(BotPlugin):
 
     def on_register(self):
         """ Starting time. """
-        self.started = datetime.datetime.now()
+        
+        if not hasattr(self.bot, 'time_started'):
+            self.bot.time_started = datetime.datetime.now()
 
     @botcmd()
     def uptime(self, command, args, msg):
         """ See how long the bot has been up."""
 
-        difference = datetime.datetime.now() - self.started
+        difference = datetime.datetime.now() - self.bot.time_started
         weeks, days = divmod(difference.days, 7)
         minutes, seconds = divmod(difference.seconds, 60)
         hours, minutes = divmod(minutes, 60)
