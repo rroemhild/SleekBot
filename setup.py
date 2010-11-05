@@ -25,7 +25,7 @@ setup(
         "Topic :: Communications :: Chat"
         ],
     requires=['sleekxmpp'],
-    scripts=['scripts/runbot.py'],
+    scripts=['scripts/sleekbot'],
     long_description="""
 SleekBot
 -------------------------------------

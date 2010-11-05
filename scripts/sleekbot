@@ -21,7 +21,13 @@ from optparse import OptionParser
 from sleekbot.sleekbot import SleekBot, END_STATUS
 
 if __name__ == '__main__':
-    OPTP = OptionParser(usage="usage: %prog [options] configuration_file")
+
+    DEFAULT = {}
+    DEFAULT['home'] = os.environ["HOME"] +'/.sleekbot'
+    DEFAULT['config'] = 'config.xml'
+    CONFIG_FILE = DEFAULT['home'] + '/' + DEFAULT['config']
+
+    OPTP = OptionParser(usage="usage: %prog [options] [configuration_file]")
     OPTP.add_option('-n', '--new', help='Create a new configuration file',
                     action='store_const', dest='new',
                     const=True, default=False)
@@ -35,30 +41,46 @@ if __name__ == '__main__':
                     action='store_const', dest='loglevel', const=5,
                     default=logging.INFO)
     OPTS, ARGS = OPTP.parse_args()
-    if not ARGS:
-        OPTP.print_help()
-        exit()
+    if not ARGS and not OPTS.new:
+        if not os.path.exists(CONFIG_FILE):
+            print("\n You need to create a config file first.\n\n")
+            OPTP.print_help()
+            exit()            
     if OPTS.new:
         import sleekbot.sleekbot
-        shutil.copy(
-            os.path.join(os.path.dirname(globals()['sleekbot'].__file__),
-            'config_template.xml'), ARGS[0])
-        print("\n  A configuration file named %s was created. Edit it and "
+        if not ARGS:
+            if not os.path.exists(DEFAULT['home']):
+                os.makedirs(DEFAULT['home'])
+            shutil.copy(
+                os.path.join(os.path.dirname(globals()['sleekbot'].__file__),
+                'config_template.xml'), CONFIG_FILE)
+            print("\n  A configuration file named %s was created in %s. "
+              "Edit it and then start your bot by running:\n\n\t sleekbot\n"
+              % (DEFAULT['config'], DEFAULT['home']))
+        else:
+            shutil.copy(
+                os.path.join(os.path.dirname(globals()['sleekbot'].__file__),
+                'config_template.xml'), ARGS[0])
+            print("\n  A configuration file named %s was created. Edit it and "
               "then start your bot by running:\n\n\t runbot.py %s\n"
               % (ARGS[0], ARGS[0]))
         exit()
 
     logging.basicConfig(level=OPTS.loglevel,
                         format='%(levelname)-8s %(message)s')
-
-    sys.path.append(os.path.dirname(os.path.abspath(ARGS[0])))
+    
+    if not ARGS:
+        sys.path.append(DEFAULT['home'])
+    else:
+        sys.path.append(os.path.dirname(os.path.abspath(ARGS[0])))
+        CONFIG_FILE = os.path.abspath(ARGS[0])
 
     SHOULD_RESTART = True
     while SHOULD_RESTART:
         SHOULD_RESTART = False
-        logging.info('Loading config file: %s', ARGS[0])
+        logging.info('Loading config file: %s', CONFIG_FILE)
 
-        BOT = SleekBot(ARGS[0])
+        BOT = SleekBot(CONFIG_FILE)
         BOT.start()
         BOT.process(threaded=False)
         while not BOT.state['disconnecting']:
