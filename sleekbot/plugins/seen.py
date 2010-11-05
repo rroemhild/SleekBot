@@ -50,20 +50,20 @@ class SeenStore(object):
         
         with self.store.context_cursor() as cur:
             logging.debug("Updating seen for %s - time: %s", event.nick,
-                                                            event.eventTime)
+                                                            event.event_time)
             cur.execute('SELECT * FROM seen WHERE nick=?', (event.nick,))
             if (len(cur.fetchall()) > 0):
-                cur.execute('UPDATE seen SET nick=?, eventTime=?, muc=?' +
+                cur.execute('UPDATE seen SET nick=?, eventTime=?, muc=?, ' +
                             'stanzaType=?, text=? WHERE nick=?', (event.nick,
-                                                    event.eventTime, event.muc,
-                                                    event.stanzaType,
+                                                    event.event_time, event.muc,
+                                                    event.stanza_type,
                                                     event.text, event.nick))
                 logging.debug("Updated existing seen")
             else:
                 cur.execute('INSERT INTO' +
-                            'seen(nick, eventTime, muc, stanzaType, text)' +
-                            'VALUES(?,?,?,?,?)', (event.nick, event.eventTime,
-                                                  event.muc, event.stanzaType,
+                            'seen(nick, eventTime, muc, stanzaType, text) ' +
+                            'VALUES(?,?,?,?,?)', (event.nick, event.event_time,
+                                                  event.muc, event.stanza_type,
                                                   event.text))
                 logging.debug("Added new seen")
 
