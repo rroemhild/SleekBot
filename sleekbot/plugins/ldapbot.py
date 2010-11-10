@@ -10,15 +10,15 @@
         <option name="user" help="Returns some user info" 
                 usage="user [givenname|surname|uid]">
             <basedn dn="ou=people,dc=domain,dc=tld" />
-            <searchFilter>(&amp;(account=active)(|(uid=*%s*)(sn=*%s*)
-                          (givenName=*%s*)(displayName=*%s*)))</searchFilter>
-            <retrieveAttributes>
+            <search_filter>(&amp;(account=active)(|(uid=*%s*)(sn=*%s*)
+                          (givenName=*%s*)(displayName=*%s*)))</search_filter>
+            <retrieve_attributes>
                 <attr name="sn" />
                 <attr name="givenName" />
                 <attr name="mail" />
                 <attr name="ou" />
                 <attr name="telephoneNumber" />
-            </retrieveAttributes>
+            </retrieve_attributes>
             <response msg="%(givenName)s %(sn)s\nOrg: %(ou)s\n
                            E-Mail: %(mail)s\nPhone: %(telephoneNumber)s" 
                            order="sorted" delimiter="\n" limit="1" />
@@ -77,7 +77,7 @@ class LDAPBot(BotPlugin):
                 'delimiter': res.get('delimiter', default=", ").replace('\\n', 
                                                                         '\n'),
                 'response_msg': res.get('msg', default='').replace('\\n', '\n'),
-                'search_filter': option.find('search_filter').text,
+                'search_filter': option.findtext('search_filter'),
                 'retrieve_attributes': option.find('retrieve_attributes')}
 
         global OPTIONS
