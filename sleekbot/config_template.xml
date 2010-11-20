@@ -31,19 +31,19 @@
 
     <plugins>
         <bot>
-            <plugin name='others'/>
-            <plugin name='botmath'/>
-            <plugin name='admin' />
+            <plugin name='Others'/>
+            <plugin name='BotMath'/>
+            <plugin name='Admin' />
             <plugin name='info' module='admin'/>
-            <plugin name='filter' />
-            <plugin name='gettune' />
-            <plugin name='xepbot'>
+            <plugin name='Filter' />
+            <plugin name='GetTune' />
+            <plugin name='XEPinfo'>
                 <config>
                     <xeps url='http://www.xmpp.org/extensions/xeps.xml'/>
                     <cache expiry='6' />
                 </config>
             </plugin>
-            <plugin name='xmradio' />
+            <plugin name='XMRadio' />
         </bot>
         <xmpp>
             <plugin name='xep_0030' />
