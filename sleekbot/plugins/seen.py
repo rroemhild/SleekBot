@@ -60,7 +60,7 @@ class SeenStore(object):
                                                     event.text, event.nick))
                 logging.debug("Updated existing seen")
             else:
-                cur.execute('INSERT INTO' +
+                cur.execute('INSERT INTO ' +
                             'seen(nick, eventTime, muc, stanzaType, text) ' +
                             'VALUES(?,?,?,?,?)', (event.nick, event.event_time,
                                                   event.muc, event.stanza_type,
