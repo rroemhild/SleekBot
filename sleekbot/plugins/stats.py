@@ -181,7 +181,7 @@ class Info(BotPlugin):
         super(Info, self).__init__(*args, **kwargs)
         self.started = False
 
-    def on_register(self):
+    def _on_register(self):
         """ Starting time. """
         
         if not hasattr(self.bot, 'time_started'):
