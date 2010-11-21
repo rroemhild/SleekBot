@@ -3,7 +3,7 @@
     See the README file for more information.
 """
 
-from html2text.html2text import html2text
+from html2text import html2text
 import feedparser
 
 import logging
@@ -62,7 +62,7 @@ class RSSBot(BotPlugin):
                 feed = feedparser.parse(feed_url)
                 for item in feed['entries']:
                     if feed_url not in self.rss_cache.keys():
-                        self.rssCache[feed_url] = []
+                        self.rss_cache[feed_url] = []
                     if item['title'] in self.rss_cache[feed_url]:
                         continue
                     #print u"found new item %s" % item['title']
