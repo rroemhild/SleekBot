@@ -122,3 +122,15 @@ class RSSBot(BotPlugin):
         except IOError:
             logging.error("Error loading rss data %s", 
                           self.cache_filename(feed))
+
+    @botcmd()
+    def rss(self, command, args, msg):
+        """Shows configured rss feeds."""
+        return_string = 'Configured rss feeds:\n'
+        counter = 0
+        feeds = self.config.findall('feed')
+        for feed in feeds:
+            counter += 1
+            url, ref = feed.attrib['url'], feed.attrib['refresh']
+            return_string += "%d - url: %s refresh: %s[min]\n" %(counter, url, ref)
+        return return_string
