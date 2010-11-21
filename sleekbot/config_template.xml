@@ -36,7 +36,24 @@
             <plugin name='BotMath'/>
             <plugin name='Factoid'/>
             <plugin name='Filter' />
-            <plugin name='Slap' module='fun' />
+            <plugin name='Slap' module='fun'>
+            	<config>
+	            	<verbs>
+	            		slaps,hits,smashes,beats,bashes,smacks,blats,
+	               		punches,stabs
+	               	</verbs>
+	        		<size>
+	        			a large,an enormous,a small,a tiny,a medium sized,
+	              		an extra large,a questionable,a suspicious,a terrifying,
+	              		a scary,a breath taking,a horrifying
+	              	</size>
+	        		<tools>
+	        			trout,fork,mouse,piano,cello,vacuum,finetuned sledgehammer,
+	               		sewing needle,Windows ME user guide,christmas tree,axe,
+	               		iron bar,cello,set of Windows 3.11 floppies,MS IIS
+	               	</tools>
+	        	</config>
+       		</plugin>
             <plugin name='GetTune' />
             <plugin name='IrssiLogs' />
             <plugin name='LDAPBot' />
