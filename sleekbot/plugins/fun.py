@@ -30,9 +30,12 @@ class Slap(BotPlugin):
 
     def _on_register(self):
         """ Obtains verbs, tools and sizes from the config file """
-        self.slap_verbs = self.config.find('verbs').text.split(',')
-        self.slap_tools = self.config.find('tools').text.split(',')
-        self.slap_size = self.config.find('size').text.split(',')
+        verbs = self.config.find('verbs').text.split(',')
+        tools = self.config.find('tools').text.split(',')
+        size = self.config.find('size').text.split(',')
+        self.slap_verbs = [v.strip() for v in verbs]
+        self.slap_tools = [t.strip() for t in tools]
+        self.slap_size = [s.strip() for s in size]
 
     @botcmd(usage='[nickname]', chat=False)
     def slap(self, command, args, msg):
