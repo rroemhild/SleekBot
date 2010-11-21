@@ -5,6 +5,7 @@
 
 from html2text import html2text
 import feedparser
+import xml.sax.saxutils
 
 import logging
 import thread
@@ -59,6 +60,7 @@ class RSSBot(BotPlugin):
         self.load_cache(feed_url)
         while not self.shutting_down:
             if self.bot['xep_0045']:
+                logging.debug("Fetching feed url: %s", feed_url)
                 feed = feedparser.parse(feed_url)
                 for item in feed['entries']:
                     if feed_url not in self.rss_cache.keys():
@@ -87,12 +89,12 @@ class RSSBot(BotPlugin):
         #    return
         #print u"found content in key %s" % contentKey
         if 'content' in item:
-            content = self.bot.xmlesc(item['content'][0].value)
+            content = xml.sax.saxutils.escape(item['content'][0].value)
             content = item['content'][0].value
         else:
             content = ''
         text = html2text("Update from feed %s\n%s\n%s" % 
-                         (feed_name, self.bot.xmlesc(item['title']), content))
+                         (feed_name, xml.sax.saxutils.escape(item['title']), content))
         self.bot.send_message(muc, text, mtype='groupchat')
 
     def cache_filename(self, feed_url):
