@@ -31,12 +31,36 @@
 
     <plugins>
         <bot>
-            <plugin name='Others'/>
-            <plugin name='BotMath'/>
             <plugin name='Admin' />
-            <plugin name='info' module='admin'/>
+            <plugin name='Alias' />
+            <plugin name='BotMath'/>
+            <plugin name='Factoid'/>
             <plugin name='Filter' />
+            <plugin name='Slap' module='fun' />
             <plugin name='GetTune' />
+            <plugin name='IrssiLogs' />
+            <plugin name='LDAPBot' />
+            <plugin name='Mood' />
+            <plugin name='MUCStability' />
+            <plugin name='Others'/>
+            <plugin name='Remember'/>
+			<plugin name='RSSBot'>
+				<config>
+					<feed url='https://github.com/andyhelp/SleekBot/commits/develop.atom' refresh='1'>
+						<muc room='test@conference.jabber.org' />
+					</feed>
+					<feed url='https://github.com/hgrecco/SleekBot/commits/develop.atom' refresh='1'>
+						<muc room='test@conference.jabber.org' />
+					</feed>
+					<!--feed url='https://github.com/timeline.' refresh='0.1'>
+						<muc room='test@conference.jabber.org' />
+					</feed-->
+				</config>
+			</plugin>
+			<plugin name='Seen' />
+			<plugin name='Stats'	module='stats' />
+			<plugin name='Info'		module='stats' />
+			<plugin name='CmdStats'	module='stats' />
             <plugin name='XEPinfo'>
                 <config>
                     <xeps url='http://www.xmpp.org/extensions/xeps.xml'/>
