@@ -55,7 +55,11 @@
 	        	</config>
        		</plugin>
             <plugin name='GetTune' />
-            <plugin name='IrssiLogs' />
+            <plugin name='IrssiLogs'>
+            	<config>
+            		<log room='c1@conference.localhost' file='c1@conference.localhost' />
+            	</config>
+            </plugin>
             <plugin name='LDAPBot' />
             <plugin name='Mood' />
             <plugin name='MUCStability' />
