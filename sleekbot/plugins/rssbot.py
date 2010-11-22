@@ -126,7 +126,7 @@ class RSSBot(BotPlugin):
     @botcmd()
     def rss(self, command, args, msg):
         """Shows configured rss feeds."""
-        return_string = 'Configured rss feeds:\n'
+        return_string = 'Configured rss feeds:'
         counter = 0
         feeds = self.config.findall('feed')
         for feed in feeds:
@@ -134,5 +134,5 @@ class RSSBot(BotPlugin):
             url, ref = feed.attrib['url'], feed.attrib['refresh']
             rooms_xml = feed.findall('muc')
             rooms = [room_xml.attrib['room'] for room_xml in rooms_xml]
-            return_string += "%d - url: %s refresh: %s[min] rooms: %s\n" %(counter, url, ref, rooms)
+            return_string += "\n%d - url: %s refresh: %s[min] rooms: %s" %(counter, url, ref, rooms)
         return return_string
