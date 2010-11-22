@@ -132,5 +132,7 @@ class RSSBot(BotPlugin):
         for feed in feeds:
             counter += 1
             url, ref = feed.attrib['url'], feed.attrib['refresh']
-            return_string += "%d - url: %s refresh: %s[min]\n" %(counter, url, ref)
+            rooms_xml = feed.findall('muc')
+            rooms = [room_xml.attrib['room'] for room_xml in rooms_xml]
+            return_string += "%d - url: %s refresh: %s[min] rooms: %s\n" %(counter, url, ref, rooms)
         return return_string
