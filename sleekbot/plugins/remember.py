@@ -20,8 +20,7 @@ SEARCH = """(([Tt]he|[mM]y)[\s\w\-0-9]+ (is|are|can|has|got)|I am|i am|I'm|
 class Remember(BotPlugin):
     """A plugin to rembember events."""
 
-    def __init__(self, bot, config):
-        BotPlugin.__init__(self, bot, config)
+    def _on_register(self):
         self.know = []
         self.load_default()
         self.idlemin = int(self.config.get('idlemin', 60))

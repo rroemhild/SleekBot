@@ -3,8 +3,9 @@
     See the README file for more information.
 """
 
-from html2text.html2text import html2text
+from html2text import html2text
 import feedparser
+import xml.sax.saxutils
 
 import logging
 import thread
@@ -59,10 +60,11 @@ class RSSBot(BotPlugin):
         self.load_cache(feed_url)
         while not self.shutting_down:
             if self.bot['xep_0045']:
+                logging.debug("Fetching feed url: %s", feed_url)
                 feed = feedparser.parse(feed_url)
                 for item in feed['entries']:
                     if feed_url not in self.rss_cache.keys():
-                        self.rssCache[feed_url] = []
+                        self.rss_cache[feed_url] = []
                     if item['title'] in self.rss_cache[feed_url]:
                         continue
                     #print u"found new item %s" % item['title']
@@ -87,12 +89,12 @@ class RSSBot(BotPlugin):
         #    return
         #print u"found content in key %s" % contentKey
         if 'content' in item:
-            content = self.bot.xmlesc(item['content'][0].value)
+            content = xml.sax.saxutils.escape(item['content'][0].value)
             content = item['content'][0].value
         else:
             content = ''
         text = html2text("Update from feed %s\n%s\n%s" % 
-                         (feed_name, self.bot.xmlesc(item['title']), content))
+                         (feed_name, xml.sax.saxutils.escape(item['title']), content))
         self.bot.send_message(muc, text, mtype='groupchat')
 
     def cache_filename(self, feed_url):
@@ -120,3 +122,15 @@ class RSSBot(BotPlugin):
         except IOError:
             logging.error("Error loading rss data %s", 
                           self.cache_filename(feed))
+
+    @botcmd()
+    def rss(self, command, args, msg):
+        """Shows configured rss feeds."""
+        return_string = 'Configured rss feeds:\n'
+        counter = 0
+        feeds = self.config.findall('feed')
+        for feed in feeds:
+            counter += 1
+            url, ref = feed.attrib['url'], feed.attrib['refresh']
+            return_string += "%d - url: %s refresh: %s[min]\n" %(counter, url, ref)
+        return return_string

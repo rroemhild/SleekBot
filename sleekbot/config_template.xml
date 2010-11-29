@@ -31,19 +31,64 @@
 
     <plugins>
         <bot>
-            <plugin name='others'/>
-            <plugin name='botmath'/>
-            <plugin name='admin' />
-            <plugin name='info' module='admin'/>
-            <plugin name='filter' />
-            <plugin name='gettune' />
-            <plugin name='xepbot'>
+            <plugin name='Admin' />
+            <plugin name='Alias' />
+            <plugin name='BotMath'/>
+            <plugin name='Factoid'/>
+            <plugin name='Filter' />
+            <plugin name='Slap' module='fun'>
+            	<config>
+	            	<verbs>
+	            		slaps,hits,smashes,beats,bashes,smacks,blats,
+	               		punches,stabs
+	               	</verbs>
+	        		<size>
+	        			a large,an enormous,a small,a tiny,a medium sized,
+	              		an extra large,a questionable,a suspicious,a terrifying,
+	              		a scary,a breath taking,a horrifying
+	              	</size>
+	        		<tools>
+	        			trout,fork,mouse,piano,cello,vacuum,finetuned sledgehammer,
+	               		sewing needle,Windows ME user guide,christmas tree,axe,
+	               		iron bar,cello,set of Windows 3.11 floppies,MS IIS
+	               	</tools>
+	        	</config>
+       		</plugin>
+            <plugin name='GetTune' />
+            <plugin name='IrssiLogs'>
+            	<config>
+            		<log room='c1@conference.localhost' file='c1@conference.localhost' />
+            	</config>
+            </plugin>
+            <plugin name='LDAPBot' />
+            <plugin name='Mood' />
+            <plugin name='MUCStability' />
+            <plugin name='Others'/>
+            <plugin name='Remember'/>
+			<plugin name='RSSBot'>
+				<config>
+					<feed url='https://github.com/andyhelp/SleekBot/commits/develop.atom' refresh='1'>
+						<muc room='test@conference.jabber.org' />
+					</feed>
+					<feed url='https://github.com/hgrecco/SleekBot/commits/develop.atom' refresh='1'>
+						<muc room='test@conference.jabber.org' />
+					</feed>
+					<!--feed url='https://github.com/timeline.' refresh='0.1'>
+						<muc room='test@conference.jabber.org' />
+					</feed-->
+				</config>
+			</plugin>
+			<plugin name='Seen' />
+			<plugin name='Stats'	module='stats' />
+			<plugin name='Info'		module='stats' />
+			<plugin name='CmdStats'	module='stats' />
+            <plugin name='XEPinfo'>
                 <config>
                     <xeps url='http://www.xmpp.org/extensions/xeps.xml'/>
                     <cache expiry='6' />
                 </config>
             </plugin>
-            <plugin name='xmradio' />
+            <plugin name='XMRadio' />
         </bot>
         <xmpp>
             <plugin name='xep_0030' />
