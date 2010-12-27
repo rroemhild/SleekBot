@@ -295,7 +295,6 @@ class CommandBot(object):
 
         self.freetext = []
         self.register_commands(self)
-
         aclnode = self.botconfig.find('acl')
         self.acl = get_class(aclnode.attrib.get('classname', 'acl.ACL')) \
                   (self, aclnode.find('config'))

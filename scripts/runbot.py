@@ -48,8 +48,14 @@ if __name__ == '__main__':
               % (ARGS[0], ARGS[0]))
         exit()
 
+    if OPTS.loglevel == logging.DEBUG:
+        fmt = '%(levelname)-8s %(filename)s:%(lineno)-4d: %(message)s'
+    else:
+        fmt = '%(levelname)-8s %(message)s'
+
     logging.basicConfig(level=OPTS.loglevel,
-                        format='%(levelname)-8s %(message)s')
+                        format=fmt)
+
 
     sys.path.append(os.path.dirname(os.path.abspath(ARGS[0])))
 
