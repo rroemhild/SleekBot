@@ -168,20 +168,19 @@ class PluginDict(dict):
 
         super(PluginDict, self).__delitem__(key)
 
-    def register(self, name, config=None, module=None, package=None):
+    def register(self, plugin, config=None, module=None, package=None):
         """ Loads and register a plugin
-                name    -- plugin name (name of the class)
+                plugin  -- plugin name (name of the class)
                 config  -- extra configuration (to be handled to the plugin)
-                package -- where the plugin is declared
+                module  -- module where the plugin is declared
+                package -- package where the plugin is declared
         """
         try:
-            if name in self:
+            if plugin in self:
                 return
-            if isinstance(name, self._plugin_base_class):
-                plugin = name
-                name = name.__class__.__name__
-                self[name] = plugin
-            elif isinstance(name, str):
+            if isinstance(plugin, self._plugin_base_class):
+                self[plugin.__class__.__name__] = plugin
+            elif isinstance(plugin, str):
                 if package is None:
                     package = self._default_package
                 elif not package in self.__imported:
@@ -189,17 +188,17 @@ class PluginDict(dict):
                     self.__imported.add(package)
                     logging.debug('Imported package %s', package)
                 if module is None:
-                    module = name.lower()
+                    module = plugin.lower()
 
                 imported = __import__("%s.%s" % (package, module),
-                                      fromlist=name)
-                self[name] = self._default_factory(getattr(imported, name),
-                                                   config or dict())
+                                      fromlist=plugin)
+                self[plugin] = self._default_factory(getattr(imported, plugin),
+                                                     config or dict())
 
             return True
 
         except Exception as ex:
-            logging.error('Error while registering plugin %s: %s', name, ex)
+            logging.error('Error while registering plugin %s: %s', plugin, ex)
 
     def register_many(self, include='__all__', exclude=None, config=None):
         """ Register multiple plugins

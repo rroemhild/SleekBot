@@ -19,15 +19,17 @@ __license__ = 'MIT License/X11 license'
 
 
 import logging
-from xml.etree import ElementTree as ET
 
 import sleekxmpp
+
 
 from .commandbot import CommandBot
 from .plugbot import PlugBot
 from .store import Store
+from .confighandler import ConfigDict
 
 from .acl import Enum
+
 
 END_STATUS = Enum(['none', 'restart', 'reload', 'die'])
 
@@ -37,25 +39,21 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         SleekBot was originally written by Nathan Fritz and Kevin Smith.
         This fork is maintained by Hernan E. Grecco
     """
-
     
 
-    def __init__(self, config_file, ssl=False, plugin_config=None):
+    def __init__(self, config, plugin_config=None):
         """ Initializes the bot
-                config_file -- string pointing to an xml configuration file
+                config -- specifies the configuration. Options:
+                          - a dictionary
+                          - a yaml filename
+                          - a json filename
         """
-        self._config_file = None
-        self._botconfig = None
-        self.botconfig = config_file
-        auth = self.botconfig.find('auth')
-        logging.info("Logging in as %s", auth.attrib['jid'])
-        sleekxmpp.ClientXMPP.__init__(self, auth.attrib['jid'], \
-                                      auth.attrib['pass'], \
-                                      auth.get('ssl', True), \
-                                      plugin_config or dict())
-        storage_xml = self.botconfig.find('storage')
-        if storage_xml is not None:
-            self.store = Store(storage_xml.attrib['file'])
+        self._botconfig = ConfigDict(config)
+        logging.info("Logging in as %s", self.botconfig['auth.jid'])
+        sleekxmpp.ClientXMPP.__init__(self, **self.botconfig['auth'])
+        self.store = self.botconfig.get('storage', None)
+        if self.store is not None:
+            self.store = Store(self.store)
         else:
             logging.warning("No storage element found in config file - " \
                             "proceeding with no persistent storage, " \
@@ -72,14 +70,9 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
     def start(self):
         """ Connects to the server
         """
-        auth = self.botconfig.find('auth')
+        
         logging.info("Connecting ...")
-        if not auth.get('server', None):
-            # we don't know the server, but the lib can probably figure it out
-            super(SleekBot, self).connect()
-        else:
-            super(SleekBot, self).connect((auth.attrib['server'], \
-                                           auth.get('port', 5222)))
+        super(SleekBot, self).connect(self.botconfig.get('connection.server', None))
 
     def get_botconfig(self):
         """ Gets config elementtree 
@@ -91,16 +84,11 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
                 value is None: loads the previous config file
                 type of value is str: use is as the name of the config file
         """
-        if value is None:
-            self._botconfig = ET.parse(self._config_file)
-        elif isinstance(value, str):
-            self._config_file = value
-            self._botconfig = ET.parse(value)
-        elif isinstance(value, ET.ElementTree):
-            self._botconfig = value
+        
+        self._botconfig.set(value)
         
     botconfig = property(get_botconfig, set_botconfig, None, \
-                         'XML ElementTree from the config file')
+                         'Configuration as a dictionary')
 
     def register_adhocs(self):
         """ Register all ad-hoc commands with SleekXMPP.
@@ -136,26 +124,23 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
     def register_xmpp_plugins(self):
         """ Registers all XMPP plugins required by botconfig.
         """
-        plugins = self.botconfig.findall('plugins/xmpp/plugin')
-        if plugins:
-            for plugin in plugins:
-                try:
-                    config = plugin.find('config')
-                    if config is None:
-                        self.registerPlugin(plugin.attrib['name'])
-                    else:
-                        self.registerPlugin(plugin.attrib['name'], config)
-                    logging.info("Registering XMPP plugin %s OK", \
-                                 plugin.attrib['name'])
-                except Exception as ex:
-                    logging.info("Registering XMPP plugin %s FAILED: %s", \
-                                 plugin.attrib['name'], ex)
+
+        plugins = self.botconfig.get('plugins.xmpp', ())
+
+        for plugin in plugins:
+            try:
+                self.registerPlugin(**plugin)
+                logging.info("Registering XMPP plugin %s OK", \
+                             plugin['plugin'])
+            except Exception as ex:
+                logging.info("Registering XMPP plugin %s FAILED: %s", \
+                             plugin['plugin'], ex)
 
     def handle_session_start(self, event):
         """ Event runnning when the session is established.
         """
         self.getRoster()
-        priority = self.botconfig.find('auth').get('priority', '1')
+        priority = self.botconfig.get('connection.priority', '1')
         self.sendPresence(ppriority=priority)
         self.join_rooms()
 
@@ -163,10 +148,10 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         """ Join to MUC rooms
         """
         logging.info("Joining MUC rooms")
-        xrooms = self.botconfig.findall('rooms/muc')
+        xrooms = self.botconfig.get('rooms', ())
         rooms = {}
         for xroom in xrooms:
-            rooms[xroom.attrib['room']] = xroom.attrib['nick']
+            rooms[xroom['room']] = xroom['nick']
         for room in set(self.rooms.keys()).difference(rooms.keys()):
             logging.info("Parting room %s.", room)
             self.plugin['xep_0045'].leaveMUC(room, self.rooms[room])

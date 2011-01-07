@@ -34,15 +34,7 @@ class BotPlugin(Plugin):
 class PlugBot(object):
     """ Base class for bots that are pluggable
         Requires to be coinherited with a class that has a property named
-            botconfig -- XML ElementTree from the config file. For example:
-                <bot>
-                    <plugin name='plugin1'>
-                        <config />
-                    </plugin>
-                    <plugin name='plugin2' package='anotherpackage'>
-                        <config />
-                    </plugin>
-                <bot>
+            botconfig -- a dictionary with the configuration.
     """
     __metaclass__ = ABCMeta
 
@@ -58,25 +50,19 @@ class PlugBot(object):
 
     @abstractproperty
     def botconfig(self):
-        """ XML ElementTree from the config file
+        """ Configuration as a dictionary
         """
         pass
 
     def register_cmd_plugins(self):
         """ Registers all bot plugins required by botconfig.
         """
-        plugins = self.botconfig.findall('plugins/bot/plugin')
-        if not plugins:
-            return
+        plugins = self.botconfig.get('plugins.bot', ())
 
         for plugin in plugins:
-            atr = plugin.attrib
-            loaded = self.cmd_plugins.register(atr['name'],
-                                               plugin.find('config'),
-                                               atr.get('module', None),
-                                               atr.get('package', None))
+            loaded = self.cmd_plugins.register(**plugin)
             res = 'OK' if loaded else 'FAILED'
-            logging.info('Registering plugin %s %s', atr['name'], res)
+            logging.info('Registering plugin %s %s', plugin['plugin'], res)
 
     def stop(self):
         """ Unregister command plugins

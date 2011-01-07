@@ -42,7 +42,7 @@ if __name__ == '__main__':
         import sleekbot.sleekbot
         shutil.copy(
             os.path.join(os.path.dirname(globals()['sleekbot'].__file__),
-            'config_template.xml'), ARGS[0])
+            'config_template.yaml'), ARGS[0])
         print("\n  A configuration file named %s was created. Edit it and "
               "then start your bot by running:\n\n\t runbot.py %s\n"
               % (ARGS[0], ARGS[0]))
