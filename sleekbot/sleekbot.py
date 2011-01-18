@@ -157,24 +157,6 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         self.getRoster()
         priority = self.botconfig.find('auth').get('priority', '1')
         self.sendPresence(ppriority=priority)
-        self.join_rooms()
-
-    def join_rooms(self):
-        """ Join to MUC rooms
-        """
-        logging.info("Joining MUC rooms")
-        xrooms = self.botconfig.findall('rooms/muc')
-        rooms = {}
-        for xroom in xrooms:
-            rooms[xroom.attrib['room']] = xroom.attrib['nick']
-        for room in set(self.rooms.keys()).difference(rooms.keys()):
-            logging.info("Parting room %s.", room)
-            self.plugin['xep_0045'].leaveMUC(room, self.rooms[room])
-            del self.rooms[room]
-        for room in set(rooms.keys()).difference(self.rooms.keys()):
-            self.rooms[room] = rooms[room]
-            logging.info("Joining room %s as %s.", room, rooms[room])
-            self.plugin['xep_0045'].joinMUC(room, rooms[room])
 
     def restart(self):
         """ Cause the bot to be completely restarted (will reconnect etc.)

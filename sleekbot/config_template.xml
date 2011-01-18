@@ -2,9 +2,6 @@
     <prefix chat='/' muc='!' />
     <!--Bot authorization details-->
     <auth jid='botname@server' pass='password' priority='10' server='servername' />
-    <rooms>
-        <muc room='c1@conference.localhost' nick='SleekBot' />
-    </rooms>
     <!--Location of the sqlite3 database used for persistent storage.-->
     <storage file='test.sqlite' />
 
@@ -36,6 +33,14 @@
             <plugin name='BotMath'/>
             <plugin name='Factoid'/>
             <plugin name='Filter' />
+            <plugin name="MUC" module="muc">
+                <config>
+                    <rooms>
+                        <muc room='c1@conference.localhost' nick='SleekBot' />
+                    </rooms>
+                </config>
+            </plugin>
+            <plugin name='MUCStability' module="muc" />
             <plugin name='Slap' module='fun'>
             	<config>
 	            	<verbs>
@@ -62,7 +67,6 @@
             </plugin>
             <plugin name='LDAPBot' />
             <plugin name='Mood' />
-            <plugin name='MUCStability' />
             <plugin name='Others'/>
             <plugin name='Remember'/>
 			<plugin name='RSSBot'>
