@@ -29,6 +29,19 @@
         </banned>
     </acl>
 
+<!--Sample config for sqlite base ACL
+      On first run send "register" to SleekBot to announce you as an owner. 
+      To manage ACL's use the "acl" command.-->
+    <!--<acl classname="acl.ACLdb" />-->
+
+<!-- Sample config for LDAP based ACL-->
+    <!--<acl classname="acl.ACLldap">
+        <config>
+            <server uri="ldap://server:389" binddn="" secret="" />
+            <groups basedn="ou=sleekbot,ou=groups,dc=server.com" memberattr="memberUid" groupclass="posixGroup" />
+        </config>
+    </acl>-->
+
     <plugins>
         <bot>
             <plugin name='Admin' />
