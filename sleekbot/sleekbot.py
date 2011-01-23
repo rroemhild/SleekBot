@@ -183,7 +183,6 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
 
         PlugBot.start(self)
         CommandBot.resume(self)
-        self.join_rooms()
 
     def die(self):
         """ Kills the bot.

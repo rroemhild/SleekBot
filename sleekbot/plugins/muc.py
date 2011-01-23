@@ -21,7 +21,7 @@ class MUC(BotPlugin):
 
     def _on_register(self):
         self.muc = self.bot.plugin['xep_0045']
-        self.nick = self.config.get('nick', 'SleekBot')
+        self.nick = self.config.find('rooms').get('default_nick', 'SleekBot')
         self.bot.add_event_handler("session_start", self.handle_session_start, 
                                    disposable=True)
 
@@ -51,29 +51,26 @@ class MUC(BotPlugin):
         """ Manage a Multi-User-Chat.
         """
         try:
-            args = parse_args(args, (('action', (str, 'join', 'leave', 'kick',
-                                    'ban', 'kickban', 'invite', 'set', 'show',
-                                    'topic', 'rooms', 'nick', 'priv',
-                                    'users', 'startup')), ('room', ''), ))
+            args = parse_args(args, (('action', (str, 'join', 'leave', 'invite',
+                                    'topic', 'rooms', )), ('room', ''), ))
         except ArgError as error:
             return error.msg
 
         args.parsed_ = False
         return getattr(self, 'muc_' + args.action,)(command, args, msg)
 
-    @botcmd(usage='roomname nick', allow=CommandBot.msg_from_admin, hidden=True)
+    @botcmd(usage='roomname <nick>', allow=CommandBot.msg_from_admin, hidden=True)
     def muc_join(self, command, args, msg):
         """ Join a Multi-User-Chat room.
         """
         
         try:
             args = parse_args(args, (('action', (str, 'join')),
-                                    ('room', str), ('nick', (self.nick)), ))
+                                    ('room', str), ('nick', self.nick), ))
         except ArgError as error:
             return error.msg
-
-        nick = 'SleekBot'
-        self.join_room({args.room: nick})
+        
+        self.join_room({args.room: args.nick})
 
     @botcmd(usage='roomname', allow=CommandBot.msg_from_admin, hidden=True)
     def muc_leave(self, command, args, msg):
@@ -96,19 +93,19 @@ class MUC(BotPlugin):
     def muc_invite(self, command, args, msg):
         """ Invite a victim to join a room.
         """
-
+        
         try:
             args = parse_args(args, (('action', (str, 'invite')),
                                     ('jid', str), ('room', ''),
                                     ('reason', ''), ))
         except ArgError as error:
             return error.msg
-
+        
         if not args.room:
             croom = msg['mucroom']
         else:
             croom = args.room
-
+        
         self.muc.invite(croom, args.jid, args.reason)
         logging.info("Invited %s to %s.", args.jid, croom)
 
@@ -130,19 +127,7 @@ class MUC(BotPlugin):
         except ArgError as error:
             return error
 
-    @botcmd(usage="<roomname> nick", allow=CommandBot.msg_from_admin,
-            hidden=True)
-    def muc_nick(self, command, args, msg):
-        """ Change nickname
-        """
-        pass
 
-    @botcmd(usage="set <option> <value>", allow=CommandBot.msg_from_admin,
-            hidden=True)
-    def muc_set(self, command, args, msg):
-        """ Set MUC options
-        """
-        pass
 
 
 MASK = "<message xmlns='jabber:client' type='error'>"  \
