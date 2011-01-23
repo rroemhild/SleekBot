@@ -171,14 +171,14 @@ class Stats(BotPlugin):
 class Info(BotPlugin):
     """A plugin to obtain information about the bot."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         try:
             from guppy import hpy
             self.hpy = hpy()
         except:
             delattr(Info, 'mem')
             logging.warning("guppy not present. mem plugin not available")
-        super(Info, self).__init__(*args, **kwargs)
+        BotPlugin.__init__(self)
         self.started = False
 
     def _on_register(self):

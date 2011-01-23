@@ -97,6 +97,10 @@ class IrssiLogFile(object):
         self.logfile.flush()
 
 class IrssiLogs(BotPlugin):
+
+    def __init__(self, logs=()):
+        BotPlugin.__init__(self)
+        self._logs = logs
     
     def _on_register(self):
         self.about = "Log muc events."
@@ -108,16 +112,14 @@ class IrssiLogs(BotPlugin):
                                    threaded=True)
         self.room_log_files = {}
         self.room_members = {}
-        logs = self.config.findall('log')
         self.lastdate = datetime.datetime.now()
-        if logs:
-            for log in logs:
-                room = log.attrib['room']
-                file_name = log.attrib['file']
-                self.room_log_files[room] = IrssiLogFile(room, file_name)
-                self.room_members[room] = []
-                logging.info("irssilogs.py script logging %s to %s." %
-                             (room, file_name))
+        for log in self._logs:
+            room = log['room']
+            file_name = log['file']
+            self.room_log_files[room] = IrssiLogFile(room, file_name)
+            self.room_members[room] = []
+            logging.info("irssilogs.py script logging %s to %s." %
+                         (room, file_name))
 
     def check_for_date_change(self, date):
         if (date - self.lastdate).days > 0:

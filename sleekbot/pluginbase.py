@@ -48,8 +48,7 @@ class Plugin(object):
     """ A base class for plugins.
     """
 
-    def __init__(self, config=None):
-        self.config = config if not config is None else dict()
+    def __init__(self):
         self.__plugin_dict = None
 
     def about(self):
@@ -104,30 +103,20 @@ class Plugin(object):
     plugin_dict = property(fget=_get_dict, fset=_set_dict)
 
 
-def default_plugin_factory(aclass, config):
-    """ The default factory for Plugin.
-    """
-    return aclass(config)
-
-
 class PluginDict(dict):
     """ A dictionary class to hold plugins.
     """
 
     def __init__(self, plugin_base_class=Plugin,
-                 default_factory=default_plugin_factory,
                  default_package='plugins'):
         """ Initialize dictionary
                 plugin_base_class -- class from which plugins must derive
                                      (default Plugin)
-                default_factory   -- method to instantiate a plugin object
-                                     (default default_plugin_factory)
                 default_package   -- string specifying where to look for plugins
                                      (default 'plugins')
         """
         super(PluginDict, self).__init__()
         self._plugin_base_class = plugin_base_class
-        self._default_factory = default_factory
         self._default_package = default_package
         self.__call_on_register = defaultdict(set)
         self.__call_on_unregister = defaultdict(set)
@@ -154,7 +143,7 @@ class PluginDict(dict):
         logging.info("%s registered", key)
 
     def __delitem__(self, key):
-        """ Remove plugin from the dicitionary
+        """ Remove plugin from the dictionary
         """
         if key in self:
             current = super(PluginDict, self).__getitem__(key)
@@ -192,8 +181,10 @@ class PluginDict(dict):
 
                 imported = __import__("%s.%s" % (package, module),
                                       fromlist=plugin)
-                self[plugin] = self._default_factory(getattr(imported, plugin),
-                                                     config or dict())
+                if config is None:
+                    self[plugin] = getattr(imported, plugin)()
+                else:
+                    self[plugin] = getattr(imported, plugin)(**config)
 
             return True
 
@@ -246,7 +237,7 @@ class PluginDict(dict):
             value = set(filter(lambda x: x[0] != plugin, value))
 
     def get_modules(self):
-        """ Imports and returns an list of modules
+        """ Imports and returns a list of modules
         """
         return [__import__(self[name].__module__, fromlist=name)
                 for name in self.keys()]

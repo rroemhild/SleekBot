@@ -28,8 +28,10 @@ class XEPinfo(BotPlugin):
                      
     RESPONSE_NOTFOUND = 'The XEP you specified ("%s") could not be found'
     
-    def __init__(self, *args, **kwargs):
-        super(XEPinfo, self).__init__(*args, **kwargs)
+    def __init__(self, url='http://www.xmpp.org/extensions/xeps.xml', cache_expiry=6):
+        super(XEPinfo, self).__init__()
+        self._url = url
+        self._cache_expiry = cache_expiry
         self._last_cache_time = 0
         self._xeps = None    
                      
@@ -42,20 +44,19 @@ class XEPinfo(BotPlugin):
             and refreshes if so.
         """
         now = math.floor(time.time())
-        expiry_seconds = int(self.config.find('cache').attrib['expiry']) * 3600
+        expiry_seconds = int(self._cache_expiry) * 3600
         if self._last_cache_time + expiry_seconds < now:
             self._refresh_cache()
 
     def _refresh_cache(self):
         """ Updates the xep list cache.
         """
-        url = self.config.find('xeps').attrib['url']
         try:
-            url_object = urlopen(url)
+            url_object = urlopen(self._url)
             self._xeps = ET.parse(url_object).getroot()
             self._last_cache_time = math.floor(time.time())
         except IOError as ex:
-            logging.info('Getting XEP list file %s failed. %s', url, ex)
+            logging.info('Getting XEP list file %s failed. %s', self._url, ex)
 
     @botcmd(name='xep', usage='[number]')
     def handle_xep(self, command, args, msg):
@@ -69,7 +70,7 @@ class XEPinfo(BotPlugin):
 
         xepnumber = '%04i' % int(args.xep)
 
-        if self.xeps == None:
+        if self._xeps == None:
             return self.RESPONSE_ERROR
             
         response = ''

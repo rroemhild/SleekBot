@@ -9,8 +9,11 @@ import math
 import random
 import string
 
+import inspect
+
 from sleekbot.commandbot import botcmd, parse_args, ArgError
 from sleekbot.plugbot import BotPlugin
+import sleekbot.confighandler as confighandler
 
 # make a list of safe functions
 SAFE_LIST = ['math', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', \
@@ -23,6 +26,11 @@ SAFE_DICT['d'] = random.randint
 
 class BotMath(BotPlugin):
     """A nerdy plugin for rolling complex or simple formulas."""
+    
+    def __init__(self, passgen={'choice': 'all', 'length': 8, 'max_length': 100}):
+        # Passgen defaults
+        BotPlugin.__init__(self)
+        self._passgen = confighandler.get_defaults(self.__init__).update(passgen)
 
     @botcmd(usage='[math expression]')
     def calc(self, command, args, msg):
@@ -60,31 +68,7 @@ class BotMath(BotPlugin):
     @botcmd(usage='[alpha|alphanum|numbers|all] [length]')
     def passgen(self, command, args, msg):
         """Generates random passwords"""
-
-        """Config example:
-            <plugin name="botmath">
-              <config>
-                <passgen choice="alphanum" length="8" max_length="50" />
-              </config>
-            </plugin>
-
-            Configure the defaults for passgen in the config is not
-            necessary. The defaults in the code are:
-                choice = alphanum
-                length = 8
-                max_length = 100
-        """
-
-        if self.config:
-            config = self.config.find('passgen')
-            default_choice = config.get('choice', 'all')
-            default_length = config.get('length', '8')
-            max_length = config.get('max_length', '100')
-        else:
-            default_choice = 'alphanum'
-            default_length = '8'
-            max_length = '100'
-
+        
         choices = {'alpha': string.letters,
                    'alphanum': string.letters + string.digits,
                    'num': string.digits,
@@ -95,17 +79,17 @@ class BotMath(BotPlugin):
             (choice, length) = (choice.strip(' '), length.strip(' '))
         elif not args == '':
             if args.isdigit():
-                (choice, length) = (default_choice, args.strip(' '))
+                choice, length = self._choice, args.strip(' ')
             else:
-                (choice, length) = (args.strip(' '), default_length)
+                choice, length = args.strip(' '), self._passgen['length']
         else:
-            (choice, length) = (default_choice, default_length)
+            choice, length = self._passgen['choice'], self._passgen['length']
 
         if not choice in choices:
             return "Choices are alpha, alphanum, numbers or all."
         if not length.isdigit():
             return "Length should be a number."
-        if int(length) > int(max_length):
+        if int(length) > int(self._passgen['max_length']):
             return "Do you really need such a long password?"
 
         return "".join(random.choice(choices[choice]) \

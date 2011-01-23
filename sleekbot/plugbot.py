@@ -17,7 +17,7 @@ class BotPlugin(Plugin):
     """ Base class for plugins used with CommandBot
     """
     def __init__(self, *args, **kwargs):
-        super(BotPlugin, self).__init__(*args, **kwargs)
+        super(BotPlugin, self).__init__()
         self.bot = None
 
     def _set_dict(self, value):
@@ -27,6 +27,13 @@ class BotPlugin(Plugin):
             self.bot = value.bot
             self.bot.register_commands(self)
         super(BotPlugin, self)._set_dict(value)
+
+    def example_config(self):
+        """ An example config dictionary
+        Override in your derived class if necessary.
+        """
+        return None
+
 
     plugin_dict = property(fget=Plugin._get_dict, fset=_set_dict)
 

@@ -9,7 +9,7 @@ auth:
   ssl: False
 
 connection:  
-  server: ('servername', 5222)
+  server: 'servername:port'
   priority: '10'
 
 rooms:
@@ -63,7 +63,7 @@ plugins:
         tools: trout,fork,mouse,piano,cello,vacuum,finetuned sledgehammer, sewing needle,Windows ME user guide,christmas tree,axe, iron bar,cello,set of Windows 3.11 floppies,MS IIS
     - plugin: IrssiLogs
       config:
-        rooms: 
+        logs: 
          - room: c1@conference.localhost 
            file: c1@conference.localhost
     - plugin: LDAPBot

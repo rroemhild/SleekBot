@@ -5,8 +5,13 @@
 
 import yaml
 import json
+import logging
+import inspect
 
 def parse_config(value):
+    """ Parse a config file file and return a dictionary
+            value -- the fullpath of a yaml or json file, or a json string  
+    """
     
     if isinstance(value, str):
         if value.endswith('.yaml'):
@@ -22,6 +27,9 @@ def parse_config(value):
 
 
 class ConfigDict(dict):
+    """ An extended dictionary that supports special get/set and:
+            obj.prop to access obj['prop']
+    """
 
     def __init__(self, value):
         dict.__init__(self)
@@ -34,6 +42,11 @@ class ConfigDict(dict):
         return self.get(key)
     
     def get(self, key, default=None):
+        """ Return the stored value for a given key or a default if not found
+            Supports to point notation to safely access a key in a value 
+            which is a dict
+                e.g. obj.get('a.b') = obj['a']['b'] 
+        """        
         try:
             val = self
             for akey in key.split('.'):
@@ -41,10 +54,26 @@ class ConfigDict(dict):
             return val
         except KeyError:
             return default 
-        return val
     
     def set(self, value=None):
         self._last_value = value
         self.clear()
         self.update(parse_config(value or self._last_value))
+
+
+def dict_to_private(obj, dictionary, exist_warn=False):
+    """ Add the dict content as private variables of obj
+    """
+    for key, value in dictionary:
+        if exist_warn and obj.hasattr(key):
+             logging.warning('%s property already defined ' 
+                             'for object of type %s with value %r', 
+                             key, type(obj), obj.getattr('_' + key))
+        obj.setattr['_' + key] = value
+        
+def get_defaults(fun):
+    """ Return a dict with the default values for a function arguments
+    """
+    args, _, _, defaults = inspect.getargspec(fun)
+    return dict(zip(args[-len(defaults):], defaults))
 

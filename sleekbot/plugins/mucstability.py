@@ -20,8 +20,8 @@ MASK = "<message xmlns='jabber:client' type='error'>"  \
 class MUCStability(BotPlugin):
     """ Attempts to keep Sleek in muc channels."""
 
-    def __init__(self, *args, **kwargs):
-        super(MUCStability, self).__init__(*args, **kwargs)
+    def __init__(self):
+        BotPlugin.__init__(self)
         self.__event = threading.Event()
 
     def _on_register(self):

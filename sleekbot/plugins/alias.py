@@ -3,18 +3,6 @@
     See the README file for more information.
 """
 
-""" Configuration example
-<!-- <alias /> is optinal and for global aliases. Alias specified by
-the user has precedence. -->
-<plugin name="Alias">
-    <config>
-        <alias name="r" command="rehash" />
-        <alias name="r100" command="random 100" />
-        <alias name="say2muc" command="say c1@conference.localhost" />
-    </config>
-</plugin>
-"""
-
 import logging
 
 from sleekbot.commandbot import botcmd, botfreetxt
@@ -108,6 +96,16 @@ class Alias(BotPlugin):
     """
 
     freetextRegex = ''
+    
+    def __init__(self, aliases=None):
+        BotPlugin.__init__(self)
+        # global aliases
+        self.global_aliases = {}
+        if not aliases:
+            return
+        for alias, cmd in aliases.items():
+            logging.debug("Load global alias: %s", alias)
+            self.global_aliases[alias] = AliasCmd(None, alias, cmd)
 
     def _on_register(self):
         """ On plugin load parse the freetextRegex together and set it global
@@ -121,15 +119,6 @@ class Alias(BotPlugin):
         global freetextRegex
         freetextRegex = "^[\%s\%s][a-zA-Z].*$" \
                         % (self.chat_prefix, self.muc_prefix)
-
-        # global aliases
-        self.global_aliases = {}
-        if self.config:
-            for aliascmd in self.config.findall('alias'):
-                logging.debug("Load global alias: %s", aliascmd.attrib['name'])
-                self.global_aliases[aliascmd.attrib['name']] = AliasCmd(None,
-                                                  aliascmd.attrib['name'],
-                                                  aliascmd.attrib['command'])
 
     @botfreetxt(priority=1, regex=freetextRegex)
     def handle_alias(self, text, msg, command_found, freetext_found, match):
@@ -232,3 +221,11 @@ class Alias(BotPlugin):
         if response == 'Aliases: ':
             response += "None."
         return response
+    
+    def example_config(self):
+        """ Configuration example """
+        return {'aliases': {'r': 'rehash', 
+                            'r100': 'random 100',
+                            'say2muc': 'say c1@conference.localhost'}} 
+
+

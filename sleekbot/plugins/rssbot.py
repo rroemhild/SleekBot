@@ -22,27 +22,20 @@ class RSSBot(BotPlugin):
     """ Periodically sends an rss summary to a MUC
     """
     
+    def __init__(self, feeds=()):
+        BotPlugin.__init__(self)
+        self._feeds = feeds
+        for feed in feeds:
+            url = feed['url']
+            logging.info("rssbot.py script starting with feed %s.", url)
+            self.threads[url] = thread.start_new(self.loop, **feed)
+   
     def _on_register(self):
         """ Reads config file and create thread to manage feeds
         """
         self.rss_cache = {}
-        feeds = self.config.findall('feed')
         self.threads = {}
         self.shutting_down = False
-        if not feeds:
-            return
-        for feed in feeds:
-            url, ref = feed.attrib['url'], feed.attrib['refresh']
-            logging.info("rssbot.py script starting with feed %s.", url)
-            rooms_xml = feed.findall('muc')
-            if not rooms_xml:
-                continue
-            rooms = []
-            for room_xml in rooms_xml:
-                rooms.append(room_xml.attrib['room'])
-            logging.info("Creating new thread to manage feed.")
-            self.threads[url] = thread.start_new(self.loop, 
-                                                 (url, ref, rooms))
 
     def shut_down(self):
         """ Shuts down the RSS plugin
@@ -126,13 +119,19 @@ class RSSBot(BotPlugin):
     @botcmd()
     def rss(self, command, args, msg):
         """Shows configured rss feeds."""
-        return_string = 'Configured rss feeds:'
-        counter = 0
-        feeds = self.config.findall('feed')
-        for feed in feeds:
-            counter += 1
-            url, ref = feed.attrib['url'], feed.attrib['refresh']
-            rooms_xml = feed.findall('muc')
-            rooms = [room_xml.attrib['room'] for room_xml in rooms_xml]
-            return_string += "\n%d - url: %s refresh: %s[min] rooms: %s" %(counter, url, ref, rooms)
-        return return_string
+        out = 'Configured rss feeds:'
+        for number, feed in enumerate(feeds):
+            out += "\n" + number
+            out += " - url: %(url)s refresh: %(refresh)d [min] rooms: %(rooms)r" % feed
+        return out
+    
+    def example_config(self):
+        return {'feeds': 
+            ({'url': 'https://github.com/andyhelp/SleekBot/commits/develop.atom',
+              'refresh': 1,
+              'rooms': ('test@conference.jabber.org', 'test2@conference.jabber.org')
+              },
+              {'url': 'https://github.com/hgrecco/SleekBot/commits/develop.atom',
+              'refresh': 1,
+              'rooms': ('test@conference.jabber.org', 'test2@conference.jabber.org')
+              })}

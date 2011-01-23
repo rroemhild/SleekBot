@@ -8,34 +8,23 @@ import random
 from sleekbot.commandbot import botcmd, parse_args, ArgError
 from sleekbot.plugbot import BotPlugin
 
-""" Configuraton Example:
-<plugin name="slap" module="fun">
-    <config>
-        <verbs>slaps,hits,smashes,beats,bashes,smacks,blats,
-               punches,stabs</verbs>
-        <size>a large,an enormous,a small,a tiny,a medium sized,
-              an extra large,a questionable,a suspicious,a terrifying,
-              a scary,a breath taking,a horrifying</size>
-        <tools>trout,fork,mouse,piano,cello,vacuum,finetuned sledgehammer,
-               sewing needle,Windows ME user guide,christmas tree,axe,
-               iron bar,cello,set of Windows 3.11 floppies,MS IIS</tools>
-    </config>
-</plugin>
-"""
-
-
 class Slap(BotPlugin):
     """A plugin to smack people around with enormous iron bars and scary cellos.
     """
-
-    def _on_register(self):
-        """ Obtains verbs, tools and sizes from the config file """
-        verbs = self.config.find('verbs').text.split(',')
-        tools = self.config.find('tools').text.split(',')
-        size = self.config.find('size').text.split(',')
-        self.slap_verbs = [v.strip() for v in verbs]
-        self.slap_tools = [t.strip() for t in tools]
-        self.slap_size = [s.strip() for s in size]
+    DEFAULT_VERBS = 'slaps,hits,smashes,beats,bashes,smacks,blats,punches,stabs'
+    DEFAULT_SIZE = ('a large,an enormous,a small,a tiny,a medium sized,' 
+                    'an extra large,a questionable,a suspicious,a terrifying,' 
+                    'a scary,a breath taking,a horrifying')
+    DEFAULT_TOOLS = ('trout,fork,mouse,piano,cello,vacuum,finetuned sledgehammer,'
+                     'sewing needle,Windows ME user guide,christmas tree,axe,'
+                     'iron bar,cello,set of Windows 3.11 floppies,MS IIS')
+    
+    def __init__(self, verbs=Slap.DEFAULT_VERBS, size=Slap.DEFAULT_SIZE,
+                 tools=Slap.DEFAULT_TOOLS):
+        BotPlugin.__init__(self)
+        self.slap_verbs = [v.strip() for v in verbs.split(',')]
+        self.slap_tools = [t.strip() for t in tools.split(',')]
+        self.slap_size = [s.strip() for s in size.split(',')]      
 
     @botcmd(usage='[nickname]', chat=False)
     def slap(self, command, args, msg):
