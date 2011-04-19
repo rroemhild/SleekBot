@@ -7,7 +7,7 @@ from distutils.core import setup
 setup(
     name="sleekbot",
     packages=["sleekbot", "sleekbot/plugins"],
-    package_data={"sleekbot": ['config_template.xml']},
+    package_data={"sleekbot": ['config_template.yaml']},
     version="0.4",
     description="SleekBot: an extendable XMPP/Jabber Bot based on SleekXMPP",
     author="Hernan E. Grecco",
