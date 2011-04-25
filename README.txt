@@ -37,7 +37,7 @@ First, activate your virtual environment:
 
 Bots are configured using a xml file. Create a template configuration file by running:
 
-    runbot.py -n config.xml
+    runbot.py -n config.yaml
 
 Edit config.xml with your favorite editor. The file is fully documented, so it should be easy to understand what is the purpose of each entry. Among other thing, you will
 * Configure username and password of your bot so it can log in to a server
@@ -97,7 +97,7 @@ Requirements
 * Python 2.5 or newer
 * SleekXMPP
 * dnspython
-
+* pyyaml
 
 Contribute
 ==========
