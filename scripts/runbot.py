@@ -68,7 +68,7 @@ if __name__ == '__main__':
             BOT = SleekBot(ARGS[0])
             BOT.start()
             BOT.process(threaded=False)
-            while not BOT.state['disconnecting']:
+            while not BOT.state['disconnecting'] or BOT.state['disconnected']:
                 time.sleep(1)
             #this does not work properly. Some thread is runnng
             SHOULD_RESTART = (BOT.end_status == END_STATUS.restart)
