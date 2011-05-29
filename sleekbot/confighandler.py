@@ -33,6 +33,7 @@ class ConfigDict(dict):
 
     def __init__(self, value):
         dict.__init__(self)
+        self._last_value = {}
         self.set(value)
    
     def __getattr__(self, key):
@@ -56,9 +57,13 @@ class ConfigDict(dict):
             return default 
     
     def set(self, value=None):
-        self._last_value = value
+        """ Set the configuration dictionary to the content of value. 
+            If value is none, load the last configuration.
+        """                
         self.clear()
         self.update(parse_config(value or self._last_value))
+        if value:
+            self._last_value = value
 
 
 def dict_to_private(obj, dictionary, exist_warn=False):
@@ -66,7 +71,7 @@ def dict_to_private(obj, dictionary, exist_warn=False):
     """
     for key, value in dictionary:
         if exist_warn and obj.hasattr(key):
-             logging.warning('%s property already defined ' 
+            logging.warning('%s property already defined ' 
                              'for object of type %s with value %r', 
                              key, type(obj), obj.getattr('_' + key))
         obj.setattr['_' + key] = value
