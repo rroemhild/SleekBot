@@ -72,7 +72,12 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         """
         
         logging.info("Connecting to ...")
-        super(SleekBot, self).connect(self.botconfig.get('connection.server', '').split(':'))
+        server = self.botconfig.get('connection.server', '')
+        if server and isinstance(server, (str, unicode)):
+            server = server.split(':')
+        else:
+            server = None
+        super(SleekBot, self).connect(server)
 
     def get_botconfig(self):
         """ Gets config elementtree 

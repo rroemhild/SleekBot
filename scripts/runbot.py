@@ -59,17 +59,21 @@ if __name__ == '__main__':
 
     sys.path.append(os.path.dirname(os.path.abspath(ARGS[0])))
 
-    SHOULD_RESTART = True
-    while SHOULD_RESTART:
-        SHOULD_RESTART = False
-        logging.info('Loading config file: %s', ARGS[0])
+    try:
+        SHOULD_RESTART = True
+        while SHOULD_RESTART:
+            SHOULD_RESTART = False
+            logging.info('Loading config file: %s', ARGS[0])
 
-        BOT = SleekBot(ARGS[0])
-        BOT.start()
-        BOT.process(threaded=False)
-        while not BOT.state['disconnecting']:
-            time.sleep(1)
-        #this does not work properly. Some thread is runnng
-        SHOULD_RESTART = (BOT.end_status == END_STATUS.restart)
+            BOT = SleekBot(ARGS[0])
+            BOT.start()
+            BOT.process(threaded=False)
+            while not BOT.state['disconnecting']:
+                time.sleep(1)
+            #this does not work properly. Some thread is runnng
+            SHOULD_RESTART = (BOT.end_status == END_STATUS.restart)
+    except KeyboardInterrupt:
+        BOT.die()
+        logging.info("End requested")
 
     logging.info("SleekBot finished")
