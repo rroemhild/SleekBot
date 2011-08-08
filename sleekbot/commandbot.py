@@ -264,7 +264,7 @@ class CommandBot(object):
         """ Reset commands and users
         """
         self.chat_prefix = self.botconfig.get('prefixes.chat', '/')
-        self.muc_prefix = self.botconfig.get('prefixes.chat', '!')
+        self.muc_prefix = self.botconfig.get('prefixes.muc', '!')
         
         self.chat_commands = {}
         self.muc_commands = {}

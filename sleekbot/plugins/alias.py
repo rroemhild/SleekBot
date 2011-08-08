@@ -97,28 +97,37 @@ class Alias(BotPlugin):
 
     freetextRegex = ''
     
-    def __init__(self, aliases=None):
+    def __init__(self, aliases=()):
         BotPlugin.__init__(self)
-        # global aliases
+        self._aliases = aliases
         self.global_aliases = {}
-        if not aliases:
-            return
-        for alias, cmd in aliases.items():
-            logging.debug("Load global alias: %s", alias)
-            self.global_aliases[alias] = AliasCmd(None, alias, cmd)
 
     def _on_register(self):
         """ On plugin load parse the freetextRegex together and set it global
         so botfreetext can use it later.
         """
+
         self.chat_prefix = self.bot.chat_prefix
         self.muc_prefix = self.bot.muc_prefix
         self.alias_store = AliasStore(self.bot.store)
-        
+
+        for alias in self._aliases:
+            name = alias['name']
+            cmd = alias['cmd']
+            logging.debug("Load global alias: %s", name)
+            self.global_aliases[name] = AliasCmd(None, name, cmd)
+
         # botfreetext regex string with im and mux prefix
         global freetextRegex
         freetextRegex = "^[\%s\%s][a-zA-Z].*$" \
                         % (self.chat_prefix, self.muc_prefix)
+
+    def example_config(self):
+        """ Configuration example.
+        """
+
+        return {'name': 'say2muc', 'cmd': 'say myroom@conference.server.com',
+                'name': 'rh', 'cmd': 'rehash'}
 
     @botfreetxt(priority=1, regex=freetextRegex)
     def handle_alias(self, text, msg, command_found, freetext_found, match):
@@ -217,7 +226,7 @@ class Alias(BotPlugin):
                 response += "\n%s = %s" % (aliascmd.alias, aliascmd.command)
         if not self.global_aliases == {}:
             for (key, aliascmd) in self.global_aliases.iteritems():
-                response += "\n(*) %s = %s" % (aliascmd.alias, aliascmd.command)
+                response += "\n*%s = %s" % (aliascmd.alias, aliascmd.command)
         if response == 'Aliases: ':
             response += "None."
         return response

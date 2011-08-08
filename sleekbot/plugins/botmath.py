@@ -15,6 +15,8 @@ from sleekbot.commandbot import botcmd, parse_args, ArgError
 from sleekbot.plugbot import BotPlugin
 import sleekbot.confighandler as confighandler
 
+import logging
+
 # make a list of safe functions
 SAFE_LIST = ['math', 'acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh', \
 'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot', 'ldexp', \
@@ -74,12 +76,14 @@ class BotMath(BotPlugin):
                    'num': string.digits,
                    'all': string.letters + string.digits + string.punctuation}
 
+        logging.info('>>> _passgen: %s', self._passgen)
+
         if args.count(" ") > 0:
-            (choice, length) = args.split(" ", 1)
-            (choice, length) = (choice.strip(' '), length.strip(' '))
+            choice, length = args.split(" ", 1)
+            choice, length = choice.strip(' '), length.strip(' ')
         elif not args == '':
             if args.isdigit():
-                choice, length = self._choice, args.strip(' ')
+                choice, length = self._passgen['choice'], args.strip(' ')
             else:
                 choice, length = args.strip(' '), self._passgen['length']
         else:

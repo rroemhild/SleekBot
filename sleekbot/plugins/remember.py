@@ -13,7 +13,7 @@ import copy
 
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
-import sleekbot.confighandler
+import sleekbot.confighandler as confighandler
 
 SEARCH = """(([Tt]he|[mM]y)[\s\w\-0-9]+ (is|are|can|has|got)|I am|i am|I'm|
 (?=^|,|\.\s|\?)?[\w'0-9\-]+ (is|are|can|got|has))[\s\w'0-9\-:$@%^&*]+"""

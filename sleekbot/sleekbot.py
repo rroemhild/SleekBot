@@ -6,7 +6,7 @@
 
 SleekBot is a pluggable Jabber/XMPP bot based on SleekXMPP.
 
-It is configured using an XML file
+It is configured using an YAML file
 
 
 See CommandBot and PlugBot for more details.

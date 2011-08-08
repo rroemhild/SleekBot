@@ -52,8 +52,6 @@ plugins:
       config: 
          url: http://www.xmpp.org/extensions/xeps.xml
          cache_expiry: 6
-    - plugin: BotMath
-    - plugin: Factoid
     - plugin: Filter 
     - plugin: Slap 
       module: fun
@@ -68,7 +66,6 @@ plugins:
            file: c1@conference.localhost
     - plugin: LDAPBot
     - plugin: Mood
-    - plugin: Others
     - plugin: Remember
     - plugin: RSSBot
       config:
