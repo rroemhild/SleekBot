@@ -35,7 +35,7 @@ class Mood(BotPlugin):
         for mood in self.moods:
             moods.addOption(mood, mood.title())
         frm.addField('desc', 'text-single', 'Description')
-        self.adhoc.addCommand('setmood', 'Set Mood', frm, self.handler, True)
+        self.adhoc.add_command('setmood', 'Set Mood', frm, self.handler)
 
     def handler(self, form, sessid):
         """ Handles Form

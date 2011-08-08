@@ -100,7 +100,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         """
         aboutform = self.plugin['xep_0004'].makeForm('form', "About SleekBot")
         aboutform.addField('about', 'fixed', value=self.__doc__)
-        self.plugin['xep_0050'].addCommand('about', 'About Sleekbot', aboutform)
+        self.plugin['xep_0050'].add_command('about', 'About Sleekbot', aboutform)
         pluginform = self.plugin['xep_0004'].makeForm('form', 'Plugins')
         plugins = pluginform.addField('plugin', 'list-single', 'Plugins')
         for key in self.cmd_plugins:
@@ -108,8 +108,8 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         plugins = pluginform.addField('option', 'list-single', 'Commands')
         plugins.addOption('about', 'About')
         #plugins.addOption('config', 'Configure')
-        self.plugin['xep_0050'].addCommand('plugins', 'Plugins', pluginform,
-                                           self.form_plugin_command, True)
+        self.plugin['xep_0050'].add_command('plugins', 'Plugins', pluginform,
+                                           self.form_plugin_command)
 
     def form_plugin_command(self, form, sessid):
         """ Take appropriate action when a plugin ad-hoc request is received.
