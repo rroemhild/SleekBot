@@ -20,6 +20,14 @@ from optparse import OptionParser
 
 from sleekbot.sleekbot import SleekBot, END_STATUS
 
+# Python versions before 3.0 do not use UTF-8 encoding
+# by default. To ensure that Unicode is handled properly
+# throughout SleekXMPP, we will set the default encoding
+# ourselves to UTF-8.
+if sys.version_info < (3, 0):
+    reload(sys)
+    sys.setdefaultencoding('utf8')
+
 if __name__ == '__main__':
     OPTP = OptionParser(usage="usage: %prog [options] configuration_file")
     OPTP.add_option('-n', '--new', help='Create a new configuration file',
