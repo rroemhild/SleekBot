@@ -23,14 +23,14 @@ class AliasCmd(object):
 class AliasStore(object):
     """ Class for storing aliased commands into he database
     """
-    
+
     def __init__(self, store):
         self.store = store
         self.create_table()
 
     def create_table(self):
         """ Create the alias table.
-        """        
+        """
         with self.store.context_cursor() as cur:
             if not self.store.has_table(cur,'alias'):
                 cur.execute("""CREATE TABLE "alias" (
@@ -96,7 +96,7 @@ class Alias(BotPlugin):
     """
 
     freetextRegex = ''
-    
+
     def __init__(self, aliases=()):
         BotPlugin.__init__(self)
         self._aliases = aliases
@@ -126,8 +126,13 @@ class Alias(BotPlugin):
         """ Configuration example.
         """
 
-        return {'name': 'say2muc', 'cmd': 'say myroom@conference.server.com',
-                'name': 'rh', 'cmd': 'rehash'}
+        return {'aliases':
+               ({'name': 'say2muc',
+                 'cmd': 'say myroom@conference.server.com'
+                },
+                {'name': 'rh',
+                 'cmd': 'rehash'
+               })}
 
     @botfreetxt(priority=1, regex=freetextRegex)
     def handle_alias(self, text, msg, command_found, freetext_found, match):
@@ -230,11 +235,9 @@ class Alias(BotPlugin):
         if response == 'Aliases: ':
             response += "None."
         return response
-    
+
     def example_config(self):
         """ Configuration example """
-        return {'aliases': {'r': 'rehash', 
+        return {'aliases': {'r': 'rehash',
                             'r100': 'random 100',
-                            'say2muc': 'say c1@conference.localhost'}} 
-
-
+                            'say2muc': 'say c1@conference.localhost'}}
