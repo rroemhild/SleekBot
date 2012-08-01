@@ -235,9 +235,3 @@ class Alias(BotPlugin):
         if response == 'Aliases: ':
             response += "None."
         return response
-
-    def example_config(self):
-        """ Configuration example """
-        return {'aliases': {'r': 'rehash',
-                            'r100': 'random 100',
-                            'say2muc': 'say c1@conference.localhost'}}
