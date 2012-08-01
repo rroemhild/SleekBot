@@ -28,11 +28,11 @@ SAFE_DICT['d'] = random.randint
 
 class BotMath(BotPlugin):
     """A nerdy plugin for rolling complex or simple formulas."""
-    
-    def __init__(self, passgen={'choice': 'all', 'length': 8, 'max_length': 100}):
+
+    def __init__(self, passgen={}):
         # Passgen defaults
         BotPlugin.__init__(self)
-        self._passgen = confighandler.get_defaults(self.__init__).update(passgen)
+        self._passgen = passgen
 
     @botcmd(usage='[math expression]')
     def calc(self, command, args, msg):
@@ -53,7 +53,7 @@ class BotMath(BotPlugin):
 
         if args.first > args.second:
             args.first, args.second = args.second, args.first
-            
+
         ran = random.randint(args.first, args.second)
         if msg['type'] == 'groupchat':
             return "%s rolls %d (%s - %s)" % \
@@ -65,35 +65,41 @@ class BotMath(BotPlugin):
     def roll(self, command, args, msg):
         """Rolls dice for you. d(n) is a dice with n sides
         Example: roll (1 + d(6) + 2*d(10) + 5 + d(4) * 2 """
-        return str(eval(args, {"__builtins__": None}, SAFE_DICT))
+        try:
+            return str(eval(args, {"__builtins__": None}, SAFE_DICT))
+        except:
+            return "Nothing to roll. Try \"help roll\"."
 
     @botcmd(usage='[alpha|alphanum|numbers|all] [length]')
     def passgen(self, command, args, msg):
-        """Generates random passwords"""
-        
+        """Generates random passwords."""
+
+        defaults = {'choice': 'all', 'length': 8, 'max_length': 100}
         choices = {'alpha': string.letters,
                    'alphanum': string.letters + string.digits,
-                   'num': string.digits,
+                   'numbers': string.digits,
                    'all': string.letters + string.digits + string.punctuation}
-
-        logging.info('>>> _passgen: %s', self._passgen)
 
         if args.count(" ") > 0:
             choice, length = args.split(" ", 1)
             choice, length = choice.strip(' '), length.strip(' ')
         elif not args == '':
             if args.isdigit():
-                choice, length = self._passgen['choice'], args.strip(' ')
+                choice, length = self._passgen.get('choice', defaults['choice']),\
+                                 args.strip(' ')
             else:
-                choice, length = args.strip(' '), self._passgen['length']
+                choice, length = args.strip(' '),\
+                            str(self._passgen.get('length', defaults['length']))
         else:
-            choice, length = self._passgen['choice'], self._passgen['length']
+            choice, length = self._passgen.get('choice', defaults['choice']),\
+                           str(self._passgen.get('length', defaults['length']))
 
         if not choice in choices:
             return "Choices are alpha, alphanum, numbers or all."
         if not length.isdigit():
             return "Length should be a number."
-        if int(length) > int(self._passgen['max_length']):
+        if int(length) > int(self._passgen.get('max_length',
+                                               defaults['max_length'])):
             return "Do you really need such a long password?"
 
         return "".join(random.choice(choices[choice]) \
