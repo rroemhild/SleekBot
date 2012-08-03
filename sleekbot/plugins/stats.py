@@ -133,7 +133,7 @@ class Stats(BotPlugin):
 
     @botcmd(usage='[cmd]', allow=CommandBot.msg_from_owner)
     def stats(self, command, args, msg):
-        """ Get command usage statistics."""
+        """ Get top 10 command usage statistics."""
 
         try:
             args = parse_args(args, (('cmd', ''), ))
@@ -163,7 +163,7 @@ class Stats(BotPlugin):
         cmd_stats = sorted(cmd_list, key=itemgetter('count'), reverse=True)
 
         response = "Command usage:\n"
-        for stat in cmd_stats:
+        for stat in cmd_stats[:10]:
             response += "%s: %s\n" % (stat['count'], stat['cmd'])
         return response
 
