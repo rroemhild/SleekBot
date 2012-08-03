@@ -6,11 +6,12 @@ prefixes:
 auth:
   jid: botname@servername 
   password: password
-  ssl: False
 
 connection:  
   server: 'servername:port'
   priority: '10'
+  tls: True
+  ssl: False
 
 rooms:
   - room: c1@conference.server

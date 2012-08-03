@@ -39,7 +39,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         SleekBot was originally written by Nathan Fritz and Kevin Smith.
         This fork is maintained by Hernan E. Grecco
     """
-    
+
 
     def __init__(self, config, plugin_config=None):
         """ Initializes the bot
@@ -70,28 +70,33 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
     def start(self):
         """ Connects to the server
         """
-        
+
         logging.info("Connecting to ...")
         server = self.botconfig.get('connection.server', '')
         if server and isinstance(server, (str, unicode)):
-            server = server.split(':')
+            if ':' in server:
+                server = server.split(':')
+            else:
+                server = [server, '5222']
         else:
             server = None
-        super(SleekBot, self).connect(server)
+        super(SleekBot, self).connect(server, True,
+                              self.botconfig.get('connection.tls', True),
+                              self.botconfig.get('connection.ssl', False))
 
     def get_botconfig(self):
-        """ Gets config elementtree 
+        """ Gets config elementtree
         """
         return self._botconfig
-        
+
     def set_botconfig(self, value):
         """ Sets the config elementtree
                 value is None: loads the previous config file
                 type of value is str: use is as the name of the config file
         """
-        
+
         self._botconfig.set(value)
-        
+
     botconfig = property(get_botconfig, set_botconfig, None, \
                          'Configuration as a dictionary')
 
@@ -118,7 +123,7 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
         option = value['option']
         plugin = value['plugin']
         if option == 'about':
-            aboutform = self.plugin['xep_0004'].makeForm('form', 
+            aboutform = self.plugin['xep_0004'].makeForm('form',
                                                          'About SleekBot')
             aboutform.addField('about', 'fixed',
                                value=self.cmd_plugins[plugin].about())
@@ -227,4 +232,3 @@ class SleekBot(sleekxmpp.ClientXMPP, CommandBot, PlugBot):
             else:
                 return msg['from'].bare
         return None
-        
