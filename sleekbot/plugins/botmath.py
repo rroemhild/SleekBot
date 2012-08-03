@@ -40,7 +40,10 @@ class BotMath(BotPlugin):
         You can do simple calculations such as 2+3
         Or more complex such as sin(1.5*pi)
         """
-        return str(eval(args, {"__builtins__": None}, SAFE_DICT))
+        try:
+            return str(eval(args, {"__builtins__": None}, SAFE_DICT))
+        except:
+            return "Nothing to calculate."
 
     @botcmd(usage='[A B|B]')
     def random(self, command, args, msg):
@@ -68,7 +71,7 @@ class BotMath(BotPlugin):
         try:
             return str(eval(args, {"__builtins__": None}, SAFE_DICT))
         except:
-            return "Nothing to roll. Try \"help roll\"."
+            return "Nothing to roll."
 
     @botcmd(usage='[alpha|alphanum|numbers|all] [length]')
     def passgen(self, command, args, msg):

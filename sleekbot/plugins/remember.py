@@ -23,7 +23,8 @@ class Remember(BotPlugin):
 
     def __init__(self, idlemin=60, idlemax=600):
         BotPlugin.__init__(self)
-        confighandler.dict_to_private(self, kwargs)
+        self._idlemin = idlemin
+        self._idlemax = idlemax
 
     def _on_register(self):
         self.know = []
