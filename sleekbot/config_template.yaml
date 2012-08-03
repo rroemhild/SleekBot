@@ -1,0 +1,105 @@
+ 
+prefixes:
+  chat: "/"
+  muc: "!"
+
+auth:
+  jid: botname@servername 
+  password: password
+
+connection:  
+  server: 'servername:port'
+  priority: '10'
+  tls: True
+  ssl: False
+
+rooms:
+  - room: c1@conference.server
+    nick: SleekBot
+  
+# Location of the sqlite3 database used for persistent storage
+storage: test.sqlite
+
+# When this is set to Yes, the bot will ignore requests from anyone 
+# who isn't a member (see users). When it isn't set, the bot will 
+# respond to anyone except outcasts. If you run the bot in an anonymous room, you almost certainly want this set to false
+require_membership: No
+
+# Access control list
+acl:
+  classname: acl.ACLdb
+  owner: 
+    - anotherjid@backupserver.com
+    - localhost
+  admin:
+    - trusteduser@server.com
+  user:
+     - arbitrarybotuser@server.com
+  banned:
+     - banneduser@server.com
+
+plugins:
+  bot:
+    - plugin: Others
+    - plugin: BotMath
+    - plugin: Admin
+    - plugin: ACL
+      module: admin
+    - plugin: Filter
+    - plugin: GetTune
+    - plugin: Alias
+    - plugin: MUCStability
+    - plugin: XEPinfo
+      config: 
+         url: http://www.xmpp.org/extensions/xeps.xml
+         cache_expiry: 6
+    - plugin: Filter 
+    - plugin: Slap 
+      module: fun
+      config:
+        verbs: slaps,hits,smashes,beats,bashes,smacks,blats,punches,stabs
+        size: a large,an enormous,a small,a tiny,a medium sized, an extra large,a questionable,a suspicious,a terrifying, a scary,a breath taking,a horrifying
+        tools: trout,fork,mouse,piano,cello,vacuum,finetuned sledgehammer, sewing needle,Windows ME user guide,christmas tree,axe, iron bar,cello,set of Windows 3.11 floppies,MS IIS
+    - plugin: IrssiLogs
+      config:
+        logs: 
+         - room: c1@conference.localhost 
+           file: c1@conference.localhost
+    - plugin: LDAPQuery
+    - plugin: Mood
+    - plugin: Remember
+    - plugin: RSSBot
+      config:
+        feeds: 
+          - url: https://github.com/andyhelp/SleekBot/commits/develop.atom
+            refresh: 1
+            rooms: 
+              - test@conference.jabber.org
+              - test2@conference.jabber.org
+          - url: https://github.com/hgrecco/SleekBot/commits/develop.atom
+            refresh: 1 
+            rooms: 
+              - test@conference.jabber.org
+    - plugin: Seen
+    - plugin: Stats
+      module: stats
+    - plugin: Info
+      module: stats
+    - plugin: CmdStats
+      module: stats
+    - plugin: XMRadio
+    - plugin: Networking
+  
+  xmpp:
+    - plugin: xep_0030
+    - plugin: xep_0004
+    - plugin: xep_0045
+    - plugin: xep_0050
+    - plugin: xep_0060
+    - plugin: xep_0199
+    - plugin: xep_0092
+      pconfig:
+        name: SleekBot
+        version: "0.2"
+
+ 

@@ -17,7 +17,7 @@ class BotPlugin(Plugin):
     """ Base class for plugins used with CommandBot
     """
     def __init__(self, *args, **kwargs):
-        super(BotPlugin, self).__init__(*args, **kwargs)
+        super(BotPlugin, self).__init__()
         self.bot = None
 
     def _set_dict(self, value):
@@ -28,21 +28,20 @@ class BotPlugin(Plugin):
             self.bot.register_commands(self)
         super(BotPlugin, self)._set_dict(value)
 
+    def example_config(self):
+        """ An example config dictionary
+        Override in your derived class if necessary.
+        """
+        return None
+
+
     plugin_dict = property(fget=Plugin._get_dict, fset=_set_dict)
 
 
 class PlugBot(object):
     """ Base class for bots that are pluggable
         Requires to be coinherited with a class that has a property named
-            botconfig -- XML ElementTree from the config file. For example:
-                <bot>
-                    <plugin name='plugin1'>
-                        <config />
-                    </plugin>
-                    <plugin name='plugin2' package='anotherpackage'>
-                        <config />
-                    </plugin>
-                <bot>
+            botconfig -- a dictionary with the configuration.
     """
     __metaclass__ = ABCMeta
 
@@ -58,25 +57,19 @@ class PlugBot(object):
 
     @abstractproperty
     def botconfig(self):
-        """ XML ElementTree from the config file
+        """ Configuration as a dictionary
         """
         pass
 
     def register_cmd_plugins(self):
         """ Registers all bot plugins required by botconfig.
         """
-        plugins = self.botconfig.findall('plugins/bot/plugin')
-        if not plugins:
-            return
+        plugins = self.botconfig.get('plugins.bot', ())
 
         for plugin in plugins:
-            atr = plugin.attrib
-            loaded = self.cmd_plugins.register(atr['name'],
-                                               plugin.find('config'),
-                                               atr.get('module', None),
-                                               atr.get('package', None))
+            loaded = self.cmd_plugins.register(**plugin)
             res = 'OK' if loaded else 'FAILED'
-            logging.info('Registering plugin %s %s', atr['name'], res)
+            logging.info('Registering plugin %s %s', plugin['plugin'], res)
 
     def stop(self):
         """ Unregister command plugins

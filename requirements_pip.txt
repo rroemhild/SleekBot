@@ -1,3 +1,5 @@
 dnspython
+pyyaml
 -e git://github.com/fritzy/SleekXMPP.git#egg=sleekxmpp
 -e git://github.com/hgrecco/SleekBot.git#egg=sleekbot
+

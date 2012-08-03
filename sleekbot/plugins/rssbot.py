@@ -3,8 +3,9 @@
     See the README file for more information.
 """
 
-from html2text.html2text import html2text
+from html2text import html2text
 import feedparser
+import xml.sax.saxutils
 
 import logging
 import thread
@@ -20,28 +21,20 @@ from sleekbot.plugbot import BotPlugin
 class RSSBot(BotPlugin):
     """ Periodically sends an rss summary to a MUC
     """
-    
-    def _on_register(self):
-        """ Reads config file and create thread to manage feeds
-        """
-        self.rss_cache = {}
-        feeds = self.config.findall('feed')
+    def __init__(self, feeds=()):
+        BotPlugin.__init__(self)
+        self._feeds = feeds
         self.threads = {}
+        self.rss_cache = {}
         self.shutting_down = False
-        if not feeds:
-            return
-        for feed in feeds:
-            url, ref = feed.attrib['url'], feed.attrib['refresh']
+   
+    def _on_register(self):
+        """ Create threads to manage feeds
+        """
+        for feed in self._feeds:
+            url = feed['url']
             logging.info("rssbot.py script starting with feed %s.", url)
-            rooms_xml = feed.findall('muc')
-            if not rooms_xml:
-                continue
-            rooms = []
-            for room_xml in rooms_xml:
-                rooms.append(room_xml.attrib['room'])
-            logging.info("Creating new thread to manage feed.")
-            self.threads[url] = thread.start_new(self.loop, 
-                                                 (url, ref, rooms))
+            self.threads[url] = thread.start_new(self.loop, tuple(), feed)
 
     def shut_down(self):
         """ Shuts down the RSS plugin
@@ -52,28 +45,29 @@ class RSSBot(BotPlugin):
         #    logging.info("rssbot.py killing thread for feed %s." % feed)
         #    self.threads[feed].exit()
 
-    def loop(self, feed_url, refresh, rooms):
+    def loop(self, url, refresh, rooms):
         """ The main thread loop that polls an rss feed 
             with a specified frequency
         """
-        self.load_cache(feed_url)
+        self.load_cache(url)
         while not self.shutting_down:
-            if self.bot['xep_0045']:
-                feed = feedparser.parse(feed_url)
+            if self.bot.plugin['xep_0045']:
+                logging.debug("Fetching feed url: %s", url)
+                feed = feedparser.parse(url)
                 for item in feed['entries']:
-                    if feed_url not in self.rss_cache.keys():
-                        self.rssCache[feed_url] = []
-                    if item['title'] in self.rss_cache[feed_url]:
+                    if url not in self.rss_cache.keys():
+                        self.rss_cache[url] = []
+                    if item['title'] in self.rss_cache[url]:
                         continue
                     #print u"found new item %s" % item['title']
                     for muc in rooms:
-                        if muc in self.bot['xep_0045'].getJoinedRooms():
+                        if muc in self.bot.plugin['xep_0045'].getJoinedRooms():
                             #print u"sending to room %s" %muc
                             self.send_item(item, muc, feed['channel']['title'])
-                    self.rss_cache[feed_url].append(item['title'])
+                    self.rss_cache[url].append(item['title'])
                     #print u"remembering new item %s" % item['title']
-                    logging.debug("Saving updated feed cache for %s" , feed_url)
-                    self.save_cache(feed_url)
+                    logging.debug("Saving updated feed cache for %s" , url)
+                    self.save_cache(url)
             time.sleep(float(refresh)*60)
 
     def send_item(self, item, muc, feed_name):
@@ -87,12 +81,12 @@ class RSSBot(BotPlugin):
         #    return
         #print u"found content in key %s" % contentKey
         if 'content' in item:
-            content = self.bot.xmlesc(item['content'][0].value)
+            content = xml.sax.saxutils.escape(item['content'][0].value)
             content = item['content'][0].value
         else:
             content = ''
         text = html2text("Update from feed %s\n%s\n%s" % 
-                         (feed_name, self.bot.xmlesc(item['title']), content))
+                         (feed_name, xml.sax.saxutils.escape(item['title']), content))
         self.bot.send_message(muc, text, mtype='groupchat')
 
     def cache_filename(self, feed_url):
@@ -120,3 +114,23 @@ class RSSBot(BotPlugin):
         except IOError:
             logging.error("Error loading rss data %s", 
                           self.cache_filename(feed))
+
+    @botcmd()
+    def rss(self, command, args, msg):
+        """Shows configured rss feeds."""
+        out = 'Configured rss feeds:'
+        for number, feed in enumerate(self._feeds):
+            out += "\n" + str(number)
+            out += " - url: %(url)s refresh: %(refresh)d [min] rooms: %(rooms)r" % feed
+        return out
+    
+    def example_config(self):
+        return {'feeds': 
+            ({'url': 'https://github.com/andyhelp/SleekBot/commits/develop.atom',
+              'refresh': 1,
+              'rooms': ('test@conference.jabber.org', 'test2@conference.jabber.org')
+              },
+              {'url': 'https://github.com/hgrecco/SleekBot/commits/develop.atom',
+              'refresh': 1,
+              'rooms': ('test@conference.jabber.org', 'test2@conference.jabber.org')
+              })}

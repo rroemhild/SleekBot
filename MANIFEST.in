@@ -1,2 +1,2 @@
 include COPYING.txt
-include sleekbot/config_template.xml
+include sleekbot/config_template.yaml

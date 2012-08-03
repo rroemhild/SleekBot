@@ -22,6 +22,7 @@ Which is roughly equivalent to
 
     virtualenv --no-site-packages sleekbot
     source sleekbot/bin/activate
+    pip install pyyaml
     pip install dnspython
     pip install -e git://github.com/fritzy/SleekXMPP.git#egg=sleekxmpp
     pip install -e git://github.com/hgrecco/SleekBot.git#egg=sleekbot
@@ -37,9 +38,9 @@ First, activate your virtual environment:
 
 Bots are configured using a xml file. Create a template configuration file by running:
 
-    runbot.py -n config.xml
+    runbot.py -n config.yaml
 
-Edit config.xml with your favorite editor. The file is fully documented, so it should be easy to understand what is the purpose of each entry. Among other thing, you will
+Edit config.yaml with your favorite editor. The file is fully documented, so it should be easy to understand what is the purpose of each entry. Among other thing, you will
 * Configure username and password of your bot so it can log in to a server
 * Configure access control lists
 * Select which plugins are going to be loaded
@@ -47,7 +48,7 @@ Edit config.xml with your favorite editor. The file is fully documented, so it s
 
 Run your bot:
 
-    runbot.py config.xml
+    runbot.py config.yaml
 
 and talk to it using your favorite XMPP client.
 
@@ -78,7 +79,7 @@ Copy echo.py into your plugins folder. If your followed the described installati
 
 Then, you will need to add the following line to your bot configuration file:
 
-    <plugin name='echo' />
+    - plugin: echo
 
 Now start your bot and try your new plugin!
 
@@ -86,10 +87,10 @@ If you want to keep you plugins appart, create a package folder (a folder with a
 
 If your package folder is named myplugins then the line in the config file should be:
 
-    <plugin name='echo' package='myplugins'/>
+    - plugin: echo
+      package: myplugins
 
-
-Note: The folder containing the configuration file is automatically added to the python path. So a simple organization is to put all your config files in a folder and your plugins package folder
+Note: The folder containing the configuration file is automatically added to the python path. So a simple organization is to put all your config files in a folder and your plugins package folder in another.
 
 
 Requirements
@@ -97,7 +98,7 @@ Requirements
 * Python 2.5 or newer
 * SleekXMPP
 * dnspython
-
+* pyyaml
 
 Contribute
 ==========

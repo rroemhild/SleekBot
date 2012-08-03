@@ -3,18 +3,6 @@
     See the README file for more information.
 """
 
-""" Configuration example
-<!-- <alias /> is optinal and for global aliases. Alias specified by
-the user has precedence. -->
-<plugin name="Alias">
-    <config>
-        <alias name="r" command="rehash" />
-        <alias name="r100" command="random 100" />
-        <alias name="say2muc" command="say c1@conference.localhost" />
-    </config>
-</plugin>
-"""
-
 import logging
 
 from sleekbot.commandbot import botcmd, botfreetxt
@@ -35,14 +23,14 @@ class AliasCmd(object):
 class AliasStore(object):
     """ Class for storing aliased commands into he database
     """
-    
+
     def __init__(self, store):
         self.store = store
         self.create_table()
 
     def create_table(self):
         """ Create the alias table.
-        """        
+        """
         with self.store.context_cursor() as cur:
             if not self.store.has_table(cur,'alias'):
                 cur.execute("""CREATE TABLE "alias" (
@@ -109,27 +97,42 @@ class Alias(BotPlugin):
 
     freetextRegex = ''
 
+    def __init__(self, aliases=()):
+        BotPlugin.__init__(self)
+        self._aliases = aliases
+        self.global_aliases = {}
+
     def _on_register(self):
         """ On plugin load parse the freetextRegex together and set it global
         so botfreetext can use it later.
         """
+
         self.chat_prefix = self.bot.chat_prefix
         self.muc_prefix = self.bot.muc_prefix
         self.alias_store = AliasStore(self.bot.store)
-        
+
+        for alias in self._aliases:
+            name = alias['name']
+            cmd = alias['cmd']
+            logging.debug("Load global alias: %s", name)
+            self.global_aliases[name] = AliasCmd(None, name, cmd)
+
         # botfreetext regex string with im and mux prefix
         global freetextRegex
         freetextRegex = "^[\%s\%s][a-zA-Z].*$" \
                         % (self.chat_prefix, self.muc_prefix)
 
-        # global aliases
-        self.global_aliases = {}
-        if self.config:
-            for aliascmd in self.config.findall('alias'):
-                logging.debug("Load global alias: %s", aliascmd.attrib['name'])
-                self.global_aliases[aliascmd.attrib['name']] = AliasCmd(None,
-                                                  aliascmd.attrib['name'],
-                                                  aliascmd.attrib['command'])
+    def example_config(self):
+        """ Configuration example.
+        """
+
+        return {'aliases':
+               ({'name': 'say2muc',
+                 'cmd': 'say myroom@conference.server.com'
+                },
+                {'name': 'rh',
+                 'cmd': 'rehash'
+               })}
 
     @botfreetxt(priority=1, regex=freetextRegex)
     def handle_alias(self, text, msg, command_found, freetext_found, match):
@@ -228,7 +231,7 @@ class Alias(BotPlugin):
                 response += "\n%s = %s" % (aliascmd.alias, aliascmd.command)
         if not self.global_aliases == {}:
             for (key, aliascmd) in self.global_aliases.iteritems():
-                response += "\n(*) %s = %s" % (aliascmd.alias, aliascmd.command)
+                response += "\n*%s = %s" % (aliascmd.alias, aliascmd.command)
         if response == 'Aliases: ':
             response += "None."
         return response

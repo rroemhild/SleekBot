@@ -13,6 +13,7 @@ import copy
 
 from sleekbot.commandbot import botcmd
 from sleekbot.plugbot import BotPlugin
+import sleekbot.confighandler as confighandler
 
 SEARCH = """(([Tt]he|[mM]y)[\s\w\-0-9]+ (is|are|can|has|got)|I am|i am|I'm|
 (?=^|,|\.\s|\?)?[\w'0-9\-]+ (is|are|can|got|has))[\s\w'0-9\-:$@%^&*]+"""
@@ -20,12 +21,14 @@ SEARCH = """(([Tt]he|[mM]y)[\s\w\-0-9]+ (is|are|can|has|got)|I am|i am|I'm|
 class Remember(BotPlugin):
     """A plugin to rembember events."""
 
-    def __init__(self, bot, config):
-        BotPlugin.__init__(self, bot, config)
+    def __init__(self, idlemin=60, idlemax=600):
+        BotPlugin.__init__(self)
+        self._idlemin = idlemin
+        self._idlemax = idlemax
+
+    def _on_register(self):
         self.know = []
         self.load_default()
-        self.idlemin = int(self.config.get('idlemin', 60))
-        self.idlemax = int(self.config.get('idlemax', 600))
         self.bot.add_event_handler("groupchat_message", \
                                    self.handle_message_event, threaded=True)
         self.search = re.compile(SEARCH)
@@ -42,7 +45,7 @@ class Remember(BotPlugin):
         """ Background execution.
         """
         while self.running:
-            time.sleep(random.randint(self.idlemin, self.idlemax))
+            time.sleep(random.randint(self._idlemin, self._idlemax))
             if self.lastroom:
                 msg = self.lastmessage.split(' ')
                 msgs = copy.copy(msg)

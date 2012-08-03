@@ -168,45 +168,18 @@ class CommandBot(object):
             del_event_handler
         as defined in SleekXMPP
         and a property named:
-            botconfig -- XML ElementTree from the config file. For example:
-                <prefix chat='/' muc='!' />
-                <acl>
-                    <owner>
-                        <jid>owner1@server.com</jid>
-                        <jid>owner2@server.com</jid>
-                    </owner>
-                    <admin>
-                        <jid>trusteduser@server.com</jid>
-                    </admin>
-                    <user>
-                        <jid>arbitrarybotuser@server.com</jid>
-                    </user>
-                    <banned>
-                        <jid>banneduser@server.com</jid>
-                    </banned>
-                </acl>
+            botconfig -- a dictionary with the configuration.
     """
 
     __metaclass__ = ABCMeta
 
-    def __init__(self, chat_prefix='/', muc_prefix='!'):
+    def __init__(self):
         """ Initializes the CommandBot by registering commands in self
             and message handler
-                chat_prefix  -- prefix to be used for private messages commands
-                              (default '/')
-                muc_prefix -- prefix to be used for muc messages commands
-                              (default '!')
-
-            Prefixes specified in botconfig has precedence.
         """
 
-        prefix = self.botconfig.find('prefix')
-        if prefix is None:
-            self.chat_prefix = chat_prefix
-            self.muc_prefix = muc_prefix
-        else:
-            self.chat_prefix = prefix.attrib.get('chat', chat_prefix)
-            self.muc_prefix = prefix.attrib.get('muc', muc_prefix)
+        self.chat_prefix = '/'
+        self.muc_prefix = '!'
 
         self.chat_commands = {}
         self.muc_commands = {}
@@ -249,7 +222,7 @@ class CommandBot(object):
 
     @abstractproperty
     def botconfig(self):
-        """ XML ElementTree from the config file
+        """ Configuration as a dictionary
         """
         pass
 
@@ -290,18 +263,19 @@ class CommandBot(object):
     def reset(self):
         """ Reset commands and users
         """
+        self.chat_prefix = self.botconfig.get('prefixes.chat', '/')
+        self.muc_prefix = self.botconfig.get('prefixes.muc', '!')
+
         self.chat_commands = {}
         self.muc_commands = {}
 
         self.freetext = []
         self.register_commands(self)
-
-        aclnode = self.botconfig.find('acl')
-        self.acl = get_class(aclnode.attrib.get('classname', 'acl.ACL')) \
-                  (self, aclnode.find('config'))
-        self.acl.update_from_xml(aclnode)
-        self.require_membership = \
-                              self.botconfig.find('require-membership') != None
+        aclnode = self.botconfig.get('acl', dict())
+        self.acl = get_class(aclnode.get('classname', 'acl.ACL')) \
+                  (self, aclnode.get('config', None))
+        self.acl.update_from_dict(aclnode)
+        self.require_membership = self.botconfig.get('require_membership', False)
         logging.info(self.acl.summarize() + \
                      'Require membership %s', self.require_membership)
 
@@ -504,6 +478,8 @@ def parse_args(cargs, syntax, separator=None):
     if getattr(cargs, 'parsed_', False):
         return cargs
     out = Mstr(cargs)
+    if isinstance(cargs, unicode):
+        cargs = cargs.encode('utf-8')
     cargs = map(str.strip, cargs.strip().split(separator, len(syntax)))
     delta = len(syntax) - len(cargs)
     if delta < 0:

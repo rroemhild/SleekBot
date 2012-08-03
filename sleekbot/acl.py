@@ -25,21 +25,6 @@ def in_clause_subs(number):
     return ','.join(['?'] * number)
 
 
-def get_jids_in_group(xmlnode, group):
-    """ Returns a list of all jids belonging to users of a given group."""
-    jids = []
-    users = xmlnode.findall(group)
-    if not users:
-        return jids
-    for user in users:
-        user_jids = user.findall('jid')
-        if user_jids:
-            for jid in user_jids:
-                logging.debug("appending %s to %s list", jid.text, group)
-                jids.append(jid.text)
-    return jids
-
-
 class ESet(set):
     """A set class for e-mail addresses that checks
     membership based on domains.
@@ -110,12 +95,12 @@ class ACL(object):
     def __contains__(self, jid):
         return jid in self.__dict
 
-    def update_from_xml(self, xmlnode):
-        """ Add the jids in an xmlnode.
+    def update_from_dict(self, dictionary):
+        """ Add the jids in an dictionary.
         """
 
         for role in ACL.ROLE:
-            for jid in get_jids_in_group(xmlnode, role):
+            for jid in dictionary.get(role, ()):
                 self[jid] = getattr(ACL.ROLE, role)
 
     def find_part(self, jid):
@@ -236,4 +221,3 @@ class ACLdb(ACL):
         with self.store.context_cursor() as cur:
             cur.execute(query, role)
             return int(cur.fetchone()[0])
-

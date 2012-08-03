@@ -48,8 +48,7 @@ class Plugin(object):
     """ A base class for plugins.
     """
 
-    def __init__(self, config=None):
-        self.config = config if not config is None else dict()
+    def __init__(self):
         self.__plugin_dict = None
 
     def about(self):
@@ -104,30 +103,20 @@ class Plugin(object):
     plugin_dict = property(fget=_get_dict, fset=_set_dict)
 
 
-def default_plugin_factory(aclass, config):
-    """ The default factory for Plugin.
-    """
-    return aclass(config)
-
-
 class PluginDict(dict):
     """ A dictionary class to hold plugins.
     """
 
     def __init__(self, plugin_base_class=Plugin,
-                 default_factory=default_plugin_factory,
                  default_package='plugins'):
         """ Initialize dictionary
                 plugin_base_class -- class from which plugins must derive
                                      (default Plugin)
-                default_factory   -- method to instantiate a plugin object
-                                     (default default_plugin_factory)
                 default_package   -- string specifying where to look for plugins
                                      (default 'plugins')
         """
         super(PluginDict, self).__init__()
         self._plugin_base_class = plugin_base_class
-        self._default_factory = default_factory
         self._default_package = default_package
         self.__call_on_register = defaultdict(set)
         self.__call_on_unregister = defaultdict(set)
@@ -154,7 +143,7 @@ class PluginDict(dict):
         logging.info("%s registered", key)
 
     def __delitem__(self, key):
-        """ Remove plugin from the dicitionary
+        """ Remove plugin from the dictionary
         """
         if key in self:
             current = super(PluginDict, self).__getitem__(key)
@@ -168,20 +157,19 @@ class PluginDict(dict):
 
         super(PluginDict, self).__delitem__(key)
 
-    def register(self, name, config=None, module=None, package=None):
+    def register(self, plugin, config=None, module=None, package=None):
         """ Loads and register a plugin
-                name    -- plugin name (name of the class)
+                plugin  -- plugin name (name of the class)
                 config  -- extra configuration (to be handled to the plugin)
-                package -- where the plugin is declared
+                module  -- module where the plugin is declared
+                package -- package where the plugin is declared
         """
         try:
-            if name in self:
+            if plugin in self:
                 return
-            if isinstance(name, self._plugin_base_class):
-                plugin = name
-                name = name.__class__.__name__
-                self[name] = plugin
-            elif isinstance(name, str):
+            if isinstance(plugin, self._plugin_base_class):
+                self[plugin.__class__.__name__] = plugin
+            elif isinstance(plugin, str):
                 if package is None:
                     package = self._default_package
                 elif not package in self.__imported:
@@ -189,17 +177,19 @@ class PluginDict(dict):
                     self.__imported.add(package)
                     logging.debug('Imported package %s', package)
                 if module is None:
-                    module = name.lower()
+                    module = plugin.lower()
 
                 imported = __import__("%s.%s" % (package, module),
-                                      fromlist=name)
-                self[name] = self._default_factory(getattr(imported, name),
-                                                   config or dict())
+                                      fromlist=plugin)
+                if config is None:
+                    self[plugin] = getattr(imported, plugin)()
+                else:
+                    self[plugin] = getattr(imported, plugin)(**config)
 
             return True
 
         except Exception as ex:
-            logging.error('Error while registering plugin %s: %s', name, ex)
+            logging.error('Error while registering plugin %s: %s', plugin, ex)
 
     def register_many(self, include='__all__', exclude=None, config=None):
         """ Register multiple plugins
@@ -247,7 +237,7 @@ class PluginDict(dict):
             value = set(filter(lambda x: x[0] != plugin, value))
 
     def get_modules(self):
-        """ Imports and returns an list of modules
+        """ Imports and returns a list of modules
         """
         return [__import__(self[name].__module__, fromlist=name)
                 for name in self.keys()]

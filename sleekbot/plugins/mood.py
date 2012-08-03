@@ -24,7 +24,7 @@ class Mood(BotPlugin):
 
     def _on_register(self):
         """ Creats a mood form and publish and adhoc command
-        """ 
+        """
         self.pubsub = self.bot.plugin['xep_0060']
         self.xform = self.bot.plugin['xep_0004']
         self.adhoc = self.bot.plugin['xep_0050']
@@ -35,7 +35,7 @@ class Mood(BotPlugin):
         for mood in self.moods:
             moods.addOption(mood, mood.title())
         frm.addField('desc', 'text-single', 'Description')
-        self.adhoc.addCommand('setmood', 'Set Mood', frm, self.handler, True)
+        self.adhoc.add_command('setmood', 'Set Mood', frm, self.handler)
 
     def handler(self, form, sessid):
         """ Handles Form

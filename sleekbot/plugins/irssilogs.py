@@ -7,6 +7,9 @@ import datetime
 import logging
 import codecs
 
+from sleekbot.plugbot import BotPlugin
+
+
 DAYS = ['Monday', 'Tuesay', 'Wednesday', 'Thursday', 
         'Friday', 'Saturday', 'Sunday']
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
@@ -27,7 +30,7 @@ class IrssiLogFile(object):
         """
         return "%02d:%02d" % (dt.hour, dt.minute)
 
-    def log_presence(self, presence):
+    def log_presence(self, presence, date):
         """ Log the presence to the file.
             Formats:
             join = '20:06 -!- Nick [userhost] has joined #room'
@@ -38,7 +41,7 @@ class IrssiLogFile(object):
         values['reason'] = presence.get('status', "")
         values['userhost'] = presence.get('jid', "%s/%s" % 
                                           (presence['room'], presence['nick']))
-        values['time'] = self.datetime_to_timestamp(presence['dateTime'])
+        values['time'] = self.datetime_to_timestamp(date)
         values['room'] = '#%s' % presence['room']
         if presence.get('type', None) == 'unavailable':
             line = '%(time)s -!- %(nick)s [%(userhost)s] has quit [%(reason)s]'
@@ -46,7 +49,7 @@ class IrssiLogFile(object):
             line = '%(time)s -!- %(nick)s [%(userhost)s] has joined %(room)s'
         self.append_log_line(line % values)
 
-    def log_message(self, message):
+    def log_message(self, message, date):
         """ Log the message to the file.
             Formats:
             message = '09:43 <+Nick> messagebody'
@@ -54,11 +57,11 @@ class IrssiLogFile(object):
             topic = '18:38 -!- Nick changed the topic of #room to: New Topic'
         """
         values = {}
-        values['nick'] = message['name']
-        values['userhost'] = message['room']
-        values['time'] = self.datetime_to_timestamp(message['dateTime'])
-        values['room'] = '#%s' % message['room']
-        values['body'] = message['message']
+        values['nick'] = message['mucnick']
+        values['userhost'] = message['from']
+        values['time'] = self.datetime_to_timestamp(date)
+        values['room'] = '#%s' % message['mucroom']
+        values['body'] = message['body']
         action = False
         topic = False
         if values['body'][:4] == '/me ':
@@ -93,11 +96,13 @@ class IrssiLogFile(object):
         self.logfile.write("%s\n" % line)
         self.logfile.flush()
 
-class IrssiLogs(object):
+class IrssiLogs(BotPlugin):
+
+    def __init__(self, logs=()):
+        BotPlugin.__init__(self)
+        self._logs = logs
     
-    def __init__(self, bot, config):
-        self.bot = bot
-        self.config = config
+    def _on_register(self):
         self.about = "Log muc events."
         self.bot.add_event_handler("groupchat_presence", 
                                    self.handle_groupchat_presence, 
@@ -107,16 +112,14 @@ class IrssiLogs(object):
                                    threaded=True)
         self.room_log_files = {}
         self.room_members = {}
-        logs = self.config.findall('log')
         self.lastdate = datetime.datetime.now()
-        if logs:
-            for log in logs:
-                room = log.attrib['room']
-                file_name = log.attrib['file']
-                self.room_log_files[room] = IrssiLogFile(room, file_name)
-                self.room_members[room] = []
-                logging.info("irssilogs.py script logging %s to %s.",
-                             (room, file_name))
+        for log in self._logs:
+            room = log['room']
+            file_name = log['file']
+            self.room_log_files[room] = IrssiLogFile(room, file_name)
+            self.room_members[room] = []
+            logging.info("irssilogs.py script logging %s to %s." %
+                         (room, file_name))
 
     def check_for_date_change(self, date):
         if (date - self.lastdate).days > 0:
@@ -127,13 +130,13 @@ class IrssiLogs(object):
     def handle_groupchat_presence(self, presence):
         """ Monitor MUC presences.
         """
-        presence['dateTime'] = datetime.datetime.now()
-        self.check_for_date_change(presence['dateTime'])
+        dtNow = datetime.datetime.now()
+        self.check_for_date_change(dtNow)
         if not presence['room'] in self.room_log_files:
             return
         if presence.get('type', None) == 'unavailable' or \
            presence['nick'] not in self.room_members[presence['room']]:
-            self.room_log_files[presence['room']].log_presence(presence)
+            self.room_log_files[presence['room']].log_presence(presence, dtNow)
             if presence.get('type', None) == 'unavailable':
                 for i in range(0,len(self.room_members[presence['room']])):
                     if self.room_members[presence['room']][i] == presence['nick']:
@@ -146,9 +149,9 @@ class IrssiLogs(object):
     def handle_groupchat_message(self, message):
         """ Monitor MUC messages.
         """
-        message['dateTime'] = datetime.datetime.now()
-        self.check_for_date_change(message['dateTime'])
-        if message['room'] in self.room_log_files.keys():
-            self.room_log_files[message['room']].log_message(message)
+        dtNow = datetime.datetime.now()
+        self.check_for_date_change(dtNow)
+        if message['mucroom'] in self.room_log_files.keys():
+            self.room_log_files[message['mucroom']].log_message(message, dtNow)
 
 
