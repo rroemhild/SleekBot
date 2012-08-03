@@ -36,18 +36,18 @@ class SeenStore(object):
 
     def create_table(self):
         """ Create the seen table."""
-        
+
         with self.store.context_cursor() as cur:
             if not self.store.has_table(cur,'seen'):
                 cur.execute("""CREATE TABLE seen (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            nick VARCHAR(256), eventTime DATETIME, 
-                            muc VARCHAR(256), stanzaType INTEGER, 
+                            nick VARCHAR(256), eventTime DATETIME,
+                            muc VARCHAR(256), stanzaType INTEGER,
                             text VARCHAR(256))""")
 
     def update(self, event):
         """ Update or insert a seen event."""
-        
+
         with self.store.context_cursor() as cur:
             logging.debug("Updating seen for %s - time: %s", event.nick,
                                                             event.event_time)
@@ -69,7 +69,7 @@ class SeenStore(object):
 
     def get(self, nick):
         """ Get a seen event."""
-        
+ 
         with self.store.context_cursor() as cur:
             cur.execute('SELECT * FROM seen WHERE nick=?', (nick, ))
             results = cur.fetchall()
@@ -82,7 +82,7 @@ class SeenStore(object):
 
     def delete(self, nick):
         """ Delete a seen event."""
-        
+
         with self.store.context_cursor() as cur:
             cur.execute('DELETE FROM seen WHERE nick=?', (nick, ))
 
@@ -93,11 +93,11 @@ class Seen(BotPlugin):
     def _on_register(self):
         self.seenstore = SeenStore(self.bot.store)
         self.started = datetime.timedelta(seconds=time.time())
-        self.bot.add_event_handler("groupchat_presence", 
-                                   self.handle_groupchat_presence, 
+        self.bot.add_event_handler("groupchat_presence",
+                                   self.handle_groupchat_presence,
                                    threaded=True)
-        self.bot.add_event_handler("groupchat_message", 
-                                   self.handle_groupchat_message, 
+        self.bot.add_event_handler("groupchat_message",
+                                   self.handle_groupchat_message,
                                    threaded=True)
 
     def handle_groupchat_presence(self, presence):
@@ -108,9 +108,9 @@ class Seen(BotPlugin):
         else:
             ptype = SeenEvent.presence_type
         now = datetime.datetime.now()
-        self.seenstore.update(SeenEvent(presence['from'].resource, 
-                                        now.strftime("%Y-%m-%d %H:%M:%S"), 
-                                        presence['from'].bare, ptype, 
+        self.seenstore.update(SeenEvent(presence['from'].resource,
+                                        now.strftime("%Y-%m-%d %H:%M:%S"),
+                                        presence['from'].bare, ptype,
                                         presence.get('status', None)))
 
     def handle_groupchat_message(self, message):
@@ -133,7 +133,7 @@ class Seen(BotPlugin):
         seen_data = self.seenstore.get(args)
         if seen_data == None:
             return "I have never seen '" + args + "'"
-            
+
         since_time_seconds = (datetime.datetime.now() - \
                             seen_data.event_time).seconds
         since_time = ""
@@ -148,9 +148,9 @@ class Seen(BotPlugin):
             status = "saying '%s'" % seen_data.text
         elif seen_data.stanza_type == SeenEvent.presence_type and \
              seen_data.text is not None:
-                 
+
             status = "(%s)" % seen_data.text
-            
+
         state = "in"
         if seen_data.stanza_type == SeenEvent.part_type:
             state = "leaving"

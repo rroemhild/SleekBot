@@ -64,7 +64,7 @@ plugins:
         logs: 
          - room: c1@conference.localhost 
            file: c1@conference.localhost
-    - plugin: LDAPBot
+    - plugin: LDAPQuery
     - plugin: Mood
     - plugin: Remember
     - plugin: RSSBot

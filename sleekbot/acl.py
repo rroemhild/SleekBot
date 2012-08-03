@@ -221,4 +221,3 @@ class ACLdb(ACL):
         with self.store.context_cursor() as cur:
             cur.execute(query, role)
             return int(cur.fetchone()[0])
-

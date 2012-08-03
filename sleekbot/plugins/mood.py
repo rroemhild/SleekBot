@@ -24,7 +24,7 @@ class Mood(BotPlugin):
 
     def _on_register(self):
         """ Creats a mood form and publish and adhoc command
-        """ 
+        """
         self.pubsub = self.bot.plugin['xep_0060']
         self.xform = self.bot.plugin['xep_0004']
         self.adhoc = self.bot.plugin['xep_0050']

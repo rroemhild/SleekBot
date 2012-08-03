@@ -52,21 +52,21 @@ class CmdStore(object):
 
     def insert(self, event):
         """ Insert a command usage."""
-        
+
         with self.store.context_cursor() as cur:
             cur.execute('INSERT INTO stats_botcmd(cmd, args, type, time)' \
              'VALUES(?,?,?,?)', (event.cmd, event.args, event.type, event.time))
 
     def get(self, cmd):
         """ Get command usage statistic."""
-        
+
         with self.store.context_cursor() as cur:
             cur.execute('SELECT count(*) FROM stats_botcmd WHERE cmd=?', (cmd,))
             return str(cur.fetchone()[0])
 
     def get_all(self):
         """ Get all command usage statistics."""
-        
+
         with self.store.context_cursor() as cur:
             cur.execute('SELECT * FROM stats_botcmd')
             results = cur.fetchall()
@@ -134,7 +134,7 @@ class Stats(BotPlugin):
     @botcmd(usage='[cmd]', allow=CommandBot.msg_from_owner)
     def stats(self, command, args, msg):
         """ Get command usage statistics."""
-        
+
         try:
             args = parse_args(args, (('cmd', ''), ))
         except ArgError as error:
@@ -183,7 +183,7 @@ class Info(BotPlugin):
 
     def _on_register(self):
         """ Starting time. """
-        
+
         if not hasattr(self.bot, 'time_started'):
             self.bot.time_started = datetime.datetime.now()
 

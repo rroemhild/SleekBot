@@ -42,7 +42,7 @@ class Admin(BotPlugin):
 
         self.bot.cmd_plugins.reload_all()
         return "Reloaded boss"
-    
+
     @botcmd(hidden=True)
     def register(self, command, args, msg):
         """ Register yourself the first time as a bot owner
@@ -57,13 +57,13 @@ class Admin(BotPlugin):
 class ACL(BotPlugin):
     """ A plugin to manage users."""
 
-    @botcmd(usage='[add|del|see|test] jid role', 
+    @botcmd(usage='[add|del|see|test] jid role',
             allow=CommandBot.msg_from_admin)
     def acl(self, command, args, msg):
         """ Access control list management
         """
         try:
-            args = parse_args(args, (('action', ('add', 'del', 'see', 'test')), 
+            args = parse_args(args, (('action', ('add', 'del', 'see', 'test')),
                                      ('jid', str), ('role', 'user')))
         except ArgError as ex:
             return ex.msg
@@ -149,4 +149,3 @@ class ACL(BotPlugin):
                 return '%s is not %s' % (args.jid, args.role)
         else:
             return '%s was not found in acl' % args.jid
-

@@ -128,7 +128,7 @@ class LDAPQuery(BotPlugin):
 
     def _on_register(self):
         """ Build the botcmd usage bevor the command gets
-            registered with the commandbot. 
+            registered with the commandbot.
         """
 
         for query in self._queries:
@@ -173,4 +173,3 @@ class LDAPQuery(BotPlugin):
                 return query.get_help()
             return query.run(search)
         return "Unknown option."
-

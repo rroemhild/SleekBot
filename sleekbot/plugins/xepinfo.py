@@ -15,32 +15,32 @@ from sleekbot.commandbot import parse_args, ArgError
 
 class XEPinfo(BotPlugin):
     """A plugin for obtaining xep information."""
-    
+
     RESPONSE_INFO = '%(type)s XEP-%(number)s, %(name)s, is %(status)s ' \
                    '(last updated %(updated)s): ' \
                    'http://www.xmpp.org/extensions/xep-%(number)s.html'
 
     RESPONSE_TOOMANY = '\n\n%(number)s more results were found but not shown ' \
                        '(too many results).'
-                      
+
     RESPONSE_ERROR = 'I have suffered a tremendous error: I cannot reach the ' \
                      'XEP list (and have never been able to)'
-                     
+
     RESPONSE_NOTFOUND = 'The XEP you specified ("%s") could not be found'
-    
+
     def __init__(self, url='http://www.xmpp.org/extensions/xeps.xml', cache_expiry=6):
         super(XEPinfo, self).__init__()
         self._url = url
         self._cache_expiry = cache_expiry
         self._last_cache_time = 0
-        self._xeps = None    
-                     
+        self._xeps = None
+
     def _on_register(self):
         """ Loads XEP cache if necessary """
         self._ensure_cache_is_recent()
 
     def _ensure_cache_is_recent(self):
-        """ Check if the xep list cache is older than the age limit in config 
+        """ Check if the xep list cache is older than the age limit in config
             and refreshes if so.
         """
         now = math.floor(time.time())
@@ -62,7 +62,7 @@ class XEPinfo(BotPlugin):
     def handle_xep(self, command, args, msg):
         """Returns details of the specified XEP."""
         self._ensure_cache_is_recent()
-        
+
         try:
             args = parse_args(args, (('xep', int), ))
         except ArgError as ex:
@@ -72,7 +72,7 @@ class XEPinfo(BotPlugin):
 
         if self._xeps == None:
             return self.RESPONSE_ERROR
-            
+
         response = ''
         num_responses = 0
         for xep in self._xeps.findall('xep'):
