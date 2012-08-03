@@ -99,6 +99,9 @@ class QueryObject():
         """
 
         logging.debug('Connecting to ldap server %s', self.server['uri'])
+        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+        ldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
+        ldap.set_option(ldap.OPT_DEREF, ldap.DEREF_ALWAYS)
         _ldap = ldap.initialize(self.server['uri'])
         try:
             _ldap.simple_bind_s(self.server['binddn'], self.server['secret'])
