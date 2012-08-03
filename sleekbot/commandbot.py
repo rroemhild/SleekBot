@@ -478,6 +478,8 @@ def parse_args(cargs, syntax, separator=None):
     if getattr(cargs, 'parsed_', False):
         return cargs
     out = Mstr(cargs)
+    if isinstance(cargs, unicode):
+        cargs = cargs.encode('utf-8')
     cargs = map(str.strip, cargs.strip().split(separator, len(syntax)))
     delta = len(syntax) - len(cargs)
     if delta < 0:
